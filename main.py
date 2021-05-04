@@ -12,7 +12,11 @@ import sys
 
 from colorthief import ColorThief
 
+
 # main
+from utils import pixels_conversion
+
+
 class PipeLineGUI(QWidget):
     def __init__(self):
         super().__init__()
@@ -115,26 +119,24 @@ class PipeLineGUI(QWidget):
         layout.addRow(self.workflows_header)
 
         # workflows
-        self.w1_cb = QCheckBox("Annotate Gold Particles")
-        self.w1_cb.setChecked(True)
+        # self.convert_mc_cb = QCheckBox("Coords From Pixels To Microns")
+        # self.convert_mc_cb.setChecked(True)
 
-        self.w2_cb = QCheckBox("K Nearest Neighbors")
-        self.w2_cb.setChecked(True)
+        self.annotate_particles_cb = QCheckBox("Annotate Gold Particles")
+        self.annotate_particles_cb.setChecked(True)
 
-        self.w3_cb = QCheckBox("Calculate Density")
-        self.w3_cb.setChecked(True)
+        self.knn_cb = QCheckBox("K Nearest Neighbors")
+        self.knn_cb.setChecked(True)
 
-        self.w4_cb = QCheckBox("Output Img/CSV Files")
-        self.w4_cb.setChecked(True)
+        self.calc_dens_cb = QCheckBox("Calculate Density")
+        self.calc_dens_cb.setChecked(True)
 
-        # wr1 = QHBoxLayout()
-        # wr1.addWidget(self.w1_cb)
-        # wr1.addWidget(self.w2_cb)
-        # wr1.addWidget(self.w3_cb)
-        # wr1.addWidget(self.w4_cb)
-        layout.addRow(self.w1_cb, self.w2_cb)
-        layout.addRow(self.w3_cb, self.w4_cb)
+        self.output_files_cb = QCheckBox("Output Img/CSV Files")
+        self.output_files_cb.setChecked(True)
 
+        # layout.addRow(self.convert_mc_cb)
+        layout.addRow(self.annotate_particles_cb, self.knn_cb)
+        layout.addRow(self.calc_dens_cb, self.output_files_cb)
 
         # start btn
         self.start_btn = QPushButton('Start', self)
@@ -163,8 +165,8 @@ class PipeLineGUI(QWidget):
                 (r, g, b) = palette.get_color(quality=1)
                 def clamp(x):
                     return max(0, min(x, 255))
-                # print((r, g, b), "#{0:02x}{1:02x}{2:02x}".format(clamp(r), clamp(g), clamp(b)))
-                self.clr_btn.setStyleSheet(f'QWidget {{background-color: {"#{0:02x}{1:02x}{2:02x}".format(clamp(r), clamp(g), clamp(b))}; font-size: 16px; font-weight: 600; padding: 8px; color: white; border-radius: 7px; }}')
+                self.clr_btn.setStyleSheet(
+                    f'QWidget {{background-color: {"#{0:02x}{1:02x}{2:02x}".format(clamp(r), clamp(g), clamp(b))}; font-size: 16px; font-weight: 600; padding: 8px; color: white; border-radius: 7px; }}')
 
             elif btn_type == "csv":
                 self.open_file(file)
@@ -176,10 +178,6 @@ class PipeLineGUI(QWidget):
     # open actual file
     def open_file(self, file):
         print(file)
-        # if file[0]:
-        #     with open(file[0], 'r') as f:
-        #         data = f.read()
-        #         self.textEdit.setText(data)
 
     def set_mask_clr(self):
         color = QColorDialog.getColor()
@@ -194,8 +192,11 @@ class PipeLineGUI(QWidget):
         print(
             f'\nImg File: {self.img_le.text()}, \nMask File: {self.mask_le.text()}, \nCSV File: {self.csv_le.text()}, \nCSV2 File: {self.csv2_le.text()}')
         print(
-            f'\nWorkflow 1: {self.w1_cb.isChecked()}, \nWorkflow 2: {self.w2_cb.isChecked()}, \norkflow 3: {self.w3_cb.isChecked()}, \nWorkflow 4: {self.w4_cb.isChecked()}')
+            f'\nAnnotate Particles: {self.annotate_particles_cb.isChecked()}, \nCalc Density: {self.calc_dens_cb.isChecked()}, \nKNN: {self.knn_cb.isChecked()}, \nOutput files: {self.output_files_cb.isChecked()}')
 
+        # if self.convert_mc_cb.isChecked():
+        coordinate_df = pixels_conversion(self.csv_le.text())
+        total_particles = coordinate_df.shape[0]
 
 
 styles = '''
@@ -211,10 +212,9 @@ QCheckBox::indicator {
 }
 '''
 
-
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    app.setStyle("fusion")                 # +++
+    app.setStyle("fusion")  # +++
     app.setStyleSheet(styles)
     window = PipeLineGUI()
     window.show()
