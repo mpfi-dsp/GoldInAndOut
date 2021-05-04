@@ -12,9 +12,8 @@ import sys
 
 from colorthief import ColorThief
 
-
 # main
-from utils import pixels_conversion
+from utils import pixels_conversion, get_complimentary_color
 
 
 class PipeLineGUI(QWidget):
@@ -154,25 +153,26 @@ class PipeLineGUI(QWidget):
         file = QFileDialog.getOpenFileName(self, 'Open file', root_dir)
         filename = file[0]
         if (len(filename)) > 0:
+            self.open_file(filename)
             if btn_type == "img":
-                self.open_file(filename)
                 self.img_le.setText(filename)
             elif btn_type == "mask":
-                self.open_file(file)
-                self.mask_le.setText(filename)
-                # get dominant color in layer mask and assign to btn bg
-                palette = ColorThief(filename)
-                (r, g, b) = palette.get_color(quality=1)
-                def clamp(x):
-                    return max(0, min(x, 255))
-                self.clr_btn.setStyleSheet(
-                    f'QWidget {{background-color: {"#{0:02x}{1:02x}{2:02x}".format(clamp(r), clamp(g), clamp(b))}; font-size: 16px; font-weight: 600; padding: 8px; color: white; border-radius: 7px; }}')
-
+                try:
+                    self.mask_le.setText(filename)
+                    # get dominant color in layer mask and assign to btn bg
+                    palette = ColorThief(filename)
+                    (r, g, b) = palette.get_color(quality=1)
+                    def clamp(x):
+                        return max(0, min(x, 255))
+                    hex = "#{0:02x}{1:02x}{2:02x}".format(clamp(r), clamp(g), clamp(b))
+                    comp_color = get_complimentary_color(hex)
+                    self.clr_btn.setStyleSheet( f'QWidget {{background-color: {hex}; font-size: 16px; font-weight: 600; padding: 8px; color: {comp_color}; border-radius: 7px; }}')
+                    self.clr_btn.setText(hex)
+                except Exception as e:
+                    print(e)
             elif btn_type == "csv":
-                self.open_file(file)
                 self.csv_le.setText(filename)
             elif btn_type == "csv2":
-                self.open_file(file)
                 self.csv2_le.setText(filename)
 
     # open actual file
@@ -180,13 +180,12 @@ class PipeLineGUI(QWidget):
         print(file)
 
     def set_mask_clr(self):
-        color = QColorDialog.getColor()
+        color = QColorDialog.getColor().name(0)
         print(color)
+        comp_color = get_complimentary_color(color)
         self.clr_btn.setStyleSheet(
-            'font-size: 16px; font-weight: 600; padding: 8px; background: blue; color: white; border-radius: 7px; ')
-        graphic = QGraphicsColorizeEffect(self)
-        graphic.setColor(color)
-        self.clr_btn.setGraphicsEffect(graphic)
+            f'QWidget {{background-color: {color}; font-size: 16px; font-weight: 600; padding: 8px; color: {comp_color}; border-radius: 7px; }}')
+        self.clr_btn.setText(color)
 
     def start(self):
         print(
@@ -197,6 +196,7 @@ class PipeLineGUI(QWidget):
         # if self.convert_mc_cb.isChecked():
         coordinate_df = pixels_conversion(self.csv_le.text())
         total_particles = coordinate_df.shape[0]
+        print(f'total_particles: {total_particles}')
 
 
 styles = '''

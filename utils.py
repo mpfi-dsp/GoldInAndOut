@@ -26,3 +26,9 @@ def pixels_conversion(filename, nm=False):
     except Exception as e:
         print(e)
 
+def get_complimentary_color(hexcode):
+    color = int(hexcode[1:], 16)
+    comp_color = 0xFFFFFF ^ color
+    comp_color = "#%06X" % comp_color
+    return comp_color
+
