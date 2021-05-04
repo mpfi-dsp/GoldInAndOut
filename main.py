@@ -1,63 +1,138 @@
+# QT5
 from PyQt5.QtWidgets import (QMainWindow, QLabel, QVBoxLayout, QTextEdit, QAction, QFileDialog, QApplication,
-                             QPushButton, QWidget)
+                             QSpacerItem, QDialog, QRadioButton, QCheckBox, QHBoxLayout, QGraphicsColorizeEffect,
+                             QPushButton, QWidget, QGridLayout, QSizePolicy, QFormLayout, QLineEdit, QColorDialog)
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import (QSize, Qt)
+from PyQt5.QtCore import (QSize, Qt, QRect, QCoreApplication, QMetaObject)
+
+# general
 from pathlib import Path
 from functools import partial
 import sys
 
+from colorthief import ColorThief
 
-
-# main class
+# main
 class PipeLineGUI(QWidget):
-    # init gui & add ui
     def __init__(self):
-        QMainWindow.__init__(self)
+        super().__init__()
         self.setWindowIcon(QIcon('logo.jpg'))
-        self.setMinimumSize(QSize(1000, 500))
-        self.setWindowTitle('MPFI EM Pipeline')
+        self.setMinimumSize(QSize(600, 600))
+        self.setWindowTitle('EM Pipeline')
 
-        layout = QVBoxLayout()
+        layout = QFormLayout()
+
+        # header
+        self.header = QLabel("MPFI EM Core Pipeline")
+        self.header.setStyleSheet("font-size: 24px; font-weight: bold; padding-top: 8px; ")
+        layout.addRow(self.header)
+        self.desc = QLabel(
+            "Simply upload the appropriate files, check the workflows you'd like to run, and click \"Start\"!")
+        self.desc.setStyleSheet("font-size: 17px; padding-top: 3px; padding-bottom: 20px;")
+        self.desc.setWordWrap(True)
+        layout.addRow(self.desc)
+
+        # upload header
+        self.upload_header = QLabel("Upload Files")
+        self.upload_header.setStyleSheet("font-size: 20px; font-weight: bold; padding-top: 8px; padding-bottom: 10px")
+        layout.addRow(self.upload_header)
 
         # img btn
         self.img_btn = QPushButton('Upload Image', self)
-        self.img_btn.setStyleSheet("font-size: 20px; font-weight: bold; background: #ddd; border-radius: 7px; ")
+        self.img_btn.setStyleSheet(
+            "font-size: 16px; font-weight: 600; padding: 8px; background: teal; color: white;  border-radius: 7px; ")
         self.img_btn.clicked.connect(partial(self.open_file_picker, "img"))
-        # self.img_btn.resize(900, 50)
-        # self.img_btn.move(50, 60)
+        # img input
+        self.img_le = QLineEdit()
+        self.img_le.setStyleSheet(
+            "font-size: 16px; padding: 8px; font-weight: 400; background: #ddd; border-radius: 7px;")
+        self.img_le.setPlaceholderText("None Selected")
+        # add img row
+        layout.addRow(self.img_btn, self.img_le)
 
         # mask btn
         self.mask_btn = QPushButton('Upload Mask', self)
-        self.mask_btn.setStyleSheet("font-size: 20px; font-weight: bold; background: #ddd; border-radius: 7px; ")
+        self.mask_btn.setStyleSheet(
+            "font-size: 16px; font-weight: 600; padding: 8px; background: teal; color: white;  border-radius: 7px;")
         self.mask_btn.clicked.connect(partial(self.open_file_picker, "mask"))
-        # self.mask_btn.resize(900, 50)
-        # self.mask_btn.move(50, 140)
+        # mask input
+        self.mask_le = QLineEdit()
+        self.mask_le.setStyleSheet(
+            "font-size: 16px; padding: 8px; font-weight: 400; background: #ddd; border-radius: 7px; margin-bottom: 5px;")
+        self.mask_le.setPlaceholderText("None Selected")
+        # mask color btn
+        self.clr_btn = QPushButton('Color', self)
+        self.clr_btn.setStyleSheet(
+            "font-size: 16px; font-weight: 500; padding: 8px; background: black; color: white;  border-radius: 7px; margin-bottom: 5px;")
+        self.clr_btn.clicked.connect(self.set_mask_clr)
+        # add mask row
+        mask_r = QHBoxLayout()
+        mask_r.addWidget(self.mask_btn)
+        mask_r.addWidget(self.mask_le)
+        mask_r.addWidget(self.clr_btn)
+        layout.addRow(mask_r)
 
         # csv btn
         self.csv_btn = QPushButton('Upload CSV', self)
-        self.csv_btn.setStyleSheet("font-size: 20px; font-weight: bold; background: #ddd; border-radius: 7px; ")
+        self.csv_btn.setStyleSheet(
+            "font-size: 16px; font-weight: 600; padding: 8px; background: teal; color: white; border-radius: 7px; ")
         self.csv_btn.clicked.connect(partial(self.open_file_picker, "csv"))
-        # self.csv_btn.resize(900, 50)
-        # self.csv_btn.move(50, 220)
+        # csv input
+        self.csv_le = QLineEdit()
+        self.csv_le.setStyleSheet(
+            "font-size: 16px; padding: 8px; font-weight: 400; background: #ddd; border-radius: 7px; margin-bottom: 5px;")
+        self.csv_le.setPlaceholderText("None Selected")
+        # add csv row
+        layout.addRow(self.csv_btn, self.csv_le)
 
         # csv2 btn
         self.csv2_btn = QPushButton('Upload CSV2', self)
-        self.csv2_btn.setStyleSheet("font-size: 20px; font-weight: bold; background: #ddd; border-radius: 7px; ")
+        self.csv2_btn.setStyleSheet(
+            "font-size: 16px; font-weight: 600; padding: 8px; background: teal; color: white; border-radius: 7px; ")
         self.csv2_btn.clicked.connect(partial(self.open_file_picker, "csv2"))
-        self.csv2_btn.resize(900, 60)
-        # self.csv2_btn.move(50, 300)
+        # csv2 input
+        self.csv2_le = QLineEdit()
+        self.csv2_le.setStyleSheet(
+            "font-size: 16px; padding: 8px; font-weight: 400; background: #ddd; border-radius: 7px; margin-bottom: 5px;")
+        self.csv2_le.setPlaceholderText("None Selected")
+        # add csv2 row
+        layout.addRow(self.csv2_btn, self.csv2_le)
 
-        layout.addWidget(self.img_btn)
-        layout.addWidget(self.mask_btn)
-        layout.addWidget(self.csv_btn)
-        layout.addWidget(self.csv2_btn)
+        # workflows header
+        self.workflows_header = QLabel("Select Workflows")
+        self.workflows_header.setStyleSheet(
+            "font-size: 20px; font-weight: bold; padding-top: 20px; padding-bottom: 10px")
+        layout.addRow(self.workflows_header)
+
+        # workflows
+        self.w1_cb = QCheckBox("Workflow 1")
+        self.w1_cb.setChecked(True)
+
+        self.w2_cb = QCheckBox("Workflow 2")
+        self.w2_cb.setChecked(True)
+
+        self.w3_cb = QCheckBox("Workflow 3")
+        self.w3_cb.setChecked(True)
+
+        self.w4_cb = QCheckBox("Workflow 4")
+        self.w4_cb.setChecked(True)
+
+        wr1 = QHBoxLayout()
+        wr1.addWidget(self.w1_cb)
+        wr1.addWidget(self.w2_cb)
+        wr1.addWidget(self.w3_cb)
+        wr1.addWidget(self.w4_cb)
+        layout.addRow(wr1)
+
+        # start btn
+        self.start_btn = QPushButton('Start', self)
+        self.start_btn.setStyleSheet(
+            "font-size: 16px; font-weight: 600; padding: 8px; margin-top: auto; background: teal; color: white; border-radius: 7px; ")
+        self.start_btn.clicked.connect(self.start)
+        layout.addRow(self.start_btn)
+
+        # assign layout
         self.setLayout(layout)
-
-        # next btn
-        # self.next_btn = QPushButton('Next', self)
-        # self.next_btn.setStyleSheet("font-size: 20px; font-weight: bold; background: #ddd; border-radius: 7px; ")
-        # # self.next_btn.clicked.connect()
-        # self.verticalLayout.addWidget(self.next_btn, alignment=Qt.AlignRight)
 
     # open file picker and print file names
     def open_file_picker(self, btn_type):
@@ -67,21 +142,24 @@ class PipeLineGUI(QWidget):
         if (len(filename)) > 0:
             if btn_type == "img":
                 self.open_file(filename)
-                self.img_btn.setText("IMG: " + filename)
-                self.img_btn.setStyleSheet("font-size: 20px; background: #ddd; border-radius: 7px; color: teal;")
+                self.img_le.setText(filename)
             elif btn_type == "mask":
                 self.open_file(file)
-                self.mask_btn.setText("MASK: " + filename)
-                self.mask_btn.setStyleSheet("font-size: 20px; background: #ddd; border-radius: 7px; color: teal;")
+                self.mask_le.setText(filename)
+                # get dominant color in layer mask and assign to btn bg
+                palette = ColorThief(filename)
+                (r, g, b) = palette.get_color(quality=1)
+                def clamp(x):
+                    return max(0, min(x, 255))
+                # print((r, g, b), "#{0:02x}{1:02x}{2:02x}".format(clamp(r), clamp(g), clamp(b)))
+                self.clr_btn.setStyleSheet(f'QWidget {{background-color: {"#{0:02x}{1:02x}{2:02x}".format(clamp(r), clamp(g), clamp(b))}; font-size: 16px; font-weight: 600; padding: 8px; color: white; border-radius: 7px; }}')
+
             elif btn_type == "csv":
                 self.open_file(file)
-                self.csv_btn.setText("CSV: " + filename)
-                self.csv_btn.setStyleSheet("font-size: 20px; background: #ddd; border-radius: 7px; color: teal;")
+                self.csv_le.setText(filename)
             elif btn_type == "csv2":
                 self.open_file(file)
-                self.csv2_btn.setText("CSV2: " + filename)
-                self.csv2_btn.setStyleSheet("font-size: 20px; background: #ddd; border-radius: 7px; color: teal;")
-
+                self.csv2_le.setText(filename)
 
     # open actual file
     def open_file(self, file):
@@ -91,10 +169,24 @@ class PipeLineGUI(QWidget):
         #         data = f.read()
         #         self.textEdit.setText(data)
 
+    def set_mask_clr(self):
+        color = QColorDialog.getColor()
+        print(color)
+        self.clr_btn.setStyleSheet(
+            'font-size: 16px; font-weight: 600; padding: 8px; background: blue; color: white; border-radius: 7px; ')
+        graphic = QGraphicsColorizeEffect(self)
+        graphic.setColor(color)
+        self.clr_btn.setGraphicsEffect(graphic)
 
-# launch gui
+    def start(self):
+        print(
+            f'\nImg File: {self.img_le.text()}, \nMask File: {self.mask_le.text()}, \nCSV File: {self.csv_le.text()}, \nCSV2 File: {self.csv2_le.text()}')
+        print(
+            f'\nWorkflow 1: {self.w1_cb.isChecked()}, \nWorkflow 2: {self.w2_cb.isChecked()}, \norkflow 3: {self.w3_cb.isChecked()}, \nWorkflow 4: {self.w4_cb.isChecked()}')
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    gui = PipeLineGUI()
-    gui.show()
+    window = PipeLineGUI()
+    window.show()
     sys.exit(app.exec_())
