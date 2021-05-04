@@ -18,12 +18,12 @@ class PipeLineGUI(QWidget):
         super().__init__()
         self.setWindowIcon(QIcon('logo.jpg'))
         self.setMinimumSize(QSize(600, 600))
-        self.setWindowTitle('EM Pipeline')
+        self.setWindowTitle('MPFI EM Core Pipeline')
 
         layout = QFormLayout()
 
         # header
-        self.header = QLabel("MPFI EM Core Pipeline")
+        self.header = QLabel("Gold Cluster Analysis For Freeze Fracture")
         self.header.setStyleSheet("font-size: 24px; font-weight: bold; padding-top: 8px; ")
         layout.addRow(self.header)
         self.desc = QLabel(
@@ -48,7 +48,10 @@ class PipeLineGUI(QWidget):
             "font-size: 16px; padding: 8px; font-weight: 400; background: #ddd; border-radius: 7px;")
         self.img_le.setPlaceholderText("None Selected")
         # add img row
-        layout.addRow(self.img_btn, self.img_le)
+        img_r = QHBoxLayout()
+        img_r.addWidget(self.img_btn)
+        img_r.addWidget(self.img_le)
+        layout.addRow(img_r)
 
         # mask btn
         self.mask_btn = QPushButton('Upload Mask', self)
@@ -61,7 +64,7 @@ class PipeLineGUI(QWidget):
             "font-size: 16px; padding: 8px; font-weight: 400; background: #ddd; border-radius: 7px; margin-bottom: 5px;")
         self.mask_le.setPlaceholderText("None Selected")
         # mask color btn
-        self.clr_btn = QPushButton('Color', self)
+        self.clr_btn = QPushButton('Mask Color', self)
         self.clr_btn.setStyleSheet(
             "font-size: 16px; font-weight: 500; padding: 8px; background: black; color: white;  border-radius: 7px; margin-bottom: 5px;")
         self.clr_btn.clicked.connect(self.set_mask_clr)
@@ -83,7 +86,11 @@ class PipeLineGUI(QWidget):
             "font-size: 16px; padding: 8px; font-weight: 400; background: #ddd; border-radius: 7px; margin-bottom: 5px;")
         self.csv_le.setPlaceholderText("None Selected")
         # add csv row
-        layout.addRow(self.csv_btn, self.csv_le)
+        csv_r = QHBoxLayout()
+        csv_r.addWidget(self.csv_btn)
+        csv_r.addWidget(self.csv_le)
+        layout.addRow(csv_r)
+        # layout.addRow(self.csv_btn, self.csv_le)
 
         # csv2 btn
         self.csv2_btn = QPushButton('Upload CSV2', self)
@@ -96,7 +103,10 @@ class PipeLineGUI(QWidget):
             "font-size: 16px; padding: 8px; font-weight: 400; background: #ddd; border-radius: 7px; margin-bottom: 5px;")
         self.csv2_le.setPlaceholderText("None Selected")
         # add csv2 row
-        layout.addRow(self.csv2_btn, self.csv2_le)
+        csv2_r = QHBoxLayout()
+        csv2_r.addWidget(self.csv2_btn)
+        csv2_r.addWidget(self.csv2_le)
+        layout.addRow(csv2_r)
 
         # workflows header
         self.workflows_header = QLabel("Select Workflows")
@@ -105,24 +115,26 @@ class PipeLineGUI(QWidget):
         layout.addRow(self.workflows_header)
 
         # workflows
-        self.w1_cb = QCheckBox("Workflow 1")
+        self.w1_cb = QCheckBox("Annotate Gold Particles")
         self.w1_cb.setChecked(True)
 
-        self.w2_cb = QCheckBox("Workflow 2")
+        self.w2_cb = QCheckBox("K Nearest Neighbors")
         self.w2_cb.setChecked(True)
 
-        self.w3_cb = QCheckBox("Workflow 3")
+        self.w3_cb = QCheckBox("Calculate Density")
         self.w3_cb.setChecked(True)
 
-        self.w4_cb = QCheckBox("Workflow 4")
+        self.w4_cb = QCheckBox("Output Img/CSV Files")
         self.w4_cb.setChecked(True)
 
-        wr1 = QHBoxLayout()
-        wr1.addWidget(self.w1_cb)
-        wr1.addWidget(self.w2_cb)
-        wr1.addWidget(self.w3_cb)
-        wr1.addWidget(self.w4_cb)
-        layout.addRow(wr1)
+        # wr1 = QHBoxLayout()
+        # wr1.addWidget(self.w1_cb)
+        # wr1.addWidget(self.w2_cb)
+        # wr1.addWidget(self.w3_cb)
+        # wr1.addWidget(self.w4_cb)
+        layout.addRow(self.w1_cb, self.w2_cb)
+        layout.addRow(self.w3_cb, self.w4_cb)
+
 
         # start btn
         self.start_btn = QPushButton('Start', self)
@@ -185,8 +197,25 @@ class PipeLineGUI(QWidget):
             f'\nWorkflow 1: {self.w1_cb.isChecked()}, \nWorkflow 2: {self.w2_cb.isChecked()}, \norkflow 3: {self.w3_cb.isChecked()}, \nWorkflow 4: {self.w4_cb.isChecked()}')
 
 
+
+styles = '''
+QCheckBox {
+    margin-right: 5px;
+    spacing: 5px;
+    font-size: 18px;    
+}
+
+QCheckBox::indicator {
+    width:  27px;
+    height: 27px;
+}
+'''
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    app.setStyle("fusion")                 # +++
+    app.setStyleSheet(styles)
     window = PipeLineGUI()
     window.show()
     sys.exit(app.exec_())
