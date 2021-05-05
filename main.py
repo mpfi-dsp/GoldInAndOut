@@ -1,205 +1,100 @@
-# QT5
-from PyQt5.QtWidgets import (QMainWindow, QLabel, QVBoxLayout, QTextEdit, QAction, QFileDialog, QApplication,
-                             QSpacerItem, QDialog, QRadioButton, QCheckBox, QHBoxLayout, QGraphicsColorizeEffect,
-                             QPushButton, QWidget, QGridLayout, QSizePolicy, QFormLayout, QLineEdit, QColorDialog)
+from random import randint
+from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import (QSize, Qt, QRect, QCoreApplication, QMetaObject)
-
-# general
-from pathlib import Path
-from functools import partial
+from PyQt5.QtWidgets import (QWidget, QListWidget, QStackedWidget,
+                             QHBoxLayout, QListWidgetItem, QLabel, QApplication)
 import sys
 
-from colorthief import ColorThief
+from home import HomePage
+from macro import MacroPage
+from utils import pixels_conversion
 
-# main
-from utils import pixels_conversion, get_complimentary_color
+PAGE_NAMES = ["Home", "KND", "Foo", "Bar", "Baz", "Bop"]
 
 
-class PipeLineGUI(QWidget):
+class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowIcon(QIcon('logo.jpg'))
+        self.setWindowIcon(QIcon('../gui/logo.jpg'))
         self.setMinimumSize(QSize(600, 600))
         self.setWindowTitle('MPFI EM Core Pipeline')
+        self.resize(800, 600)
+        # layout with list on left and stacked widget on right
+        layout = QHBoxLayout(self, spacing=0)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.nav_list = QListWidget(self)
+        layout.addWidget(self.nav_list)
+        self.page_stack = QStackedWidget(self)
+        layout.addWidget(self.page_stack)
 
-        layout = QFormLayout()
+        self.home_page = HomePage(start=self.start)
 
-        # header
-        self.header = QLabel("Gold Cluster Analysis For Freeze Fracture")
-        self.header.setStyleSheet("font-size: 24px; font-weight: bold; padding-top: 8px; ")
-        layout.addRow(self.header)
-        self.desc = QLabel(
-            "Simply upload the appropriate files, check the workflows you'd like to run, and click \"Start\"!")
-        self.desc.setStyleSheet("font-size: 17px; padding-top: 3px; padding-bottom: 20px;")
-        self.desc.setWordWrap(True)
-        layout.addRow(self.desc)
+        self.init_ui()
 
-        # upload header
-        self.upload_header = QLabel("Upload Files")
-        self.upload_header.setStyleSheet("font-size: 20px; font-weight: bold; padding-top: 8px; padding-bottom: 10px")
-        layout.addRow(self.upload_header)
+    def init_ui(self):
+        # create interface, hide scrollbar
+        self.nav_list.currentRowChanged.connect(
+            self.page_stack.setCurrentIndex)
+        self.nav_list.setFrameShape(QListWidget.NoFrame)
+        self.nav_list.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.nav_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-        # img btn
-        self.img_btn = QPushButton('Upload Image', self)
-        self.img_btn.setStyleSheet(
-            "font-size: 16px; font-weight: 600; padding: 8px; background: teal; color: white;  border-radius: 7px; ")
-        self.img_btn.clicked.connect(partial(self.open_file_picker, "img"))
-        # img input
-        self.img_le = QLineEdit()
-        self.img_le.setStyleSheet(
-            "font-size: 16px; padding: 8px; font-weight: 400; background: #ddd; border-radius: 7px;")
-        self.img_le.setPlaceholderText("None Selected")
-        # add img row
-        img_r = QHBoxLayout()
-        img_r.addWidget(self.img_btn)
-        img_r.addWidget(self.img_le)
-        layout.addRow(img_r)
+        item = QListWidgetItem(
+            QIcon('foo.jpg'), str("Home"), self.nav_list)
+        item.setSizeHint(QSize(60, 60))
+        item.setTextAlignment(Qt.AlignCenter)
 
-        # mask btn
-        self.mask_btn = QPushButton('Upload Mask', self)
-        self.mask_btn.setStyleSheet(
-            "font-size: 16px; font-weight: 600; padding: 8px; background: teal; color: white;  border-radius: 7px;")
-        self.mask_btn.clicked.connect(partial(self.open_file_picker, "mask"))
-        # mask input
-        self.mask_le = QLineEdit()
-        self.mask_le.setStyleSheet(
-            "font-size: 16px; padding: 8px; font-weight: 400; background: #ddd; border-radius: 7px; margin-bottom: 5px;")
-        self.mask_le.setPlaceholderText("None Selected")
-        # mask color btn
-        self.clr_btn = QPushButton('Mask Color', self)
-        self.clr_btn.setStyleSheet(
-            "font-size: 16px; font-weight: 500; padding: 8px; background: black; color: white;  border-radius: 7px; margin-bottom: 5px;")
-        self.clr_btn.clicked.connect(self.set_mask_clr)
-        # add mask row
-        mask_r = QHBoxLayout()
-        mask_r.addWidget(self.mask_btn)
-        mask_r.addWidget(self.mask_le)
-        mask_r.addWidget(self.clr_btn)
-        layout.addRow(mask_r)
+        self.page_stack.addWidget(self.home_page)
+        # select first page by default
+        self.nav_list.item(0).setSelected(True)
 
-        # csv btn
-        self.csv_btn = QPushButton('Upload CSV', self)
-        self.csv_btn.setStyleSheet(
-            "font-size: 16px; font-weight: 600; padding: 8px; background: teal; color: white; border-radius: 7px; ")
-        self.csv_btn.clicked.connect(partial(self.open_file_picker, "csv"))
-        # csv input
-        self.csv_le = QLineEdit()
-        self.csv_le.setStyleSheet(
-            "font-size: 16px; padding: 8px; font-weight: 400; background: #ddd; border-radius: 7px; margin-bottom: 5px;")
-        self.csv_le.setPlaceholderText("None Selected")
-        # add csv row
-        csv_r = QHBoxLayout()
-        csv_r.addWidget(self.csv_btn)
-        csv_r.addWidget(self.csv_le)
-        layout.addRow(csv_r)
-        # layout.addRow(self.csv_btn, self.csv_le)
+    def init_macros(self):
+        # add page tabs
+        for i in range(5):
+            if i > 0:
+                item = QListWidgetItem(
+                    QIcon('foo.jpg'), str(PAGE_NAMES[i]), self.nav_list)
+                item.setSizeHint(QSize(60, 60))
+                item.setTextAlignment(Qt.AlignCenter)
 
-        # csv2 btn
-        self.csv2_btn = QPushButton('Upload CSV2', self)
-        self.csv2_btn.setStyleSheet(
-            "font-size: 16px; font-weight: 600; padding: 8px; background: teal; color: white; border-radius: 7px; ")
-        self.csv2_btn.clicked.connect(partial(self.open_file_picker, "csv2"))
-        # csv2 input
-        self.csv2_le = QLineEdit()
-        self.csv2_le.setStyleSheet(
-            "font-size: 16px; padding: 8px; font-weight: 400; background: #ddd; border-radius: 7px; margin-bottom: 5px;")
-        self.csv2_le.setPlaceholderText("None Selected")
-        # add csv2 row
-        csv2_r = QHBoxLayout()
-        csv2_r.addWidget(self.csv2_btn)
-        csv2_r.addWidget(self.csv2_le)
-        layout.addRow(csv2_r)
+        knn_page = MacroPage(header_name="N Nearest Distance", desc="distance!", img_dropdown=[self.home_page.img_le.text()], mask_dropdown=[self.home_page.mask_le.text()], csv_dropdown=[self.home_page.csv_le.text()], parameters=["rand_particles"])
+        self.page_stack.addWidget(knn_page)
 
-        # workflows header
-        self.workflows_header = QLabel("Select Workflows")
-        self.workflows_header.setStyleSheet(
-            "font-size: 20px; font-weight: bold; padding-top: 20px; padding-bottom: 10px")
-        layout.addRow(self.workflows_header)
-
-        # workflows
-        # self.convert_mc_cb = QCheckBox("Coords From Pixels To Microns")
-        # self.convert_mc_cb.setChecked(True)
-
-        self.annotate_particles_cb = QCheckBox("Annotate Gold Particles")
-        self.annotate_particles_cb.setChecked(True)
-
-        self.knn_cb = QCheckBox("K Nearest Neighbors")
-        self.knn_cb.setChecked(True)
-
-        self.calc_dens_cb = QCheckBox("Calculate Density")
-        self.calc_dens_cb.setChecked(True)
-
-        self.output_files_cb = QCheckBox("Output Img/CSV Files")
-        self.output_files_cb.setChecked(True)
-
-        # layout.addRow(self.convert_mc_cb)
-        layout.addRow(self.annotate_particles_cb, self.knn_cb)
-        layout.addRow(self.calc_dens_cb, self.output_files_cb)
-
-        # start btn
-        self.start_btn = QPushButton('Start', self)
-        self.start_btn.setStyleSheet(
-            "font-size: 16px; font-weight: 600; padding: 8px; margin-top: auto; background: teal; color: white; border-radius: 7px; ")
-        self.start_btn.clicked.connect(self.start)
-        layout.addRow(self.start_btn)
-
-        # assign layout
-        self.setLayout(layout)
-
-    # open file picker and print file names
-    def open_file_picker(self, btn_type):
-        root_dir = str(Path.home())
-        file = QFileDialog.getOpenFileName(self, 'Open file', root_dir)
-        filename = file[0]
-        if (len(filename)) > 0:
-            self.open_file(filename)
-            if btn_type == "img":
-                self.img_le.setText(filename)
-            elif btn_type == "mask":
-                try:
-                    self.mask_le.setText(filename)
-                    # get dominant color in layer mask and assign to btn bg
-                    palette = ColorThief(filename)
-                    (r, g, b) = palette.get_color(quality=1)
-                    def clamp(x):
-                        return max(0, min(x, 255))
-                    hex = "#{0:02x}{1:02x}{2:02x}".format(clamp(r), clamp(g), clamp(b))
-                    comp_color = get_complimentary_color(hex)
-                    self.clr_btn.setStyleSheet( f'QWidget {{background-color: {hex}; font-size: 16px; font-weight: 600; padding: 8px; color: {comp_color}; border-radius: 7px; }}')
-                    self.clr_btn.setText(hex)
-                except Exception as e:
-                    print(e)
-            elif btn_type == "csv":
-                self.csv_le.setText(filename)
-            elif btn_type == "csv2":
-                self.csv2_le.setText(filename)
-
-    # open actual file
-    def open_file(self, file):
-        print(file)
-
-    def set_mask_clr(self):
-        color = QColorDialog.getColor().name(0)
-        print(color)
-        comp_color = get_complimentary_color(color)
-        self.clr_btn.setStyleSheet(
-            f'QWidget {{background-color: {color}; font-size: 16px; font-weight: 600; padding: 8px; color: {comp_color}; border-radius: 7px; }}')
-        self.clr_btn.setText(color)
+        for i in range(5):
+            if i > 1:
+                label = QLabel(f'{PAGE_NAMES[i]}Page', self)
+                label.setAlignment(Qt.AlignCenter)
+                label.setStyleSheet('background: rgb(%d, %d, %d); margin: 50px;' % (
+                    randint(0, 255), randint(0, 255), randint(0, 255)))
+                self.page_stack.addWidget(label)
 
     def start(self):
-        print(
-            f'\nImg File: {self.img_le.text()}, \nMask File: {self.mask_le.text()}, \nCSV File: {self.csv_le.text()}, \nCSV2 File: {self.csv2_le.text()}')
-        print(
-            f'\nAnnotate Particles: {self.annotate_particles_cb.isChecked()}, \nCalc Density: {self.calc_dens_cb.isChecked()}, \nKNN: {self.knn_cb.isChecked()}, \nOutput files: {self.output_files_cb.isChecked()}')
-
-        # if self.convert_mc_cb.isChecked():
-        coordinate_df = pixels_conversion(self.csv_le.text())
-        total_particles = coordinate_df.shape[0]
-        print(f'total_particles: {total_particles}')
+        self.init_macros()
 
 
-styles = '''
+styles = """
+QListWidget, QListView, QTreeWidget, QTreeView {
+    outline: 0px;
+}
+QListWidget {
+    min-width: 120px;
+    max-width: 120px;
+    color: white;
+    background: teal;
+    font-weight: 500;
+    font-size: 18px;
+}
+QListWidget::item:selected {
+    background: rgb(16,100,112);
+    border-left: 3px solid #01D4B4;
+    color: white;
+}
+HistoryPanel::item:hover {background: rgb(52, 52, 52);}
+
+
+/* QStackedWidget {background: rgb(30, 30, 30);} */
+
+QLabel {color: black;}
 QCheckBox {
     margin-right: 5px;
     spacing: 5px;
@@ -210,12 +105,58 @@ QCheckBox::indicator {
     width:  27px;
     height: 27px;
 }
-'''
 
-if __name__ == "__main__":
+QPushButton {
+font-size: 16px; 
+font-weight: 600; 
+padding: 8px; 
+background: teal; 
+color: white; 
+border-radius: 7px;
+}
+
+QLineEdit {
+font-size: 16px; 
+padding: 8px; 
+font-weight: 400; 
+background: #ddd; 
+border-radius: 7px; 
+margin-bottom: 5px;
+}
+
+QComboBox {
+font-size: 16px; 
+padding: 8px; 
+font-weight: 400; 
+background: #ddd; 
+border-radius: 7px; 
+margin-bottom: 5px;
+}
+
+QComboBox QAbstractItemView {
+font-size: 16px; 
+padding: 2px;
+border: 0 !important; 
+outline: none !important; 
+color: teal;
+font-weight: 400; 
+background: #ccc; 
+border-radius: 7px; 
+margin-bottom: 5px;
+}
+
+QLabel {
+font-size: 20px; 
+font-weight: bold; 
+padding-top: 8px; 
+padding-bottom: 10px;
+}
+"""
+
+if __name__ == '__main__':
     app = QApplication(sys.argv)
-    app.setStyle("fusion")  # +++
     app.setStyleSheet(styles)
-    window = PipeLineGUI()
-    window.show()
+    app.setStyle("fusion")
+    w = MainWindow()
+    w.show()
     sys.exit(app.exec_())

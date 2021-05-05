@@ -31,4 +31,6 @@ def get_complimentary_color(hexcode):
     comp_color = 0xFFFFFF ^ color
     comp_color = "#%06X" % comp_color
     return comp_color
-
+#
+# def k_nearest_distance():
+#
