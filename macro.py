@@ -1,20 +1,36 @@
 # QT5
 import pandas as pd
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtCore import QThread, pyqtSignal, Qt
+from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import (QMainWindow, QLabel, QVBoxLayout, QTextEdit, QAction, QFileDialog, QApplication,
                              QSpacerItem, QDialog, QRadioButton, QCheckBox, QHBoxLayout, QGraphicsColorizeEffect,
                              QPushButton, QWidget, QGridLayout, QSizePolicy, QFormLayout, QLineEdit, QColorDialog,
                              QComboBox, QProgressBar)
-import time
 from functools import partial
-
-from nnd import run_nnd
+import cv2
+import seaborn as sns
+from nnd import run_nnd, draw_length
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import matplotlib.pyplot as plt
 
 class Progress(QThread):
     prog = pyqtSignal(int)
 
     def update_progress(self, count):
         self.prog.emit(count)
+
+
+
+def create_color_pal(h_bins=10):
+    palette = sns.color_palette("crest")
+    color_palette = []
+    for i in range(h_bins):
+        color = palette[i]
+        for value in color:
+            value *= 255
+        color_palette.append(color)
+    return color_palette
+
 
 class MacroPage(QWidget):
     def __init__(self, header_name="Undefined", desc="Undefined", img_dropdown=[], mask_dropdown=[], csv_dropdown=[],
@@ -66,22 +82,39 @@ class MacroPage(QWidget):
         # props
         self.csvs_lb = QLabel("CSV Scalar")
         self.csvs_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
-        self.csvs_input = QLineEdit()
-        self.csvs_input.setPlaceholderText("1")
-        self.gen_rand = QLabel("Generate Rand Coords")
-        self.gen_rand.setStyleSheet("font-size: 17px; font-weight: 400;")
+        self.csvs_ip = QLineEdit()
+        self.csvs_ip.setStyleSheet("font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 75px;")
+        self.csvs_ip.setPlaceholderText("1")
+        layout.addRow(self.csvs_lb, self.csvs_ip)
+
+        self.bars_lb = QLabel("# Bars in Histogram")
+        self.bars_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
+        self.bars_ip = QLineEdit()
+        self.bars_ip.setStyleSheet("font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 75px;")
+        self.bars_ip.setPlaceholderText("1")
+        layout.addRow(self.bars_lb, self.bars_ip)
+
+        self.gen_rand_lb = QLabel("Generate Rand Coords")
+        self.gen_rand_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.gen_rand_cb = QCheckBox()
-        param_r = QHBoxLayout()
-        param_r.addWidget(self.csvs_lb)
-        param_r.addWidget(self.csvs_input)
-        param_r.addWidget(self.gen_rand)
-        param_r.addWidget(self.gen_rand_cb)
-        layout.addRow(param_r)
+        layout.addRow(self.gen_rand_lb, self.gen_rand_cb)
 
         self.progress = QProgressBar(self)
         self.progress.setGeometry(0, 0, 300, 25)
         self.progress.setMaximum(100)
         layout.addRow(self.progress)
+
+        # annotated image
+        self.image_frame = QLabel()
+        self.image_frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # hist
+        self.figure = plt.figure()
+        self.canvas = FigureCanvas(self.figure)
+        # container for visualizers
+        self.img_cont = QVBoxLayout()
+        self.img_cont.addWidget(self.image_frame)
+        self.img_cont.addWidget(self.canvas)
+        layout.addRow(self.img_cont)
 
         # run & download btns
         self.run_btn = QPushButton('Run Again', self)
@@ -109,18 +142,14 @@ class MacroPage(QWidget):
             # run knn
             self.OUTPUT_DF = run_nnd(prog_wrapper=prog_wrapper, img_path=self.img_drop.currentText(), csv_path=self.csv_drop.currentText(),
                                          pface_path="",
-                                         csv_scalar=(self.csvs_input.text() if len(self.csvs_input.text()) > 0 else 1),
+                                         csv_scalar=(self.csvs_ip.text() if len(self.csvs_ip.text()) > 0 else 1),
                                          gen_rand=self.gen_rand_cb.isChecked())
             self.progress.setValue(100)
-            # # update progress bar
-            # nnd = NNDWrapper()
-            # nnd.countChanged.connect(self.onCountChanged)
-            #
-            # # run knn
-            # self.OUTPUT_DF = nnd.run_nnd(img_path=self.img_drop.currentText(), csv_path=self.csv_drop.currentText(),
-            #                     pface_path="",
-            #                     csv_scalar=(self.csvs_input.text() if len(self.csvs_input.text()) > 0 else 1),
-            #                     gen_rand=self.gen_rand_cb.isChecked())
+            # get drawn img
+            drawn_img = draw_length(self.OUTPUT_DF, cv2.imread(self.img_drop.currentText()))
+            self.show_image(drawn_img)
+            self.create_hist(self.bars_ip.text() if self.bars_ip.text() else 10)
+
             print(self.OUTPUT_DF.head())
             self.download_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: auto; background: teal; color: white; border-radius: 7px; ")
         except Exception as e:
@@ -132,3 +161,24 @@ class MacroPage(QWidget):
                 self.OUTPUT_DF.to_csv(file_name, index=False, header=True)
             except Exception as e:
                 print(e)
+
+    def show_image(self, img):
+        image = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888).rgbSwapped()
+        pixmap = QPixmap.fromImage(image)
+        smaller_pixmap = pixmap.scaled(400, 600, Qt.KeepAspectRatio, Qt.FastTransformation)
+        self.image_frame.setPixmap(smaller_pixmap)
+
+    def create_hist(self, n_bins=10):
+        # plot = sns.histplot(data=self.OUTPUT_DF['dist'], bins=n_bins, ax=self.widget.canvas.ax)
+        # self.widget.canvas.draw()
+        self.figure.clear()
+        ax = self.figure.add_subplot(111)
+        # colormap
+        cm = plt.cm.get_cmap('RdYlBu_r')
+        n, bins, patches = ax.hist(self.OUTPUT_DF['dist'], bins=n_bins, color='green')
+        # To normalize your values
+        col = (n - n.min()) / (n.max() - n.min())
+        for c, p in zip(col, patches):
+            p.set_facecolor(cm(c))
+
+        self.canvas.draw()

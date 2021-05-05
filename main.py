@@ -9,16 +9,16 @@ from home import HomePage
 from macro import MacroPage
 from utils import pixels_conversion
 
-PAGE_NAMES = ["Home", "KND", "Foo", "Bar", "Baz", "Bop"]
+PAGE_NAMES = ["Selection", "NND", "Foo", "Bar", "Baz", "Bop"]
 
 
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowIcon(QIcon('../gui/logo.jpg'))
-        self.setMinimumSize(QSize(600, 600))
+        self.setMinimumSize(QSize(900, 900))
         self.setWindowTitle('MPFI EM Core Pipeline')
-        self.resize(800, 600)
+        self.resize(900, 900)
         # layout with list on left and stacked widget on right
         layout = QHBoxLayout(self, spacing=0)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -40,7 +40,7 @@ class MainWindow(QWidget):
         self.nav_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
         item = QListWidgetItem(
-            QIcon('foo.jpg'), str("Home"), self.nav_list)
+            QIcon('foo.jpg'), str("Selection"), self.nav_list)
         item.setSizeHint(QSize(60, 60))
         item.setTextAlignment(Qt.AlignCenter)
 
@@ -57,7 +57,7 @@ class MainWindow(QWidget):
                 item.setSizeHint(QSize(60, 60))
                 item.setTextAlignment(Qt.AlignCenter)
 
-        knn_page = MacroPage(header_name="N Nearest Distance", desc="distance!", img_dropdown=[self.home_page.img_le.text()], mask_dropdown=[self.home_page.mask_le.text()], csv_dropdown=[self.home_page.csv_le.text()], parameters=["rand_particles"])
+        knn_page = MacroPage(header_name="N Nearest Distance", desc="Find the nearest distance between gold particles. Optionally generate random coordinates.", img_dropdown=[self.home_page.img_le.text()], mask_dropdown=[self.home_page.mask_le.text()], csv_dropdown=[self.home_page.csv_le.text()], parameters=["rand_particles"])
         self.page_stack.addWidget(knn_page)
 
         for i in range(5):
@@ -94,7 +94,7 @@ HistoryPanel::item:hover {background: rgb(52, 52, 52);}
 
 /* QStackedWidget {background: rgb(30, 30, 30);} */
 
-QLabel {color: black;}
+
 QCheckBox {
     margin-right: 5px;
     spacing: 5px;
@@ -105,6 +105,18 @@ QCheckBox::indicator {
     width:  27px;
     height: 27px;
 }
+
+QProgressBar {
+text-align: center;
+border: solid grey;
+border-radius: 15px;
+color: black;
+font-size: 20px;
+}
+QProgressBar::chunk {
+background-color: #05B8CC;
+border-radius :15px;
+}      
 
 QPushButton {
 font-size: 16px; 
@@ -148,8 +160,9 @@ margin-bottom: 5px;
 QLabel {
 font-size: 20px; 
 font-weight: bold; 
-padding-top: 8px; 
+padding-top: 15px; 
 padding-bottom: 10px;
+color: black;
 }
 """
 

@@ -4,7 +4,6 @@ import random
 import pandas as pd
 import math
 
-
 def run_nnd(prog_wrapper, img_path, csv_path, pface_path="", csv_scalar=1, gen_rand=False):
     # Generate Faux Gold Particles within the P-face
     def generate_random_points(boundary, quantity, mask):
@@ -32,15 +31,16 @@ def run_nnd(prog_wrapper, img_path, csv_path, pface_path="", csv_scalar=1, gen_r
             particle_i = coord_list[i]
             particle_if = (particle_i[1], particle_i[0])
             templist[0] = particle_if
-            for j in range(i + 1, coord_list_len - 1):
-                particle_j = coord_list[j]
-                particle_jf = (particle_j[1], particle_j[0])
-                dist = ((particle_jf[0] - particle_if[0]) ** 2) + ((particle_jf[1] - particle_if[1]) ** 2)
-                dist = math.sqrt(dist)
-                if (dist < small_dist):
-                    small_dist = dist
-                    templist[1] = particle_jf
-                    templist[2] = small_dist
+            for j in range(0, coord_list_len - 1):
+                if i is not j:
+                    particle_j = coord_list[j]
+                    particle_jf = (particle_j[1], particle_j[0])
+                    dist = ((particle_jf[0] - particle_if[0]) ** 2) + ((particle_jf[1] - particle_if[1]) ** 2)
+                    dist = math.sqrt(dist)
+                    if (dist < small_dist):
+                        small_dist = dist
+                        templist[1] = particle_jf
+                        templist[2] = small_dist
             nndlist.append(templist)
 
         return nndlist
@@ -95,3 +95,16 @@ def run_nnd(prog_wrapper, img_path, csv_path, pface_path="", csv_scalar=1, gen_r
         return nnd(real_coordinates, pface_mask)
     else:
         return nnd(real_coordinates)
+
+
+def draw_length(nnd_df, img):
+    for index, entry in nnd_df.iterrows():
+        particle_1 = entry['og_coord']
+        particle_2 = entry['closest_coord']
+        print(particle_2)
+        img = cv2.circle(img, particle_1, 10, (0, 0, 255), -1)
+        img = cv2.line(img, particle_1, particle_2, (255, 255, 0), 5)
+
+    # to save image:
+    cv2.imwrite('drawn_nnd_img.jpg', img)
+    return img
