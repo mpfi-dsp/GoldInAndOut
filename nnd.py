@@ -97,11 +97,15 @@ def run_nnd(prog_wrapper, img_path, csv_path, pface_path="", csv_scalar=1, gen_r
         return nnd(real_coordinates)
 
 
-def draw_length(nnd_df, img):
+def draw_length(nnd_df, img, palette):
     for index, entry in nnd_df.iterrows():
         particle_1 = entry['og_coord']
         particle_2 = entry['closest_coord']
+        dist = entry['dist']
         print(particle_2)
+        if dist < some_distance and dist > some_other_distance:
+               cv2.line(img, particle_1, particle_2, palette[0], 5)
+
         img = cv2.circle(img, particle_1, 10, (0, 0, 255), -1)
         img = cv2.line(img, particle_1, particle_2, (255, 255, 0), 5)
 

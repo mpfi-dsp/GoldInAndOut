@@ -1,6 +1,6 @@
 # QT5
 import pandas as pd
-from PyQt5.QtCore import QThread, pyqtSignal, Qt
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import (QMainWindow, QLabel, QVBoxLayout, QTextEdit, QAction, QFileDialog, QApplication,
                              QSpacerItem, QDialog, QRadioButton, QCheckBox, QHBoxLayout, QGraphicsColorizeEffect,
@@ -8,17 +8,20 @@ from PyQt5.QtWidgets import (QMainWindow, QLabel, QVBoxLayout, QTextEdit, QActio
                              QComboBox, QProgressBar)
 from functools import partial
 import cv2
+
 from image_viewer import QImageViewer
 from nnd import run_nnd, draw_length
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
-from utils import Progress, fig2img
+from utils import Progress, create_color_pal
 
 
 class MacroPage(QWidget):
-    def __init__(self, header_name="Undefined", desc="Undefined", img_dropdown=[], mask_dropdown=[], csv_dropdown=[],
-                 parameters=[]):
+    def __init__(self, header_name="Undefined", desc="Undefined", img_dropdown=None, mask_dropdown=None, csv_dropdown=None,
+                 parameters=None):
         super().__init__()
+        if img_dropdown is None:
+            img_dropdown = []
         self.OUTPUT_DF = pd.DataFrame()
 
         layout = QFormLayout()
@@ -93,6 +96,11 @@ class MacroPage(QWidget):
         self.out_header = QLabel("Output")
         layout.addRow(self.out_header)
 
+        self.out_desc = QLabel("Double-click on an image to open it.")
+        self.out_desc.setStyleSheet("font-size: 17px; font-weight: 400; padding-top: 3px; padding-bottom: 20px;")
+        self.out_desc.setWordWrap(True)
+        layout.addRow(self.out_desc)
+
         # annotated image
         self.image_frame = QLabel()
         self.image_frame.setStyleSheet("padding-top: 3px; background: white;")
@@ -101,14 +109,16 @@ class MacroPage(QWidget):
         self.image_frame.mouseDoubleClickEvent = lambda event: self.open_large(event, self.display_img)
 
         # hist
-        self.figure = plt.figure()
-        self.canvas = FigureCanvas(self.figure)
-        self.canvas.mouseDoubleClickEvent = lambda event: self.open_large(event, self.hist)
+        self.hist_frame = QLabel()
+        self.hist_frame.setStyleSheet("padding-top: 3px; background: white;")
+        self.hist_frame.setMaximumSize(400, 250)
+        self.hist_frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.hist_frame.mouseDoubleClickEvent = lambda event: self.open_large(event, self.hist)
 
         # container for visualizers
         self.img_cont = QHBoxLayout()
         self.img_cont.addWidget(self.image_frame)
-        self.img_cont.addWidget(self.canvas)
+        self.img_cont.addWidget(self.hist_frame)
         layout.addRow(self.img_cont)
 
         self.progress = QProgressBar(self)
@@ -131,6 +141,9 @@ class MacroPage(QWidget):
         # assign layout
         self.setLayout(layout)
 
+        # run on init
+        self.run()
+
     def on_progress_update(self, value):
         self.progress.setValue(value)
 
@@ -138,6 +151,7 @@ class MacroPage(QWidget):
         try:
             prog_wrapper = Progress()
             prog_wrapper.prog.connect(self.on_progress_update)
+            self.palette = create_color_pal(n_bins=self.bars_ip.text() if len(self.bars_ip.text()) > 0 else 10)
 
             # run knn
             self.OUTPUT_DF = run_nnd(prog_wrapper=prog_wrapper, img_path=self.img_drop.currentText(), csv_path=self.csv_drop.currentText(),
@@ -146,7 +160,7 @@ class MacroPage(QWidget):
                                          gen_rand=self.gen_rand_cb.isChecked())
             self.progress.setValue(100)
             # get drawn img
-            drawn_img = draw_length(self.OUTPUT_DF, cv2.imread(self.img_drop.currentText()))
+            drawn_img = draw_length(nnd_df=self.OUTPUT_DF, palette=self.palette, img=cv2.imread(self.img_drop.currentText()))
             self.show_image(drawn_img)
             self.create_hist(self.bars_ip.text() if self.bars_ip.text() else 10)
 
@@ -168,22 +182,30 @@ class MacroPage(QWidget):
         smaller_pixmap = pixmap.scaled(200, 200, Qt.KeepAspectRatio, Qt.FastTransformation)
         self.image_frame.setPixmap(smaller_pixmap)
 
-    def create_hist(self, n_bins=10):
-        # plot = sns.histplot(data=self.OUTPUT_DF['dist'], bins=n_bins, ax=self.widget.canvas.ax)
-        # self.widget.canvas.draw()
-        self.figure.clear()
-        ax = self.figure.add_subplot(111)
-        # colormap
-        cm = plt.cm.get_cmap('RdYlBu_r')
+    def create_hist(self, n_bins=10, cmap='RdYlBu_r'):
+        cm = plt.cm.get_cmap(cmap)
+        fig = plt.figure()
+        canvas = FigureCanvas(fig)
+        ax = fig.add_subplot(111)
+        # create hist
         n, bins, patches = ax.hist(self.OUTPUT_DF['dist'], bins=n_bins, color='green')
-        # To normalize your values
+        ax.set_xlabel("N Nearest Distance (nm)")
+        ax.set_ylabel("Number of Entries")
+        ax.set_title('Distances Between Nearest Neighbors')
+
+        # normalize values
         col = (n - n.min()) / (n.max() - n.min())
+        # colormap
         for c, p in zip(col, patches):
             p.set_facecolor(cm(c))
-
-        self.canvas.draw()
-        img = fig2img(self.figure)
-        self.hist = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888).rgbSwapped()
+        canvas.draw()
+        size = canvas.size()
+        width, height = size.width(), size.height()
+        self.hist = QImage(canvas.buffer_rgba(), width, height, QImage.Format_ARGB32)
+        # display img
+        pixmap = QPixmap.fromImage(self.hist)
+        smaller_pixmap = pixmap.scaled(400, 250, Qt.KeepAspectRatio, Qt.FastTransformation)
+        self.hist_frame.setPixmap(smaller_pixmap)
 
     def open_large(self, event, file):
         self.image_viewer = QImageViewer(file)
