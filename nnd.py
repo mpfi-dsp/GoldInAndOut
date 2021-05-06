@@ -97,17 +97,22 @@ def run_nnd(prog_wrapper, img_path, csv_path, pface_path="", csv_scalar=1, gen_r
         return nnd(real_coordinates)
 
 
-def draw_length(nnd_df, img, palette):
-    for index, entry in nnd_df.iterrows():
+def draw_length(nnd_df, bin_counts, img, palette):
+    def sea_to_rgb(color):
+        color = [val * 255 for val in color]
+        return color
+    count = 0
+    bin_idx = 0
+    for idx, entry in nnd_df.iterrows():
+        count += 1
         particle_1 = entry['og_coord']
         particle_2 = entry['closest_coord']
-        dist = entry['dist']
-        print(particle_2)
-        if dist < some_distance and dist > some_other_distance:
-               cv2.line(img, particle_1, particle_2, palette[0], 5)
 
+        if count >= bin_counts[bin_idx]:
+            bin_idx += 1
+            count=0
         img = cv2.circle(img, particle_1, 10, (0, 0, 255), -1)
-        img = cv2.line(img, particle_1, particle_2, (255, 255, 0), 5)
+        img = cv2.line(img, particle_1, particle_2, sea_to_rgb(palette[bin_idx]), 5)
 
     # to save image:
     cv2.imwrite('drawn_nnd_img.jpg', img)

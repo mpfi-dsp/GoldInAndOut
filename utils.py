@@ -55,10 +55,11 @@ class Progress(QThread):
         self.prog.emit(count)
 
 
-def create_color_pal(h_bins=10):
-    palette = sns.color_palette("crest")
+def create_color_pal(n_bins=10, palette_type="crest"):
+    palette = sns.color_palette(palette_type, n_colors=n_bins)
+    print(palette)
     color_palette = []
-    for i in range(h_bins):
+    for i in range(n_bins):
         color = palette[i]
         for value in color:
             value *= 255

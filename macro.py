@@ -14,7 +14,7 @@ from nnd import run_nnd, draw_length
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
 from utils import Progress, create_color_pal
-
+import seaborn as sns
 
 class MacroPage(QWidget):
     def __init__(self, header_name="Undefined", desc="Undefined", img_dropdown=None, mask_dropdown=None, csv_dropdown=None,
@@ -151,7 +151,6 @@ class MacroPage(QWidget):
         try:
             prog_wrapper = Progress()
             prog_wrapper.prog.connect(self.on_progress_update)
-            self.palette = create_color_pal(n_bins=self.bars_ip.text() if len(self.bars_ip.text()) > 0 else 10)
 
             # run knn
             self.OUTPUT_DF = run_nnd(prog_wrapper=prog_wrapper, img_path=self.img_drop.currentText(), csv_path=self.csv_drop.currentText(),
@@ -160,9 +159,9 @@ class MacroPage(QWidget):
                                          gen_rand=self.gen_rand_cb.isChecked())
             self.progress.setValue(100)
             # get drawn img
-            drawn_img = draw_length(nnd_df=self.OUTPUT_DF, palette=self.palette, img=cv2.imread(self.img_drop.currentText()))
-            self.show_image(drawn_img)
-            self.create_hist(self.bars_ip.text() if self.bars_ip.text() else 10)
+            # drawn_img = draw_length(nnd_df=self.OUTPUT_DF, palette=self.palette, img=cv2.imread(self.img_drop.currentText()))
+            # self.show_image(drawn_img)
+            self.create_visuals(n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'))
 
             print(self.OUTPUT_DF.head())
             self.download_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: teal; color: white; border-radius: 7px; ")
@@ -176,36 +175,42 @@ class MacroPage(QWidget):
             except Exception as e:
                 print(e)
 
-    def show_image(self, img):
-        self.display_img = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888).rgbSwapped()
-        pixmap = QPixmap.fromImage(self.display_img)
-        smaller_pixmap = pixmap.scaled(200, 200, Qt.KeepAspectRatio, Qt.FastTransformation)
-        self.image_frame.setPixmap(smaller_pixmap)
-
-    def create_hist(self, n_bins=10, cmap='RdYlBu_r'):
-        cm = plt.cm.get_cmap(cmap)
+    def create_visuals(self, n_bins='fd', palette_type="rocket_r"):
+        cm = sns.color_palette(palette_type, as_cmap=True)
         fig = plt.figure()
         canvas = FigureCanvas(fig)
         ax = fig.add_subplot(111)
+
+        self.OUTPUT_DF.sort_values('dist', inplace=True)
+
         # create hist
         n, bins, patches = ax.hist(self.OUTPUT_DF['dist'], bins=n_bins, color='green')
         ax.set_xlabel("N Nearest Distance (nm)")
         ax.set_ylabel("Number of Entries")
         ax.set_title('Distances Between Nearest Neighbors')
 
+        # generate palette
+        palette = create_color_pal(n_bins=int(len(n)), palette_type=palette_type)
+
         # normalize values
         col = (n - n.min()) / (n.max() - n.min())
-        # colormap
         for c, p in zip(col, patches):
             p.set_facecolor(cm(c))
+
         canvas.draw()
         size = canvas.size()
         width, height = size.width(), size.height()
         self.hist = QImage(canvas.buffer_rgba(), width, height, QImage.Format_ARGB32)
         # display img
         pixmap = QPixmap.fromImage(self.hist)
-        smaller_pixmap = pixmap.scaled(400, 250, Qt.KeepAspectRatio, Qt.FastTransformation)
+        smaller_pixmap = pixmap.scaled(300, 250, Qt.KeepAspectRatio, Qt.FastTransformation)
         self.hist_frame.setPixmap(smaller_pixmap)
+
+        drawn_img = draw_length(nnd_df=self.OUTPUT_DF, bin_counts=n, palette=palette, img=cv2.imread(self.img_drop.currentText()))
+        self.display_img = QImage(drawn_img.data, drawn_img.shape[1], drawn_img.shape[0], QImage.Format_RGB888).rgbSwapped()
+        pixmap = QPixmap.fromImage(self.display_img)
+        smaller_pixmap = pixmap.scaled(200, 200, Qt.KeepAspectRatio, Qt.FastTransformation)
+        self.image_frame.setPixmap(smaller_pixmap)
 
     def open_large(self, event, file):
         self.image_viewer = QImageViewer(file)

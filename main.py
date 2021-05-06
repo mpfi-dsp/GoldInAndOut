@@ -16,7 +16,7 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowIcon(QIcon('../gui/logo.jpg'))
-        self.setMinimumSize(QSize(900, 900))
+        self.setMinimumSize(QSize(900, 950))
         # self.setMaximumSize(QSize(900, 900))
         self.setWindowTitle('MPFI EM Core Pipeline')
         self.resize(900, 900)
