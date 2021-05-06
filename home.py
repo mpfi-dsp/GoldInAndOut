@@ -86,34 +86,31 @@ class HomePage(QWidget):
         csv2_r.addWidget(self.csv2_le)
         layout.addRow(csv2_r)
 
+        spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        layout.addItem(spacer)
+
         # workflows header
         self.workflows_header = QLabel("Select Workflows")
         layout.addRow(self.workflows_header)
 
         # workflows
-        # self.convert_mc_cb = QCheckBox("Coords From Pixels To Microns")
-        # self.convert_mc_cb.setChecked(True)
-
         self.annotate_particles_cb = QCheckBox("Macro 1")
-        # self.annotate_particles_cb.setChecked(True)
 
         self.knn_cb = QCheckBox("N Nearest Neighbors")
         self.knn_cb.setChecked(True)
 
         self.calc_dens_cb = QCheckBox("Macro 3")
-        # self.calc_dens_cb.setChecked(True)
 
         self.output_files_cb = QCheckBox("Macro 4")
-        # self.output_files_cb.setChecked(True)
 
-        # layout.addRow(self.convert_mc_cb)
         layout.addRow(self.annotate_particles_cb, self.knn_cb)
         layout.addRow(self.calc_dens_cb, self.output_files_cb)
+        layout.addItem(spacer)
 
         # start btn
         self.start_btn = QPushButton('Start', self)
         self.start_btn.setStyleSheet(
-            "font-size: 16px; font-weight: 600; padding: 8px; margin-top: auto; background: teal; color: white; border-radius: 7px; ")
+            "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; background: #ff8943; color: white; border-radius: 7px; ")
         self.start_btn.clicked.connect(start)
         layout.addRow(self.start_btn)
 

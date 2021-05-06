@@ -9,6 +9,8 @@ from PyQt5.QtWidgets import (QMainWindow, QLabel, QVBoxLayout, QTextEdit, QActio
 from functools import partial
 import cv2
 import seaborn as sns
+
+from image_viewer import QImageViewer
 from nnd import run_nnd, draw_length
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
@@ -80,48 +82,63 @@ class MacroPage(QWidget):
         layout.addRow(self.workflows_header)
 
         # props
+        # knn specific props
         self.csvs_lb = QLabel("CSV Scalar")
         self.csvs_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.csvs_ip = QLineEdit()
         self.csvs_ip.setStyleSheet("font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 75px;")
         self.csvs_ip.setPlaceholderText("1")
-        layout.addRow(self.csvs_lb, self.csvs_ip)
-
+        self.gen_rand_lb = QLabel("Generate Rand Coords")
+        self.gen_rand_lb.setStyleSheet("margin-left: 50px; font-size: 17px; font-weight: 400;")
+        self.gen_rand_cb = QCheckBox()
+        self.nnd_props = QHBoxLayout()
+        self.nnd_props.addWidget(self.csvs_lb)
+        self.nnd_props.addWidget(self.csvs_ip)
+        self.nnd_props.addWidget(self.gen_rand_lb)
+        self.nnd_props.addWidget(self.gen_rand_cb)
+        layout.addRow(self.nnd_props)
+        # hist specific props
         self.bars_lb = QLabel("# Bars in Histogram")
         self.bars_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.bars_ip = QLineEdit()
         self.bars_ip.setStyleSheet("font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 75px;")
-        self.bars_ip.setPlaceholderText("1")
-        layout.addRow(self.bars_lb, self.bars_ip)
+        self.bars_ip.setPlaceholderText("10")
+        self.hist_props = QHBoxLayout()
+        self.hist_props.addWidget(self.bars_lb)
+        self.hist_props.addWidget(self.bars_ip)
+        layout.addRow(self.hist_props)
 
-        self.gen_rand_lb = QLabel("Generate Rand Coords")
-        self.gen_rand_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
-        self.gen_rand_cb = QCheckBox()
-        layout.addRow(self.gen_rand_lb, self.gen_rand_cb)
+        # output header
+        self.out_header = QLabel("Output")
+        layout.addRow(self.out_header)
+
+        # annotated image
+        self.image_frame = QLabel()
+        self.image_frame.setStyleSheet("padding-top: 3px; background: white;")
+        self.image_frame.setMaximumSize(400, 250)
+        self.image_frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.image_frame.mouseDoubleClickEvent = lambda event: self.open_large(event, self.image_frame.pixmap())
+
+        # hist
+        self.figure = plt.figure()
+        self.canvas = FigureCanvas(self.figure)
+        # container for visualizers
+        self.img_cont = QHBoxLayout()
+        self.img_cont.addWidget(self.image_frame)
+        self.img_cont.addWidget(self.canvas)
+        layout.addRow(self.img_cont)
 
         self.progress = QProgressBar(self)
         self.progress.setGeometry(0, 0, 300, 25)
         self.progress.setMaximum(100)
         layout.addRow(self.progress)
 
-        # annotated image
-        self.image_frame = QLabel()
-        self.image_frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        # hist
-        self.figure = plt.figure()
-        self.canvas = FigureCanvas(self.figure)
-        # container for visualizers
-        self.img_cont = QVBoxLayout()
-        self.img_cont.addWidget(self.image_frame)
-        self.img_cont.addWidget(self.canvas)
-        layout.addRow(self.img_cont)
-
         # run & download btns
         self.run_btn = QPushButton('Run Again', self)
-        self.run_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: auto; background: teal; color: white; border-radius: 7px; ")
+        self.run_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #ff8943; color: white; border-radius: 7px; ")
         self.run_btn.clicked.connect(self.run)
         self.download_btn = QPushButton('Download', self)
-        self.download_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: auto; background: #ccc; color: white; border-radius: 7px; ")
+        self.download_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #ccc; color: white; border-radius: 7px; ")
         self.download_btn.clicked.connect(partial(self.download, "nnd_output.csv"))
         btn_r = QHBoxLayout()
         btn_r.addWidget(self.run_btn)
@@ -151,7 +168,7 @@ class MacroPage(QWidget):
             self.create_hist(self.bars_ip.text() if self.bars_ip.text() else 10)
 
             print(self.OUTPUT_DF.head())
-            self.download_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: auto; background: teal; color: white; border-radius: 7px; ")
+            self.download_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: teal; color: white; border-radius: 7px; ")
         except Exception as e:
             print(e)
 
@@ -163,9 +180,9 @@ class MacroPage(QWidget):
                 print(e)
 
     def show_image(self, img):
-        image = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888).rgbSwapped()
-        pixmap = QPixmap.fromImage(image)
-        smaller_pixmap = pixmap.scaled(400, 600, Qt.KeepAspectRatio, Qt.FastTransformation)
+        self.display_img = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888).rgbSwapped()
+        pixmap = QPixmap.fromImage(self.display_img)
+        smaller_pixmap = pixmap.scaled(200, 200, Qt.KeepAspectRatio, Qt.FastTransformation)
         self.image_frame.setPixmap(smaller_pixmap)
 
     def create_hist(self, n_bins=10):
@@ -182,3 +199,7 @@ class MacroPage(QWidget):
             p.set_facecolor(cm(c))
 
         self.canvas.draw()
+
+    def open_large(self, event, pixmap):
+        self.image_viewer = QImageViewer(self.display_img)
+        self.image_viewer.show()

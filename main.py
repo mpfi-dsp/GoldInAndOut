@@ -9,7 +9,7 @@ from home import HomePage
 from macro import MacroPage
 from utils import pixels_conversion
 
-PAGE_NAMES = ["Selection", "NND", "Foo", "Bar", "Baz", "Bop"]
+PAGE_NAMES = ["Main", "NND", "Foo", "Bar", "Baz", "Bop"]
 
 
 class MainWindow(QWidget):
@@ -17,6 +17,7 @@ class MainWindow(QWidget):
         super().__init__()
         self.setWindowIcon(QIcon('../gui/logo.jpg'))
         self.setMinimumSize(QSize(900, 900))
+        # self.setMaximumSize(QSize(900, 900))
         self.setWindowTitle('MPFI EM Core Pipeline')
         self.resize(900, 900)
         # layout with list on left and stacked widget on right
@@ -40,7 +41,7 @@ class MainWindow(QWidget):
         self.nav_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
         item = QListWidgetItem(
-            QIcon('foo.jpg'), str("Selection"), self.nav_list)
+            QIcon('foo.jpg'), str("Main"), self.nav_list)
         item.setSizeHint(QSize(60, 60))
         item.setTextAlignment(Qt.AlignCenter)
 
@@ -96,7 +97,7 @@ HistoryPanel::item:hover {background: rgb(52, 52, 52);}
 
 
 QCheckBox {
-    margin-right: 5px;
+    margin-right: 50px;
     spacing: 5px;
     font-size: 18px;    
 }
@@ -109,13 +110,14 @@ QCheckBox::indicator {
 QProgressBar {
 text-align: center;
 border: solid grey;
-border-radius: 15px;
+border-radius: 7px;
 color: black;
+background: #ddd;
 font-size: 20px;
 }
 QProgressBar::chunk {
 background-color: #05B8CC;
-border-radius :15px;
+border-radius :7px;
 }      
 
 QPushButton {
