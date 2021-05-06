@@ -8,30 +8,11 @@ from PyQt5.QtWidgets import (QMainWindow, QLabel, QVBoxLayout, QTextEdit, QActio
                              QComboBox, QProgressBar)
 from functools import partial
 import cv2
-import seaborn as sns
-
 from image_viewer import QImageViewer
 from nnd import run_nnd, draw_length
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
-
-class Progress(QThread):
-    prog = pyqtSignal(int)
-
-    def update_progress(self, count):
-        self.prog.emit(count)
-
-
-
-def create_color_pal(h_bins=10):
-    palette = sns.color_palette("crest")
-    color_palette = []
-    for i in range(h_bins):
-        color = palette[i]
-        for value in color:
-            value *= 255
-        color_palette.append(color)
-    return color_palette
+from utils import Progress, fig2img
 
 
 class MacroPage(QWidget):
@@ -117,11 +98,13 @@ class MacroPage(QWidget):
         self.image_frame.setStyleSheet("padding-top: 3px; background: white;")
         self.image_frame.setMaximumSize(400, 250)
         self.image_frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.image_frame.mouseDoubleClickEvent = lambda event: self.open_large(event, self.image_frame.pixmap())
+        self.image_frame.mouseDoubleClickEvent = lambda event: self.open_large(event, self.display_img)
 
         # hist
         self.figure = plt.figure()
         self.canvas = FigureCanvas(self.figure)
+        self.canvas.mouseDoubleClickEvent = lambda event: self.open_large(event, self.hist)
+
         # container for visualizers
         self.img_cont = QHBoxLayout()
         self.img_cont.addWidget(self.image_frame)
@@ -199,7 +182,9 @@ class MacroPage(QWidget):
             p.set_facecolor(cm(c))
 
         self.canvas.draw()
+        img = fig2img(self.figure)
+        self.hist = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888).rgbSwapped()
 
-    def open_large(self, event, pixmap):
-        self.image_viewer = QImageViewer(self.display_img)
+    def open_large(self, event, file):
+        self.image_viewer = QImageViewer(file)
         self.image_viewer.show()

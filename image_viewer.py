@@ -34,6 +34,20 @@ class QImageViewer(QMainWindow):
 
         self.open(img)
 
+    def save(self):
+        print("save file")
+        # TODO:
+        # if not self.isWindowModified():
+        #     return
+        # options = QFileDialog.Options()
+        # options |= QFileDialog.DontUseNativeDialog
+        # fileName, _ = QFileDialog.getSaveFileName(self, "Save File", "", "All Files(*);;Text Files(*.txt)",options=options)
+        # if fileName:
+        #     with open(fileName, 'w') as f:
+        #         f.write(self.editor.toPlainText())
+        #     self.fileName = fileName
+        #     self.setWindowTitle(str(os.path.basename(fileName)) + " - Notepad Alpha[*]")
+
     def open(self, img):
         # options = QFileDialog.Options()
         # # fileName = QFileDialog.getOpenFileName(self, "Open File", QDir.currentPath())
@@ -87,7 +101,7 @@ class QImageViewer(QMainWindow):
 
 
     def create_actions(self):
-        self.openAct = QAction("&Open...", self, shortcut="Ctrl+O", triggered=self.open)
+        self.saveAct = QAction("&Save...", self, shortcut="Ctrl+S", triggered=self.save)
         self.printAct = QAction("&Print...", self, shortcut="Ctrl+P", enabled=False, triggered=self.print_)
         self.exitAct = QAction("E&xit", self, shortcut="Ctrl+Q", triggered=self.close)
         self.zoomInAct = QAction("Zoom &In (25%)", self, shortcut="Ctrl++", enabled=False, triggered=self.zoomIn)
@@ -98,7 +112,7 @@ class QImageViewer(QMainWindow):
 
     def create_menus(self):
         self.fileMenu = QMenu("&File", self)
-        self.fileMenu.addAction(self.openAct)
+        self.fileMenu.addAction(self.saveAct)
         self.fileMenu.addAction(self.printAct)
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.exitAct)

@@ -1,5 +1,9 @@
+from PyQt5.QtCore import QThread, pyqtSignal
 from sklearn.neighbors import KNeighborsClassifier
 import pandas as pd
+from PIL import Image
+import seaborn as sns
+import io
 
 def run_knn(X_train, y_train, k=5):
     classifier = KNeighborsClassifier(n_neighbors=k)
@@ -31,6 +35,31 @@ def get_complimentary_color(hexcode):
     comp_color = 0xFFFFFF ^ color
     comp_color = "#%06X" % comp_color
     return comp_color
-#
-# def k_nearest_distance():
-#
+
+
+def fig2img(fig):
+    """Convert a Matplotlib figure to a PIL Image and return it"""
+    buf = io.BytesIO()
+    fig.savefig(buf)
+    buf.seek(0)
+    img = Image.open(buf)
+    return img
+
+
+
+class Progress(QThread):
+    prog = pyqtSignal(int)
+
+    def update_progress(self, count):
+        self.prog.emit(count)
+
+
+def create_color_pal(h_bins=10):
+    palette = sns.color_palette("crest")
+    color_palette = []
+    for i in range(h_bins):
+        color = palette[i]
+        for value in color:
+            value *= 255
+        color_palette.append(color)
+    return color_palette
