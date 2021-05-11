@@ -66,30 +66,32 @@ margin-bottom: 5px;
 }
 
 QComboBox {
-font-size: 16px; 
-padding: 8px; 
-font-weight: 400; 
-background: #ddd; 
-border-radius: 7px; 
-margin-bottom: 5px;
+    font-size: 16px; 
+    padding: 8px; 
+    font-weight: 400; 
+    background: #ddd; 
+    border-radius: 7px; 
+    margin-bottom: 5px;
 }
 
+QComboBox::drop-down {
+    border: 2px; 
+}
+
+
 QComboBox QAbstractItemView {
-font-size: 16px; 
-padding: 2px;
-border: 0 !important; 
-outline: none !important; 
-color: #007267;
-font-weight: 400; 
-background: #ccc; 
-border-radius: 7px; 
-margin-bottom: 5px;
+    font-size: 16px; 
+    border: 0 !important; 
+    outline: none !important; 
+    color: #007267;
+    font-weight: 400; 
+    border-radius: 7px; 
 }
 
 QLabel {
 font-size: 20px; 
 font-weight: bold; 
-padding-top: 15px; 
+padding-top: 5px; 
 padding-bottom: 10px;
 color: black;
 }

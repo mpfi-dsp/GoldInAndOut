@@ -4,7 +4,8 @@ import pandas as pd
 from PIL import Image
 import seaborn as sns
 import io
-
+import numpy as np
+from typings import Unit
 
 """ PROGRESS BAR/THREADING  """
 class Progress(QThread):
@@ -56,25 +57,32 @@ def fig2img(fig):
     return img
 
 
-def pixels_conversion(filename, nm=False):
-    PIXEL_TO_MICRON_SCALAR = (1 / 1789.58611481976)
-    PIXEL_TO_NANOMETER_SCALAR = 1
+def pixels_conversion(csv_path, input_unit='px', csv_scalar=1, round=3):
+    data = pd.read_csv(csv_path, sep=",")
+    if input_unit == 'px':
+        data['X'] = data['X'].div(csv_scalar).round(round)
+        data['Y'] = data['Y'].div(csv_scalar).round(round)
+    else:
+        data['X'] = (data['X'] * csv_scalar).round(round)
+        data['Y'] = (data['Y'] * csv_scalar).round(round)
 
-    try:
-        df = pd.read_csv(filename, delimiter=",")
-        df.drop(df.columns[[0, 2]], axis=1, inplace=True)
-        if nm:
-            df['X'] = df['X'] * PIXEL_TO_NANOMETER_SCALAR
-            df['Y'] = df['Y'] * PIXEL_TO_NANOMETER_SCALAR
-        else:
-            df['X'] = df['X'] * PIXEL_TO_MICRON_SCALAR
-            df['Y'] = df['Y'] * PIXEL_TO_MICRON_SCALAR
-        df['X'] = df['X'].round(3)
-        df['Y'] = df['Y'].round(3)
-        print(df.head())
-        return df
-    except Exception as e:
-        print(e)
+    return data
+    # x_coordinates = np.array(data[1][1:])
+    # y_coordinates = np.array(data[2][1:])
+    #
+    # real_coordinates = []
+    # for i in range(len(x_coordinates)):
+    #     x = 0
+    #     y = 0
+    #     if input_unit == Unit.PIXEL:
+    #         x = round(float(x_coordinates[i]) / csv_scalar)
+    #         y = round(float(y_coordinates[i]) / csv_scalar)
+    #     elif input_unit == Unit.NANOMETER or input_unit == Unit.MICRON or input_unit == Unit.METRIC:
+    #         x = round(float(x_coordinates[i]) * csv_scalar)
+    #         y = round(float(y_coordinates[i]) * csv_scalar)
+    #     real_coordinates.append((y, x))
+
+
 
 
 """ SKLEARN """

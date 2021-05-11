@@ -5,7 +5,7 @@ from PyQt5.QtPrintSupport import QPrintDialog, QPrinter
 from PyQt5.QtWidgets import QLabel, QSizePolicy, QScrollArea, QMessageBox, QMainWindow, QMenu, QAction, \
     qApp, QFileDialog
 
-
+""" Image Viewer Widget """
 class QImageViewer(QMainWindow):
     def __init__(self, img):
         super().__init__()
@@ -29,7 +29,7 @@ class QImageViewer(QMainWindow):
         self.create_menus()
 
         self.setWindowTitle("EM Image Viewer")
-        self.setWindowIcon(QIcon('../gui/logo.jpg'))
+        self.setWindowIcon(QIcon('../gui/assets/logo.jpg'))
         self.resize(800, 600)
 
         self.open(img)

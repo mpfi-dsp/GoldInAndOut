@@ -1,6 +1,10 @@
 # views
+import pandas as pd
+
 from home import HomePage
-from macro import MacroPage
+from typings import Unit
+from utils import pixels_conversion
+from workflow import WorkflowPage
 # stylesheet
 from styles.stylesheet import styles
 # pyQT5
@@ -13,7 +17,7 @@ import sys
 
 
 PAGE_NAMES = ["Main", "NND", "Foo", "Bar", "Baz", "Bop"]
-
+CSV_SCALAR = 1
 
 """ PARENT WINDOW INITIALIZATION """
 class MainWindow(QWidget):
@@ -53,8 +57,9 @@ class MainWindow(QWidget):
         # select first page by default
         self.nav_list.item(0).setSelected(True)
 
-    """ INITIALIZE MACRO CHILD WINDOWS """
+    """ INITIALIZE CHILD WORKFLOW WINDOWS """
     def init_macros(self):
+        self.load_data()
         # add page tabs
         for i in range(5):
             if i > 0:
@@ -63,8 +68,12 @@ class MainWindow(QWidget):
                 item.setSizeHint(QSize(60, 60))
                 item.setTextAlignment(Qt.AlignCenter)
 
-        knn_page = MacroPage(header_name="N Nearest Distance", desc="Find the nearest distance between gold particles. Optionally generate random coordinates.", img_dropdown=[self.home_page.img_le.text()], mask_dropdown=[self.home_page.mask_le.text()], csv_dropdown=[self.home_page.csv_le.text()], parameters=["rand_particles"])
-        self.page_stack.addWidget(knn_page)
+        # TODO: remove when no longer using for testing
+        img_drop = self.home_page.img_le.text() if len(self.home_page.img_le.text()) > 0 else ["C:/Users/goldins/Downloads/example_image.tif"]
+        mask_drop = self.home_page.mask_le.text() if len(self.home_page.mask_le.text()) > 0 else ["C:/Users/goldins/Downloads/example_mask.tif"]
+        csv_drop = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else ["C:/Users/goldins/Downloads/example_csv.csv"]
+        nnd_page = WorkflowPage(scaled_df=self.SCALED_DF, header_name="Nearest Neighbor Distance", desc="Find the nearest neighbor distance between gold particles. Optionally generate random coordinates.", img_dropdown=img_drop, csv_scalar=float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1),  mask_dropdown=mask_drop, csv_dropdown=csv_drop, input_unit=self.home_page.scalar_type.currentText() if self.home_page.scalar_type.currentText() else 'px', props=["rand_particles"])
+        self.page_stack.addWidget(nnd_page)
         # TODO: make each individual child window (for now random suffices)
         for i in range(5):
             if i > 1:
@@ -73,6 +82,12 @@ class MainWindow(QWidget):
                 label.setStyleSheet('background: rgb(%d, %d, %d); margin: 50px;' % (
                     randint(0, 255), randint(0, 255), randint(0, 255)))
                 self.page_stack.addWidget(label)
+
+    def load_data(self):
+        path = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else "C:/Users/goldins/Downloads/example_csv.csv"
+        unit = self.home_page.scalar_type.currentText() if self.home_page.scalar_type.currentText() else 'px'
+        scalar = float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1)
+        self.SCALED_DF = pixels_conversion(csv_path=path, input_unit=unit, csv_scalar=scalar)
 
 
 if __name__ == '__main__':

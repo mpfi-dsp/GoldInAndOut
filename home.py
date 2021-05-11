@@ -1,29 +1,32 @@
-# QT5
-from PyQt5.QtWidgets import (QMainWindow, QLabel, QVBoxLayout, QTextEdit, QAction, QFileDialog, QApplication,
-                             QSpacerItem, QDialog, QRadioButton, QCheckBox, QHBoxLayout, QGraphicsColorizeEffect,
-                             QPushButton, QWidget, QGridLayout, QSizePolicy, QFormLayout, QLineEdit, QColorDialog)
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import (QSize, Qt, QRect, QCoreApplication, QMetaObject)
+# pyQT5
+from PyQt5.QtWidgets import (QLabel, QFileDialog, QSpacerItem, QCheckBox, QHBoxLayout, QPushButton, QWidget,
+                             QSizePolicy, QFormLayout, QLineEdit, QColorDialog, QComboBox)
 # general
 from pathlib import Path
 from functools import partial
-import sys
-# utils
-from utils import pixels_conversion, get_complimentary_color
 from colorthief import ColorThief
+# utils
+from globals import UNIT_OPS
+from utils import get_complimentary_color, pixels_conversion
 
+HEADER = "Gold Cluster Analysis For Freeze Fracture"
+DESC = "Simply upload the appropriate files, check the workflows you'd like to run, and click \"Start\"!"
 
+""" 
+MAIN PAGE 
+________________
+@start: begins running selected workflows and display all subpages
+"""
 class HomePage(QWidget):
     def __init__(self, start):
         super().__init__()
         layout = QFormLayout()
 
         # header
-        self.header = QLabel("Gold Cluster Analysis For Freeze Fracture")
+        self.header = QLabel(HEADER)
         self.header.setStyleSheet("font-size: 24px; font-weight: bold; padding-top: 8px; ")
         layout.addRow(self.header)
-        self.desc = QLabel(
-            "Simply upload the appropriate files, check the workflows you'd like to run, and click \"Start\"!")
+        self.desc = QLabel(DESC)
         self.desc.setStyleSheet("font-size: 17px; font-weight: 400; padding-top: 3px; padding-bottom: 20px;")
         self.desc.setWordWrap(True)
         layout.addRow(self.desc)
@@ -94,17 +97,42 @@ class HomePage(QWidget):
         layout.addRow(self.workflows_header)
 
         # workflows
-        self.annotate_particles_cb = QCheckBox("Macro 1")
+        self.annotate_particles_cb = QCheckBox("Workflow 1")
 
-        self.knn_cb = QCheckBox("N Nearest Neighbors")
-        self.knn_cb.setChecked(True)
+        self.nnd_cb = QCheckBox("Nearest Neighbor Distance")
+        self.nnd_cb.setChecked(True)
+        # TODO: enable other workflows
+        self.calc_dens_cb = QCheckBox("Workflow 3")
 
-        self.calc_dens_cb = QCheckBox("Macro 3")
+        self.output_files_cb = QCheckBox("Workflow 4")
 
-        self.output_files_cb = QCheckBox("Macro 4")
-
-        layout.addRow(self.annotate_particles_cb, self.knn_cb)
+        layout.addRow(self.annotate_particles_cb, self.nnd_cb)
         layout.addRow(self.calc_dens_cb, self.output_files_cb)
+
+        layout.addItem(spacer)
+
+        # props header
+        self.props_header = QLabel("Global Parameters")
+        layout.addRow(self.props_header)
+
+
+        self.scalr_lb = QLabel("Input CSV Unit")
+        self.scalr_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
+        self.scalar_type = QComboBox()
+        self.scalar_type.addItems(UNIT_OPS)
+        self.csvs_lb = QLabel("CSV Scalar")
+        self.csvs_lb.setStyleSheet("font-size: 17px; font-weight: 400; margin-left: 5px;")
+        self.csvs_ip = QLineEdit()
+        self.csvs_ip.setStyleSheet(
+            "font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 75px;")
+        self.csvs_ip.setPlaceholderText("1")
+        glob_props = QHBoxLayout()
+        glob_props.addWidget(self.scalr_lb)
+        glob_props.addWidget(self.scalar_type)
+        glob_props.addWidget(self.csvs_lb)
+        glob_props.addWidget(self.csvs_ip)
+        layout.addRow(glob_props)
+
         layout.addItem(spacer)
 
         # start btn
