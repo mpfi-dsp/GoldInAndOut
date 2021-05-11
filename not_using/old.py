@@ -66,19 +66,19 @@ class PipeLineGUI(QWidget):
             if btn_type == "img":
                 self.open_file(filename)
                 self.img_btn.setText("IMG: " + filename)
-                self.img_btn.setStyleSheet("font-size: 20px; background: #ddd; border-radius: 7px; color: teal;")
+                self.img_btn.setStyleSheet("font-size: 20px; background: #ddd; border-radius: 7px; color: #007267;")
             elif btn_type == "mask":
                 self.open_file(file)
                 self.mask_btn.setText("MASK: " + filename)
-                self.mask_btn.setStyleSheet("font-size: 20px; background: #ddd; border-radius: 7px; color: teal;")
+                self.mask_btn.setStyleSheet("font-size: 20px; background: #ddd; border-radius: 7px; color: #007267;")
             elif btn_type == "csv":
                 self.open_file(file)
                 self.csv_btn.setText("CSV: " + filename)
-                self.csv_btn.setStyleSheet("font-size: 20px; background: #ddd; border-radius: 7px; color: teal;")
+                self.csv_btn.setStyleSheet("font-size: 20px; background: #ddd; border-radius: 7px; color: #007267;")
             elif btn_type == "csv2":
                 self.open_file(file)
                 self.csv2_btn.setText("CSV2: " + filename)
-                self.csv2_btn.setStyleSheet("font-size: 20px; background: #ddd; border-radius: 7px; color: teal;")
+                self.csv2_btn.setStyleSheet("font-size: 20px; background: #ddd; border-radius: 7px; color: #007267;")
 
 
     # open actual file

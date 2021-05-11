@@ -110,7 +110,7 @@ class HomePage(QWidget):
         # start btn
         self.start_btn = QPushButton('Start', self)
         self.start_btn.setStyleSheet(
-            "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; background: #ff8943; color: white; border-radius: 7px; ")
+            "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; background: #E89C12; color: white; border-radius: 7px; ")
         self.start_btn.clicked.connect(start)
         layout.addRow(self.start_btn)
 

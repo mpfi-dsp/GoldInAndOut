@@ -13,12 +13,12 @@ from image_viewer import QImageViewer
 from nnd import run_nnd, draw_length
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
-from utils import Progress, create_color_pal
+from utils import Progress, create_color_pal, download_csv
 import seaborn as sns
 
 class MacroPage(QWidget):
-    def __init__(self, header_name="Undefined", desc="Undefined", img_dropdown=None, mask_dropdown=None, csv_dropdown=None,
-                 parameters=None):
+    def __init__(self, macro=None, header_name="Undefined", desc="Undefined", img_dropdown=None, mask_dropdown=None, csv_dropdown=None,
+                 props=None):
         super().__init__()
         if img_dropdown is None:
             img_dropdown = []
@@ -66,7 +66,6 @@ class MacroPage(QWidget):
         layout.addRow(self.workflows_header)
 
         # props
-        # knn specific props
         self.csvs_lb = QLabel("CSV Scalar")
         self.csvs_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.csvs_ip = QLineEdit()
@@ -128,11 +127,11 @@ class MacroPage(QWidget):
 
         # run & download btns
         self.run_btn = QPushButton('Run Again', self)
-        self.run_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #ff8943; color: white; border-radius: 7px; ")
+        self.run_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #E89C12; color: white; border-radius: 7px; ")
         self.run_btn.clicked.connect(self.run)
         self.download_btn = QPushButton('Download', self)
         self.download_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #ccc; color: white; border-radius: 7px; ")
-        self.download_btn.clicked.connect(partial(self.download, "nnd_output.csv"))
+        self.download_btn.clicked.connect(partial(download_csv, self.OUTPUT_DF, "nnd_output.csv"))
         btn_r = QHBoxLayout()
         btn_r.addWidget(self.run_btn)
         btn_r.addWidget(self.download_btn)
@@ -158,22 +157,11 @@ class MacroPage(QWidget):
                                          csv_scalar=(self.csvs_ip.text() if len(self.csvs_ip.text()) > 0 else 1),
                                          gen_rand=self.gen_rand_cb.isChecked())
             self.progress.setValue(100)
-            # get drawn img
-            # drawn_img = draw_length(nnd_df=self.OUTPUT_DF, palette=self.palette, img=cv2.imread(self.img_drop.currentText()))
-            # self.show_image(drawn_img)
-            self.create_visuals(n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'))
 
-            print(self.OUTPUT_DF.head())
-            self.download_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: teal; color: white; border-radius: 7px; ")
+            self.create_visuals(n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'))
+            self.download_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
         except Exception as e:
             print(e)
-
-    def download(self, file_name):
-        if self.OUTPUT_DF.shape[0] > 0 and self.OUTPUT_DF.shape[1] > 0:
-            try:
-                self.OUTPUT_DF.to_csv(file_name, index=False, header=True)
-            except Exception as e:
-                print(e)
 
     def create_visuals(self, n_bins='fd', palette_type="rocket_r"):
         cm = sns.color_palette(palette_type, as_cmap=True)

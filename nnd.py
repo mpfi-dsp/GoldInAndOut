@@ -4,7 +4,18 @@ import random
 import pandas as pd
 import math
 
-def run_nnd(prog_wrapper, img_path, csv_path, pface_path="", csv_scalar=1, gen_rand=False):
+
+""" 
+N NEAREST DISTANCE RUN FUNCTION
+_______________________________
+@prog_wrapper: progress bar wrapper element, allows us to track how much time is left in process
+@csv_path: path to csv we are finding the n nearest distance of
+@gen_rand: generate random coordinates
+@img_path: path to image we are finding the n nearest distance of (only needed if gen_rand is True)
+@pface_path: path to mask we are finding the n nearest distance of (only needed if gen_rand is True)
+@csv_scalar: optional scalar prop to multiply all csv coordinate values by
+"""
+def run_nnd(prog_wrapper, csv_path, gen_rand=False, img_path="", pface_path="", csv_scalar=1):
     # Generate Faux Gold Particles within the P-face
     def generate_random_points(boundary, quantity, mask):
         coordinates = []
@@ -15,18 +26,18 @@ def run_nnd(prog_wrapper, img_path, csv_path, pface_path="", csv_scalar=1, gen_r
             if mask[x, y] != 0:
                 coordinates.append((x, y))
                 count += 1
-        print(f"The total number of particles inside the pface are {count}.")
+        print(f"The total number of particles inside the p-face are {count}.")
         return coordinates
 
+    """ FIND DIST TO CLOSEST PARTICLE """
     def distance_to_closest_particle(coord_list):
         nndlist = []
         coord_list_len = len(coord_list)
-        # for progress bar
-
         for i in range(coord_list_len - 1):
+            # update progress bar
             prog_wrapper.update_progress(i)
             small_dist = 10000000000000000000
-            # og coord (x, y), closest coord (x, y), distance
+            # templist = [og coord (x, y), closest coord (x, y), distance]
             templist = [0, 0, 0]
             particle_i = coord_list[i]
             particle_if = (particle_i[1], particle_i[0])
@@ -45,7 +56,8 @@ def run_nnd(prog_wrapper, img_path, csv_path, pface_path="", csv_scalar=1, gen_r
 
         return nndlist
 
-    def nnd(coordinate_list, pface_mask=[]):
+    """ N NEAREST DISTANCE """
+    def nnd(coordinate_list, pface_mask=None):
         print("running nnd")
         real_nndlist = distance_to_closest_particle(coordinate_list)
         d = {'Nearest Neighbor Distance': real_nndlist}
@@ -62,10 +74,6 @@ def run_nnd(prog_wrapper, img_path, csv_path, pface_path="", csv_scalar=1, gen_r
             [x for x in real_df['Nearest Neighbor Distance'].tolist()])
         return clean_df
 
-    # Import Images
-    img_original = cv2.imread(img_path)
-    crop = img_original.shape
-
     # Import CSV Coordinates
     data = pd.read_csv(csv_path, sep=",", header=None)
     x_coordinates = np.array(data[1][1:])
@@ -77,17 +85,21 @@ def run_nnd(prog_wrapper, img_path, csv_path, pface_path="", csv_scalar=1, gen_r
         y = round(float(y_coordinates[i]) * int(csv_scalar))
         real_coordinates.append((y, x))
 
-    if gen_rand and len(pface_path) > 0:
+    # if generate_random prop enabled, create random coordinates and return results, else return real coordinates
+    if gen_rand and len(img_path) > 0 and len(pface_path) > 0:
+        # import images
+        img_original = cv2.imread(img_path)
+        crop = img_original.shape
         img_pface = cv2.imread(pface_path)
         img_pface = img_pface[:crop[0], :crop[1], :3]
-        # Grab Contours of P-face
+        # grab contours of pface
         lower_bound = np.array([239, 174, 0])
         upper_bound = np.array([254, 254, 254])
         pface_mask = cv2.inRange(img_pface, lower_bound, upper_bound)
         pface_cnts, pface_hierarchy = cv2.findContours(pface_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
         drawn_pface_mask = img_pface.copy()
         drawn_pface_mask = cv2.drawContours(drawn_pface_mask, pface_cnts, -1, (0, 255, 0), 5)
-
+        # TODO: determine if nnd() should be called with pface_mask or drawn_pface_mask
         pface_area = 0
         for cnt in pface_cnts:
             area = cv2.contourArea(cnt)
@@ -97,7 +109,8 @@ def run_nnd(prog_wrapper, img_path, csv_path, pface_path="", csv_scalar=1, gen_r
         return nnd(real_coordinates)
 
 
-def draw_length(nnd_df, bin_counts, img, palette):
+""" DRAW LINES TO ANNOTATE N NEAREST DIST ON IMAGE """
+def draw_length(nnd_df, bin_counts, img, palette, save_img=True):
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
@@ -110,10 +123,11 @@ def draw_length(nnd_df, bin_counts, img, palette):
 
         if count >= bin_counts[bin_idx]:
             bin_idx += 1
-            count=0
+            count = 0
         img = cv2.circle(img, particle_1, 10, (0, 0, 255), -1)
         img = cv2.line(img, particle_1, particle_2, sea_to_rgb(palette[bin_idx]), 5)
 
-    # to save image:
-    cv2.imwrite('drawn_nnd_img.jpg', img)
+    # save image
+    if save_img:
+        cv2.imwrite('./output/drawn_nnd_img.jpg', img)
     return img
