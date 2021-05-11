@@ -193,6 +193,7 @@ class WorkflowPage(QWidget):
                                      img_path=self.img_drop.currentText(),
                                      # csv_path=self.csv_drop.currentText(),
                                      pface_path=self.mask_drop.currentText(),
+                                     n_rand_to_gen=self.n_coord_ip.text()
                                     )
             # print("real", self.REAL_COORDS, "rand", self.RAND_COORDS)
             self.progress.setValue(100)
