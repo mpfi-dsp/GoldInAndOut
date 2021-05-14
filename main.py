@@ -69,9 +69,9 @@ class MainWindow(QWidget):
                 item.setTextAlignment(Qt.AlignCenter)
 
         # TODO: remove when no longer using for testing
-        img_drop = self.home_page.img_le.text() if len(self.home_page.img_le.text()) > 0 else ["C:/Users/goldins/Downloads/example_image.tif"]
-        mask_drop = self.home_page.mask_le.text() if len(self.home_page.mask_le.text()) > 0 else ["C:/Users/goldins/Downloads/example_mask.tif"]
-        csv_drop = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else ["C:/Users/goldins/Downloads/example_csv.csv"]
+        img_drop = self.home_page.img_le.text() if len(self.home_page.img_le.text()) > 0 else ["./input/example_image.tif"]
+        mask_drop = self.home_page.mask_le.text() if len(self.home_page.mask_le.text()) > 0 else ["./input/example_mask.tif"]
+        csv_drop = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else ["./input/example_csv.csv"]
         nnd_page = WorkflowPage(scaled_df=self.SCALED_DF, header_name="Nearest Neighbor Distance", desc="Find the nearest neighbor distance between gold particles. Optionally generate random coordinates.", img_dropdown=img_drop, csv_scalar=float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1),  mask_dropdown=mask_drop, csv_dropdown=csv_drop, input_unit=self.home_page.scalar_type.currentText() if self.home_page.scalar_type.currentText() else 'px', props=["rand_particles"])
         self.page_stack.addWidget(nnd_page)
         # TODO: make each individual child window (for now random suffices)
@@ -84,7 +84,7 @@ class MainWindow(QWidget):
                 self.page_stack.addWidget(label)
 
     def load_data(self):
-        path = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else "C:/Users/goldins/Downloads/example_csv.csv"
+        path = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else "./input/example_csv.csv"
         unit = self.home_page.scalar_type.currentText() if self.home_page.scalar_type.currentText() else 'px'
         scalar = float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1)
         self.SCALED_DF = pixels_conversion(csv_path=path, input_unit=unit, csv_scalar=scalar)
