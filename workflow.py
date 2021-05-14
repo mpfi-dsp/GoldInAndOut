@@ -54,13 +54,14 @@ class WorkflowPage(QWidget):
         self.csv_drop.addItems(csv_dropdown)
         layout.addRow(self.csv_lb, self.csv_drop)
         # hist specific props
-        self.bars_lb = QLabel("# Bins in Histogram")
+        self.bars_lb = QLabel('<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.hist.html"># Bins in Histogram</a>')
+        self.bars_lb.setOpenExternalLinks(True)
         self.bars_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.bars_ip = QLineEdit()
         self.bars_ip.setStyleSheet(
             "font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 75px;")
         self.bars_ip.setPlaceholderText("10")
-        self.pal_lb = QLabel("Histogram Color Palette")
+        self.pal_lb = QLabel('<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">Color Palette</a>')
         self.pal_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.pal_type = QComboBox()
         self.pal_type.addItems(PALETTE_OPS)
@@ -86,6 +87,13 @@ class WorkflowPage(QWidget):
         self.mask_drop.addItems(mask_dropdown)
         layout.addRow(self.mask_lb, self.mask_drop)
 
+        self.r_pal_lb = QLabel('<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">Rand Coords Color Palette</a>')
+        self.r_pal_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
+        self.r_pal_type = QComboBox()
+        self.r_pal_type.addItems(PALETTE_OPS)
+        self.r_pal_type.setCurrentText('crest')
+        layout.addRow(self.r_pal_lb, self.r_pal_type)
+
         self.n_coord_lb = QLabel("# Random Coordinates To Generate")
         self.n_coord_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.n_coord_ip = QLineEdit()
@@ -97,6 +105,8 @@ class WorkflowPage(QWidget):
         self.n_coord_ip.setHidden(True)
         self.img_drop.setHidden(True)
         self.img_lb.setHidden(True)
+        self.r_pal_lb.setHidden(True)
+        self.r_pal_type.setHidden(True)
         self.mask_lb.setHidden(True)
         self.mask_drop.setHidden(True)
 
@@ -180,6 +190,9 @@ class WorkflowPage(QWidget):
         self.mask_drop.setVisible(not self.mask_drop.isVisible())
         self.n_coord_ip.setVisible(not self.n_coord_ip.isVisible())
         self.n_coord_lb.setVisible(not self.n_coord_lb.isVisible())
+        self.r_pal_type.setVisible(not self.r_pal_type.isVisible())
+        self.r_pal_lb.setVisible(not self.r_pal_lb.isVisible())
+
 
     def run(self, scaled_df, scalar, input_unit):
         try:
@@ -207,6 +220,7 @@ class WorkflowPage(QWidget):
 
     def create_visuals(self, n_bins='fd', input_unit='px', scalar=1):
         cm = sns.color_palette(self.pal_type.currentText(), as_cmap=True)
+        r_cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
         fig = plt.figure()
         canvas = FigureCanvas(fig)
         ax = fig.add_subplot(111)
@@ -223,6 +237,7 @@ class WorkflowPage(QWidget):
 
         # generate palette
         palette = create_color_pal(n_bins=int(len(n)), palette_type=self.pal_type.currentText())
+        r_palette = create_color_pal(n_bins=int(len(n)), palette_type=self.r_pal_type.currentText())
 
         # normalize values
         col = (n - n.min()) / (n.max() - n.min())
@@ -242,12 +257,12 @@ class WorkflowPage(QWidget):
         # real coords
         if self.gen_real_cb.isChecked():
             drawn_img = draw_length(nnd_df=self.REAL_COORDS, bin_counts=n, palette=palette, input_unit=input_unit,
-                                    scalar=scalar, img=drawn_img)
+                                    scalar=scalar, img=drawn_img, circle_c=(103, 114, 0))
 
         # random
         if self.gen_rand_cb.isChecked():
-            drawn_img = draw_length(nnd_df=self.RAND_COORDS, bin_counts=n, palette=palette, input_unit=input_unit,
-                                    scalar=scalar, img=drawn_img)
+            drawn_img = draw_length(nnd_df=self.RAND_COORDS, bin_counts=n, palette=r_palette, input_unit=input_unit,
+                                    scalar=scalar, img=drawn_img, circle_c=(18, 156, 232))
 
         self.display_img = QImage(drawn_img.data, drawn_img.shape[1], drawn_img.shape[0],
                                   QImage.Format_RGB888).rgbSwapped()

@@ -118,7 +118,7 @@ def run_nnd(data, prog_wrapper, gen_real=True, gen_rand=False, img_path="", pfac
 
 
 """ DRAW LINES TO ANNOTATE N NEAREST DIST ON IMAGE """
-def draw_length(nnd_df, bin_counts, img, palette, input_unit='px', scalar=1,  save_img=True):
+def draw_length(nnd_df, bin_counts, img, palette, input_unit='px', scalar=1,  save_img=True, circle_c=(0, 0, 255)):
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
@@ -142,7 +142,7 @@ def draw_length(nnd_df, bin_counts, img, palette, input_unit='px', scalar=1,  sa
         if count >= bin_counts[bin_idx]:
             bin_idx += 1
             count = 0
-        img = cv2.circle(img, particle_1, 10, (0, 0, 255), -1)
+        img = cv2.circle(img, particle_1, 10, circle_c, -1)
         img = cv2.line(img, particle_1, particle_2, sea_to_rgb(palette[bin_idx]), 5)
 
     # save image

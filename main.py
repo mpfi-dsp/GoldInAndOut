@@ -72,16 +72,26 @@ class MainWindow(QWidget):
         img_drop = self.home_page.img_le.text() if len(self.home_page.img_le.text()) > 0 else ["./input/example_image.tif"]
         mask_drop = self.home_page.mask_le.text() if len(self.home_page.mask_le.text()) > 0 else ["./input/example_mask.tif"]
         csv_drop = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else ["./input/example_csv.csv"]
-        nnd_page = WorkflowPage(scaled_df=self.SCALED_DF, header_name="Nearest Neighbor Distance", desc="Find the nearest neighbor distance between gold particles. Optionally generate random coordinates.", img_dropdown=img_drop, csv_scalar=float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1),  mask_dropdown=mask_drop, csv_dropdown=csv_drop, input_unit=self.home_page.scalar_type.currentText() if self.home_page.scalar_type.currentText() else 'px', props=["rand_particles"])
-        self.page_stack.addWidget(nnd_page)
+
         # TODO: make each individual child window (for now random suffices)
         for i in range(5):
+            self.on_progress_update(i * 20)
+            if i == 1:
+                nnd_page = WorkflowPage(scaled_df=self.SCALED_DF, header_name="Nearest Neighbor Distance",
+                                        desc="Find the nearest neighbor distance between gold particles. Optionally generate random coordinates.",
+                                        img_dropdown=img_drop, csv_scalar=float(
+                        self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1),
+                                        mask_dropdown=mask_drop, csv_dropdown=csv_drop,
+                                        input_unit=self.home_page.scalar_type.currentText() if self.home_page.scalar_type.currentText() else 'px',
+                                        props=["rand_particles"])
+                self.page_stack.addWidget(nnd_page)
             if i > 1:
                 label = QLabel(f'{PAGE_NAMES[i]}Page', self)
                 label.setAlignment(Qt.AlignCenter)
                 label.setStyleSheet('background: rgb(%d, %d, %d); margin: 50px;' % (
                     randint(0, 255), randint(0, 255), randint(0, 255)))
                 self.page_stack.addWidget(label)
+        self.on_progress_update(100)
 
     def load_data(self):
         path = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else "./input/example_csv.csv"
@@ -89,6 +99,8 @@ class MainWindow(QWidget):
         scalar = float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1)
         self.SCALED_DF = pixels_conversion(csv_path=path, input_unit=unit, csv_scalar=scalar)
 
+    def on_progress_update(self, value):
+        self.home_page.progress.setValue(value)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

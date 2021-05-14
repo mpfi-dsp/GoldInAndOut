@@ -1,6 +1,6 @@
 # pyQT5
 from PyQt5.QtWidgets import (QLabel, QFileDialog, QSpacerItem, QCheckBox, QHBoxLayout, QPushButton, QWidget,
-                             QSizePolicy, QFormLayout, QLineEdit, QColorDialog, QComboBox)
+                             QSizePolicy, QFormLayout, QLineEdit, QColorDialog, QComboBox, QProgressBar)
 # general
 from pathlib import Path
 from functools import partial
@@ -135,6 +135,11 @@ class HomePage(QWidget):
 
         layout.addItem(spacer)
 
+        self.progress = QProgressBar(self)
+        self.progress.setGeometry(0, 0, 300, 25)
+        self.progress.setMaximum(100)
+        layout.addRow(self.progress)
+
         # start btn
         self.start_btn = QPushButton('Start', self)
         self.start_btn.setStyleSheet(
@@ -151,7 +156,6 @@ class HomePage(QWidget):
         file = QFileDialog.getOpenFileName(self, 'Open file', root_dir)
         filename = file[0]
         if (len(filename)) > 0:
-            self.open_file(filename)
             if btn_type == "img":
                 self.img_le.setText(filename)
             elif btn_type == "mask":
@@ -172,10 +176,6 @@ class HomePage(QWidget):
                 self.csv_le.setText(filename)
             elif btn_type == "csv2":
                 self.csv2_le.setText(filename)
-
-    # open actual file
-    def open_file(self, file):
-        print(file)
 
     def set_mask_clr(self):
         color = QColorDialog.getColor().name(0)
