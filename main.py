@@ -84,7 +84,7 @@ class MainWindow(QWidget):
                                         img_dropdown=img_drop, csv_scalar=float(
                         self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1),
                                         mask_dropdown=mask_drop, csv_dropdown=csv_drop,
-                                        input_unit=self.home_page.scalar_type.currentText() if self.home_page.scalar_type.currentText() else 'px',
+                                        input_unit=self.home_page.ip_scalar_type.currentText() if self.home_page.ip_scalar_type.currentText() else 'px',
                                         props=["rand_particles"])
                 self.page_stack.addWidget(nnd_page)
             # elif i > 1:
@@ -97,7 +97,7 @@ class MainWindow(QWidget):
 
     def load_data(self):
         path = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else "./input/example_csv.csv"
-        unit = self.home_page.scalar_type.currentText() if self.home_page.scalar_type.currentText() else 'px'
+        unit = self.home_page.ip_scalar_type.currentText() if self.home_page.ip_scalar_type.currentText() else 'px'
         scalar = float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1)
         self.SCALED_DF = pixels_conversion(csv_path=path, input_unit=unit, csv_scalar=scalar)
 

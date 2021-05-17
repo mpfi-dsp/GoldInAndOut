@@ -42,10 +42,7 @@ class HomePage(QWidget):
         self.img_le = QLineEdit()
         self.img_le.setPlaceholderText("None Selected")
         # add img row
-        img_r = QHBoxLayout()
-        img_r.addWidget(self.img_btn)
-        img_r.addWidget(self.img_le)
-        layout.addRow(img_r)
+        layout.addRow(self.img_btn, self.img_le)
 
         # mask btn
         self.mask_btn = QPushButton('Upload Mask', self)
@@ -53,16 +50,12 @@ class HomePage(QWidget):
         # mask input
         self.mask_le = QLineEdit()
         self.mask_le.setPlaceholderText("None Selected")
-        # mask color btn
-        self.clr_btn = QPushButton('Mask Color', self)
-        self.clr_btn.setStyleSheet("background: black;")
-        self.clr_btn.clicked.connect(self.set_mask_clr)
+        # TODO: mask color btn
+        # self.clr_btn = QPushButton('Mask Color', self)
+        # self.clr_btn.setStyleSheet("background: black;")
+        # self.clr_btn.clicked.connect(self.set_mask_clr)
         # add mask row
-        mask_r = QHBoxLayout()
-        mask_r.addWidget(self.mask_btn)
-        mask_r.addWidget(self.mask_le)
-        mask_r.addWidget(self.clr_btn)
-        layout.addRow(mask_r)
+        layout.addRow(self.mask_btn, self.mask_le)
 
         # csv btn
         self.csv_btn = QPushButton('Upload CSV', self)
@@ -71,11 +64,7 @@ class HomePage(QWidget):
         self.csv_le = QLineEdit()
         self.csv_le.setPlaceholderText("None Selected")
         # add csv row
-        csv_r = QHBoxLayout()
-        csv_r.addWidget(self.csv_btn)
-        csv_r.addWidget(self.csv_le)
-        layout.addRow(csv_r)
-        # layout.addRow(self.csv_btn, self.csv_le)
+        layout.addRow(self.csv_btn, self.csv_le)
 
         # csv2 btn
         self.csv2_btn = QPushButton('Upload CSV2', self)
@@ -84,10 +73,7 @@ class HomePage(QWidget):
         self.csv2_le = QLineEdit()
         self.csv2_le.setPlaceholderText("None Selected")
         # add csv2 row
-        csv2_r = QHBoxLayout()
-        csv2_r.addWidget(self.csv2_btn)
-        csv2_r.addWidget(self.csv2_le)
-        layout.addRow(csv2_r)
+        layout.addRow(self.csv2_btn, self.csv2_le)
 
         spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         layout.addItem(spacer)
@@ -116,19 +102,25 @@ class HomePage(QWidget):
         layout.addRow(self.props_header)
 
 
-        self.scalr_lb = QLabel("Input CSV Unit")
-        self.scalr_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
-        self.scalar_type = QComboBox()
-        self.scalar_type.addItems(UNIT_OPS)
-        self.csvs_lb = QLabel("CSV Scalar")
+        self.ip_scalr_lb = QLabel("Input Unit")
+        self.ip_scalr_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
+        self.ip_scalar_type = QComboBox()
+        self.ip_scalar_type.addItems(UNIT_OPS)
+        self.op_scalr_lb = QLabel("Output Unit")
+        self.op_scalr_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
+        self.op_scalar_type = QComboBox()
+        self.op_scalar_type.addItems(UNIT_OPS)
+        self.csvs_lb = QLabel("Scalar")
         self.csvs_lb.setStyleSheet("font-size: 17px; font-weight: 400; margin-left: 5px;")
         self.csvs_ip = QLineEdit()
         self.csvs_ip.setStyleSheet(
             "font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 75px;")
         self.csvs_ip.setPlaceholderText("1")
         glob_props = QHBoxLayout()
-        glob_props.addWidget(self.scalr_lb)
-        glob_props.addWidget(self.scalar_type)
+        glob_props.addWidget(self.ip_scalr_lb)
+        glob_props.addWidget(self.ip_scalar_type)
+        glob_props.addWidget(self.op_scalr_lb)
+        glob_props.addWidget(self.op_scalar_type)
         glob_props.addWidget(self.csvs_lb)
         glob_props.addWidget(self.csvs_ip)
         layout.addRow(glob_props)
