@@ -66,6 +66,7 @@ def pixels_conversion(csv_path, input_unit='px', csv_scalar=1, round=3):
         data['X'] = (data['X'] * csv_scalar).round(round)
         data['Y'] = (data['Y'] * csv_scalar).round(round)
 
+    print(data.head())
     return data
     # x_coordinates = np.array(data[1][1:])
     # y_coordinates = np.array(data[2][1:])

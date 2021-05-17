@@ -85,6 +85,7 @@ class MainWindow(QWidget):
                         self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1),
                                         mask_dropdown=mask_drop, csv_dropdown=csv_drop,
                                         input_unit=self.home_page.ip_scalar_type.currentText() if self.home_page.ip_scalar_type.currentText() else 'px',
+                                        output_unit=self.home_page.op_scalar_type.currentText() if self.home_page.op_scalar_type.currentText() else 'px',
                                         props=["rand_particles"])
                 self.page_stack.addWidget(nnd_page)
             # elif i > 1:
@@ -108,7 +109,6 @@ class MainWindow(QWidget):
         # for item in self.nav_list.selectedItems():
         #     self.nav_list.takeItem(self.nav_list.row(item))
         # self.nav_list.clear()
-        print(self.page_stack.count())
         for i in range(self.page_stack.count()):
             if i > 0:
                 self.nav_list.takeItem(i)

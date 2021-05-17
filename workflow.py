@@ -27,7 +27,7 @@ __________________
 
 class WorkflowPage(QWidget):
     def __init__(self, scaled_df, workflow=None, csv_scalar=1, header_name="Undefined", desc="Undefined", img_dropdown=None,
-                 mask_dropdown=None, csv_dropdown=None, input_unit='px', scalar=1,
+                 mask_dropdown=None, csv_dropdown=None, input_unit='px', output_unit='px', scalar=1,
                  props=None):
         super().__init__()
         if img_dropdown is None:
@@ -116,7 +116,7 @@ class WorkflowPage(QWidget):
         self.out_header = QLabel("Output")
         layout.addRow(self.out_header)
 
-        self.out_desc = QLabel("Double-click on an image to open it.")
+        self.out_desc = QLabel("Check boxes to toggle output options. Double-click on an image to open it.")
         self.out_desc.setStyleSheet("font-size: 17px; font-weight: 400; padding-top: 3px; padding-bottom: 20px;")
         self.out_desc.setWordWrap(True)
         layout.addRow(self.out_desc)
@@ -180,7 +180,7 @@ class WorkflowPage(QWidget):
         self.setLayout(layout)
 
         # run on init
-        self.run(scaled_df=scaled_df, scalar=scalar, input_unit=input_unit)
+        self.run(scaled_df=scaled_df, scalar=scalar, output_unit=output_unit,input_unit=input_unit)
 
     def on_progress_update(self, value):
         self.progress.setValue(value)
@@ -196,7 +196,7 @@ class WorkflowPage(QWidget):
         self.r_pal_lb.setVisible(not self.r_pal_lb.isVisible())
 
 
-    def run(self, scaled_df, scalar, input_unit):
+    def run(self, scaled_df, scalar, output_unit, input_unit):
         try:
             prog_wrapper = Progress()
             prog_wrapper.prog.connect(self.on_progress_update)
@@ -212,15 +212,15 @@ class WorkflowPage(QWidget):
                                     )
             # print("real", self.REAL_COORDS, "rand", self.RAND_COORDS)
             self.progress.setValue(100)
-            print(self.RAND_COORDS.head())
+            # print(self.RAND_COORDS.head())
 
-            self.create_visuals(n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), scalar=scalar, input_unit=input_unit)
+            self.create_visuals(n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), scalar=scalar, input_unit=input_unit, output_unit=output_unit)
             self.download_btn.setStyleSheet(
                 "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
         except Exception as e:
             print(e)
 
-    def create_visuals(self, n_bins='fd', input_unit='px', scalar=1):
+    def create_visuals(self, n_bins='fd', input_unit='px', output_unit='px', scalar=1):
         cm = sns.color_palette(self.pal_type.currentText(), as_cmap=True)
         r_cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
         fig = plt.figure()
@@ -233,7 +233,7 @@ class WorkflowPage(QWidget):
 
         # create hist
         n, bins, patches = ax.hist(self.REAL_COORDS['dist'], bins=n_bins, color='green')
-        ax.set_xlabel(f'Nearest Neighbor Distance ({input_unit})')
+        ax.set_xlabel(f'Nearest Neighbor Distance ({output_unit})')
         ax.set_ylabel("Number of Entries")
         ax.set_title('Distances Between Nearest Neighbors')
 
@@ -242,7 +242,8 @@ class WorkflowPage(QWidget):
         r_palette = create_color_pal(n_bins=int(len(n)), palette_type=self.r_pal_type.currentText())
 
         # normalize values
-        # col = (n - n.min()) / (n.max() - n.min())
+        col = (n - n.min()) / (n.max() - n.min())
+        print(n, col)
         for c, p in zip(n, patches):
             p.set_facecolor(cm(c))
 
