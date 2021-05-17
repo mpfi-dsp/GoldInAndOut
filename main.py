@@ -1,6 +1,7 @@
 # views
 import pandas as pd
 
+from globals import PAGE_NAMES
 from home import HomePage
 from typings import Unit
 from utils import pixels_conversion
@@ -16,7 +17,6 @@ from random import randint
 import sys
 
 
-PAGE_NAMES = ["Main", "NND", "Foo", "Bar", "Baz", "Bop"]
 CSV_SCALAR = 1
 
 """ PARENT WINDOW INITIALIZATION """
@@ -35,7 +35,7 @@ class MainWindow(QWidget):
         self.page_stack = QStackedWidget(self)
         layout.addWidget(self.page_stack)
         # add main page
-        self.home_page = HomePage(start=self.init_macros)
+        self.home_page = HomePage(start=self.init_workflows)
         # init ui
         self.init_ui()
 
@@ -58,10 +58,12 @@ class MainWindow(QWidget):
         self.nav_list.item(0).setSelected(True)
 
     """ INITIALIZE CHILD WORKFLOW WINDOWS """
-    def init_macros(self):
+    def init_workflows(self):
+        self.home_page.start_btn.setText("Run Again")
+        self.empty_stack()
         self.load_data()
         # add page tabs
-        for i in range(5):
+        for i in range(len(PAGE_NAMES)):
             if i > 0:
                 item = QListWidgetItem(
                     QIcon('foo.jpg'), str(PAGE_NAMES[i]), self.nav_list)
@@ -74,7 +76,7 @@ class MainWindow(QWidget):
         csv_drop = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else ["./input/example_csv.csv"]
 
         # TODO: make each individual child window (for now random suffices)
-        for i in range(5):
+        for i in range(len(PAGE_NAMES)):
             self.on_progress_update(i * 20)
             if i == 1:
                 nnd_page = WorkflowPage(scaled_df=self.SCALED_DF, header_name="Nearest Neighbor Distance",
@@ -85,12 +87,12 @@ class MainWindow(QWidget):
                                         input_unit=self.home_page.scalar_type.currentText() if self.home_page.scalar_type.currentText() else 'px',
                                         props=["rand_particles"])
                 self.page_stack.addWidget(nnd_page)
-            if i > 1:
-                label = QLabel(f'{PAGE_NAMES[i]}Page', self)
-                label.setAlignment(Qt.AlignCenter)
-                label.setStyleSheet('background: rgb(%d, %d, %d); margin: 50px;' % (
-                    randint(0, 255), randint(0, 255), randint(0, 255)))
-                self.page_stack.addWidget(label)
+            # elif i > 1:
+            #     label = QLabel(f'{PAGE_NAMES[i]}Page', self)
+            #     label.setAlignment(Qt.AlignCenter)
+            #     label.setStyleSheet('background: rgb(%d, %d, %d); margin: 50px;' % (
+            #         randint(0, 255), randint(0, 255), randint(0, 255)))
+            #     self.page_stack.addWidget(label)
         self.on_progress_update(100)
 
     def load_data(self):
@@ -101,6 +103,17 @@ class MainWindow(QWidget):
 
     def on_progress_update(self, value):
         self.home_page.progress.setValue(value)
+
+    def empty_stack(self):
+        # for item in self.nav_list.selectedItems():
+        #     self.nav_list.takeItem(self.nav_list.row(item))
+        # self.nav_list.clear()
+        print(self.page_stack.count())
+        for i in range(self.page_stack.count()):
+            if i > 0:
+                self.nav_list.takeItem(i)
+                self.page_stack.removeWidget(self.page_stack.widget(i))
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

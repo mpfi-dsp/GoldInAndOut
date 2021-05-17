@@ -62,6 +62,7 @@ class WorkflowPage(QWidget):
             "font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 75px;")
         self.bars_ip.setPlaceholderText("10")
         self.pal_lb = QLabel('<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">Color Palette</a>')
+        self.pal_lb.setOpenExternalLinks(True)
         self.pal_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.pal_type = QComboBox()
         self.pal_type.addItems(PALETTE_OPS)
@@ -89,6 +90,7 @@ class WorkflowPage(QWidget):
 
         self.r_pal_lb = QLabel('<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">Rand Coords Color Palette</a>')
         self.r_pal_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
+        self.r_pal_lb.setOpenExternalLinks(True)
         self.r_pal_type = QComboBox()
         self.r_pal_type.addItems(PALETTE_OPS)
         self.r_pal_type.setCurrentText('crest')
@@ -240,8 +242,8 @@ class WorkflowPage(QWidget):
         r_palette = create_color_pal(n_bins=int(len(n)), palette_type=self.r_pal_type.currentText())
 
         # normalize values
-        col = (n - n.min()) / (n.max() - n.min())
-        for c, p in zip(col, patches):
+        # col = (n - n.min()) / (n.max() - n.min())
+        for c, p in zip(n, patches):
             p.set_facecolor(cm(c))
 
         canvas.draw()
