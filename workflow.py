@@ -23,8 +23,6 @@ __________________
 @workflow: selected workflow
 
 """
-
-
 class WorkflowPage(QWidget):
     def __init__(self, scaled_df, workflow=None, header_name="Undefined", desc="Undefined", img_dropdown=None,
                  mask_dropdown=None, csv_dropdown=None, input_unit='px', output_unit='px', scalar=1,
@@ -177,10 +175,8 @@ class WorkflowPage(QWidget):
         btn_r.addWidget(self.run_btn)
         btn_r.addWidget(self.download_btn)
         layout.addRow(btn_r)
-
         # assign layout
         self.setLayout(layout)
-
         # run on init
         self.run(scaled_df=scaled_df, scalar=scalar, input_unit=input_unit, output_unit=output_unit)
 
@@ -211,10 +207,8 @@ class WorkflowPage(QWidget):
                 pface_path=self.mask_drop.currentText(),
                 n_rand_to_gen=self.n_coord_ip.text()
             )
-            # print("real", self.REAL_COORDS, "rand", self.RAND_COORDS)
             self.progress.setValue(100)
-            # print(self.RAND_COORDS.head())
-
+            # create ui scheme
             self.create_visuals(n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), scalar=scalar,
                                 input_unit=input_unit, output_unit=output_unit)
             self.download_btn.setStyleSheet(
@@ -223,15 +217,13 @@ class WorkflowPage(QWidget):
             print(e)
 
     def create_visuals(self, n_bins='fd', input_unit='px', output_unit='px', scalar=1):
-
+        # init vars & figure
+        hist_df = pd.DataFrame([])
+        cm = plt.cm.get_cmap('crest')
         fig = plt.figure()
         canvas = FigureCanvas(fig)
         ax = fig.add_subplot(111)
-
-        # TODO: download_csv(self.REAL_COORDS, "test.csv")
         # create hist
-        hist_df = []
-
         if self.gen_real_cb.isChecked():
             self.REAL_COORDS.sort_values('dist', inplace=True)
             hist_df = self.REAL_COORDS['dist']
@@ -242,51 +234,48 @@ class WorkflowPage(QWidget):
             ax.set_title('Distances Between Nearest Neighbors (Rand)')
             cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
             hist_df = self.RAND_COORDS['dist']
-
+        # draw hist
         n, bins, patches = ax.hist(hist_df, bins=(int(n_bins) if n_bins.isdecimal() else n_bins),
                                        color='green')
         ax.set_xlabel(f'Nearest Neighbor Distance ({output_unit})')
         ax.set_ylabel("Number of Entries")
-
         # generate palette
         palette = create_color_pal(n_bins=int(len(n)), palette_type=self.pal_type.currentText())
         r_palette = create_color_pal(n_bins=int(len(n)), palette_type=self.r_pal_type.currentText())
-
         # normalize values
-        print('patches', patches)
-        # for i, p in enumerate(patches):
-        #     p.set_facecolor(cm(i))
-        # plt.setp(p, 'facecolor', cm(i / 25))
         col = (n - n.min()) / (n.max() - n.min())
         for c, p in zip(col, patches):
             p.set_facecolor(cm(c))
-
+        # draw on canvas
         canvas.draw()
+        # determine shape of canvas
         size = canvas.size()
         width, height = size.width(), size.height()
+        # set hist to image of plotted hist
         self.hist = QImage(canvas.buffer_rgba(), width, height, QImage.Format_ARGB32)
         # display img
         pixmap = QPixmap.fromImage(self.hist)
         smaller_pixmap = pixmap.scaled(300, 250, Qt.KeepAspectRatio, Qt.FastTransformation)
         self.hist_frame.setPixmap(smaller_pixmap)
-
+        # load in image
         drawn_img = cv2.imread(self.img_drop.currentText())
-        # real coords
+        # if real coords selected, annotate them on img with lines indicating length
         if self.gen_real_cb.isChecked():
             drawn_img = draw_length(nnd_df=self.REAL_COORDS, bin_counts=n, palette=palette, input_unit=input_unit,
                                     scalar=scalar, img=drawn_img, circle_c=(103, 114, 0))
-
-        # random
+        # if rand coords selected, annotate them on img with lines indicating length
         if self.gen_rand_cb.isChecked():
             drawn_img = draw_length(nnd_df=self.RAND_COORDS, bin_counts=n, palette=r_palette, input_unit=input_unit,
                                     scalar=1, img=drawn_img, circle_c=(18, 156, 232))
-
+        # set display img to annotated image
         self.display_img = QImage(drawn_img.data, drawn_img.shape[1], drawn_img.shape[0],
                                   QImage.Format_RGB888).rgbSwapped()
+        # resize to fit on gui
         pixmap = QPixmap.fromImage(self.display_img)
         smaller_pixmap = pixmap.scaled(200, 200, Qt.KeepAspectRatio, Qt.FastTransformation)
         self.image_frame.setPixmap(smaller_pixmap)
 
     def open_large(self, event, file):
+        # open image file in custom image viewer
         self.image_viewer = QImageViewer(file)
         self.image_viewer.show()

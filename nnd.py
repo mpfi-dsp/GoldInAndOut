@@ -1,23 +1,21 @@
-import cv2
+import pandas as pd
 import numpy as np
 import random
-import pandas as pd
 import math
-
-from typings import Unit
+import cv2
 
 """ 
 N NEAREST DISTANCE RUN FUNCTION
 _______________________________
-@prog_wrapper: progress bar wrapper element, allows us to track how much time is left in process
 @data: dataframe with coordinates scaled to whatever format desired
+@prog_wrapper: progress bar wrapper element, allows us to track how much time is left in process
 @gen_rand: generate random coordinates
 @img_path: path to image we are finding the n nearest distance of (only needed if gen_rand is True)
 @pface_path: path to mask we are finding the n nearest distance of (only needed if gen_rand is True)
-@scalar: optional scalar prop to multiply all csv coordinate values by
+@n_rand_to_gen: number of random particles to generate
 """
-def run_nnd(data, prog_wrapper, scalar=1, img_path="", pface_path="", n_rand_to_gen=None):
-    # Generate Faux Gold Particles within the P-face
+def run_nnd(data, prog_wrapper, img_path="", pface_path="", n_rand_to_gen=None):
+    # generate faux particles within the P-face
     def generate_random_points(boundary, quantity, mask):
         coordinates = []
         count = 0
@@ -78,7 +76,6 @@ def run_nnd(data, prog_wrapper, scalar=1, img_path="", pface_path="", n_rand_to_
             clean_rand_df[['og_coord', 'closest_coord', 'dist']] = pd.DataFrame(
                 [x for x in rand_df['Nearest Neighbor Distance'].tolist()])
 
-        # print("rand", rand_df.head())
         # clean up df
         clean_real_df = pd.DataFrame()
         clean_real_df[['og_coord', 'closest_coord', 'dist']] = pd.DataFrame(
@@ -86,8 +83,6 @@ def run_nnd(data, prog_wrapper, scalar=1, img_path="", pface_path="", n_rand_to_
         return clean_real_df, clean_rand_df
 
     """ START """
-    # # Import CSV Coordinates
-    # data = pd.read_csv(csv_path, sep=",", header=None)
     x_coordinates = np.array(data['X'])
     y_coordinates = np.array(data['Y'])
     real_coordinates = []
@@ -107,7 +102,7 @@ def run_nnd(data, prog_wrapper, scalar=1, img_path="", pface_path="", n_rand_to_
         pface_mask = cv2.inRange(img_pface, lower_bound, upper_bound)
         pface_cnts, pface_hierarchy = cv2.findContours(pface_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
         drawn_pface_mask = img_pface.copy()
-        drawn_pface_mask = cv2.drawContours(drawn_pface_mask, pface_cnts, -1, (0, 255, 0), 5)
+        # drawn_pface_mask = cv2.drawContours(drawn_pface_mask, pface_cnts, -1, (0, 255, 0), 5)
         pface_area = 0
         for cnt in pface_cnts:
             area = cv2.contourArea(cnt)
@@ -124,28 +119,23 @@ def draw_length(nnd_df, bin_counts, img, palette, input_unit='px', scalar=1,  sa
         return color
     count = 0
     bin_idx = 0
-
-    print(nnd_df.head())
-
+    # print(nnd_df.head())
     for idx, entry in nnd_df.iterrows():
         count += 1
         particle_1 = entry['og_coord']
         particle_2 = entry['closest_coord']
-        # print('scla', scalar)
-        # print('inp', input_unit)
+        # scale back to drawable size
         if input_unit == 'px':
             particle_1 = tuple(int(scalar * x) for x in particle_1)
             particle_2 = tuple(int(scalar * x) for x in particle_2)
         else:
             particle_1 = tuple(int(x / scalar) for x in particle_1)
             particle_2 = tuple(int(x / scalar) for x in particle_2)
-        # print("p", particle_1, particle_2)
         if count >= bin_counts[bin_idx]:
             bin_idx += 1
             count = 0
         img = cv2.circle(img, particle_1, 10, circle_c, -1)
         img = cv2.line(img, particle_1, particle_2, sea_to_rgb(palette[bin_idx]), 5)
-
     # save image
     if save_img:
         cv2.imwrite('./output/drawn_nnd_img.jpg', img)
