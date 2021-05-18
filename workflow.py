@@ -26,7 +26,7 @@ __________________
 
 
 class WorkflowPage(QWidget):
-    def __init__(self, scaled_df, workflow=None, csv_scalar=1, header_name="Undefined", desc="Undefined", img_dropdown=None,
+    def __init__(self, scaled_df, workflow=None, header_name="Undefined", desc="Undefined", img_dropdown=None,
                  mask_dropdown=None, csv_dropdown=None, input_unit='px', output_unit='px', scalar=1,
                  props=None):
         super().__init__()
@@ -54,13 +54,14 @@ class WorkflowPage(QWidget):
         self.csv_drop.addItems(csv_dropdown)
         layout.addRow(self.csv_lb, self.csv_drop)
         # hist specific props
-        self.bars_lb = QLabel('<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.hist.html"># Bins in Histogram</a>')
+        self.bars_lb = QLabel(
+            '<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.hist.html"># Bins in Histogram</a>')
         self.bars_lb.setOpenExternalLinks(True)
         self.bars_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.bars_ip = QLineEdit()
-        self.bars_ip.setStyleSheet(
-            "font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 75px;")
-        self.bars_ip.setPlaceholderText("10")
+        # self.bars_ip.setStyleSheet(
+        #     "font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 75px;")
+        self.bars_ip.setPlaceholderText("10 OR [1, 2, 3, 4] OR 'fd'")
         self.pal_lb = QLabel('<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">Color Palette</a>')
         self.pal_lb.setOpenExternalLinks(True)
         self.pal_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
@@ -88,7 +89,8 @@ class WorkflowPage(QWidget):
         self.mask_drop.addItems(mask_dropdown)
         layout.addRow(self.mask_lb, self.mask_drop)
 
-        self.r_pal_lb = QLabel('<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">Rand Coords Color Palette</a>')
+        self.r_pal_lb = QLabel(
+            '<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">Rand Coords Color Palette</a>')
         self.r_pal_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.r_pal_lb.setOpenExternalLinks(True)
         self.r_pal_type = QComboBox()
@@ -180,7 +182,7 @@ class WorkflowPage(QWidget):
         self.setLayout(layout)
 
         # run on init
-        self.run(scaled_df=scaled_df, scalar=scalar, output_unit=output_unit,input_unit=input_unit)
+        self.run(scaled_df=scaled_df, scalar=scalar, input_unit=input_unit, output_unit=output_unit)
 
     def on_progress_update(self, value):
         self.progress.setValue(value)
@@ -195,7 +197,6 @@ class WorkflowPage(QWidget):
         self.r_pal_type.setVisible(not self.r_pal_type.isVisible())
         self.r_pal_lb.setVisible(not self.r_pal_lb.isVisible())
 
-
     def run(self, scaled_df, scalar, output_unit, input_unit):
         try:
             prog_wrapper = Progress()
@@ -203,18 +204,19 @@ class WorkflowPage(QWidget):
 
             # run knn
             self.REAL_COORDS, self.RAND_COORDS = run_nnd(
-                                    data=scaled_df,
-                                    prog_wrapper=prog_wrapper,
-                                     img_path=self.img_drop.currentText(),
-                                     # csv_path=self.csv_drop.currentText(),
-                                     pface_path=self.mask_drop.currentText(),
-                                     n_rand_to_gen=self.n_coord_ip.text()
-                                    )
+                data=scaled_df,
+                prog_wrapper=prog_wrapper,
+                img_path=self.img_drop.currentText(),
+                # csv_path=self.csv_drop.currentText(),
+                pface_path=self.mask_drop.currentText(),
+                n_rand_to_gen=self.n_coord_ip.text()
+            )
             # print("real", self.REAL_COORDS, "rand", self.RAND_COORDS)
             self.progress.setValue(100)
             # print(self.RAND_COORDS.head())
 
-            self.create_visuals(n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), scalar=scalar, input_unit=input_unit, output_unit=output_unit)
+            self.create_visuals(n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), scalar=scalar,
+                                input_unit=input_unit, output_unit=output_unit)
             self.download_btn.setStyleSheet(
                 "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
         except Exception as e:
@@ -231,8 +233,11 @@ class WorkflowPage(QWidget):
         if self.gen_rand_cb.isChecked():
             self.RAND_COORDS.sort_values('dist', inplace=True)
 
+        download_csv(self.REAL_COORDS, "test.csv")
+
         # create hist
-        n, bins, patches = ax.hist(self.REAL_COORDS['dist'], bins=n_bins, color='green')
+        n, bins, patches = ax.hist(self.REAL_COORDS['dist'], bins=(int(n_bins) if n_bins.isdecimal() else n_bins),
+                                   color='green')
         ax.set_xlabel(f'Nearest Neighbor Distance ({output_unit})')
         ax.set_ylabel("Number of Entries")
         ax.set_title('Distances Between Nearest Neighbors')
@@ -242,9 +247,12 @@ class WorkflowPage(QWidget):
         r_palette = create_color_pal(n_bins=int(len(n)), palette_type=self.r_pal_type.currentText())
 
         # normalize values
+        print('patches', patches)
+        # for i, p in enumerate(patches):
+        #     p.set_facecolor(cm(i))
+        # plt.setp(p, 'facecolor', cm(i / 25))
         col = (n - n.min()) / (n.max() - n.min())
-        print(n, col)
-        for c, p in zip(n, patches):
+        for c, p in zip(col, patches):
             p.set_facecolor(cm(c))
 
         canvas.draw()
@@ -265,7 +273,7 @@ class WorkflowPage(QWidget):
         # random
         if self.gen_rand_cb.isChecked():
             drawn_img = draw_length(nnd_df=self.RAND_COORDS, bin_counts=n, palette=r_palette, input_unit=input_unit,
-                                    scalar=scalar, img=drawn_img, circle_c=(18, 156, 232))
+                                    scalar=1, img=drawn_img, circle_c=(18, 156, 232))
 
         self.display_img = QImage(drawn_img.data, drawn_img.shape[1], drawn_img.shape[0],
                                   QImage.Format_RGB888).rgbSwapped()

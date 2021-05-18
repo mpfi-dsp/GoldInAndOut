@@ -57,7 +57,7 @@ def fig2img(fig):
     return img
 
 
-def pixels_conversion(csv_path, input_unit='px', csv_scalar=1, round=3):
+def pixels_conversion(csv_path, input_unit='px', csv_scalar=1, round=5):
     data = pd.read_csv(csv_path, sep=",")
     if input_unit == 'px':
         data['X'] = data['X'].div(csv_scalar).round(round)
@@ -82,7 +82,6 @@ def pixels_conversion(csv_path, input_unit='px', csv_scalar=1, round=3):
     #         x = round(float(x_coordinates[i]) * csv_scalar)
     #         y = round(float(y_coordinates[i]) * csv_scalar)
     #     real_coordinates.append((y, x))
-
 
 
 

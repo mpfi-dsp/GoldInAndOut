@@ -81,7 +81,7 @@ class MainWindow(QWidget):
             if i == 1:
                 nnd_page = WorkflowPage(scaled_df=self.SCALED_DF, header_name="Nearest Neighbor Distance",
                                         desc="Find the nearest neighbor distance between gold particles. Optionally generate random coordinates.",
-                                        img_dropdown=img_drop, csv_scalar=float(
+                                        img_dropdown=img_drop, scalar=float(
                         self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1),
                                         mask_dropdown=mask_drop, csv_dropdown=csv_drop,
                                         input_unit=self.home_page.ip_scalar_type.currentText() if self.home_page.ip_scalar_type.currentText() else 'px',

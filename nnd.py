@@ -14,9 +14,9 @@ _______________________________
 @gen_rand: generate random coordinates
 @img_path: path to image we are finding the n nearest distance of (only needed if gen_rand is True)
 @pface_path: path to mask we are finding the n nearest distance of (only needed if gen_rand is True)
-@csv_scalar: optional scalar prop to multiply all csv coordinate values by
+@scalar: optional scalar prop to multiply all csv coordinate values by
 """
-def run_nnd(data, prog_wrapper, gen_real=True, gen_rand=False, img_path="", pface_path="", n_rand_to_gen=None):
+def run_nnd(data, prog_wrapper, scalar=1, img_path="", pface_path="", n_rand_to_gen=None):
     # Generate Faux Gold Particles within the P-face
     def generate_random_points(boundary, quantity, mask):
         coordinates = []
@@ -92,7 +92,7 @@ def run_nnd(data, prog_wrapper, gen_real=True, gen_rand=False, img_path="", pfac
     y_coordinates = np.array(data['Y'])
     real_coordinates = []
     for i in range(len(x_coordinates)):
-        real_coordinates.append((round(float(y_coordinates[i])), round(float(x_coordinates[i]))))
+        real_coordinates.append((float(y_coordinates[i]), float(x_coordinates[i])))
 
     # if generate_random prop enabled, create random coordinates and return results, else return real coordinates
     if len(pface_path) > 0 and len(img_path) > 0:
@@ -125,20 +125,21 @@ def draw_length(nnd_df, bin_counts, img, palette, input_unit='px', scalar=1,  sa
     count = 0
     bin_idx = 0
 
+    print(nnd_df.head())
+
     for idx, entry in nnd_df.iterrows():
         count += 1
         particle_1 = entry['og_coord']
         particle_2 = entry['closest_coord']
-
+        # print('scla', scalar)
+        # print('inp', input_unit)
         if input_unit == 'px':
-            particle_1 = tuple(scalar * x for x in particle_1)
-            particle_2 = tuple(scalar * x for x in particle_2)
+            particle_1 = tuple(int(scalar * x) for x in particle_1)
+            particle_2 = tuple(int(scalar * x) for x in particle_2)
         else:
-            particle_1 = tuple(x / scalar for x in particle_1)
-            particle_2 = tuple(x / scalar for x in particle_2)
-
-            print("p", particle_1, particle_2)
-
+            particle_1 = tuple(int(x / scalar) for x in particle_1)
+            particle_2 = tuple(int(x / scalar) for x in particle_2)
+        # print("p", particle_1, particle_2)
         if count >= bin_counts[bin_idx]:
             bin_idx += 1
             count = 0
