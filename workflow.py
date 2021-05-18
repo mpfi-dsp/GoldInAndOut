@@ -223,24 +223,30 @@ class WorkflowPage(QWidget):
             print(e)
 
     def create_visuals(self, n_bins='fd', input_unit='px', output_unit='px', scalar=1):
-        cm = sns.color_palette(self.pal_type.currentText(), as_cmap=True)
-        r_cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
+
         fig = plt.figure()
         canvas = FigureCanvas(fig)
         ax = fig.add_subplot(111)
 
-        self.REAL_COORDS.sort_values('dist', inplace=True)
-        if self.gen_rand_cb.isChecked():
-            self.RAND_COORDS.sort_values('dist', inplace=True)
-
-        download_csv(self.REAL_COORDS, "test.csv")
-
+        # TODO: download_csv(self.REAL_COORDS, "test.csv")
         # create hist
-        n, bins, patches = ax.hist(self.REAL_COORDS['dist'], bins=(int(n_bins) if n_bins.isdecimal() else n_bins),
-                                   color='green')
+        hist_df = []
+
+        if self.gen_real_cb.isChecked():
+            self.REAL_COORDS.sort_values('dist', inplace=True)
+            hist_df = self.REAL_COORDS['dist']
+            cm = sns.color_palette(self.pal_type.currentText(), as_cmap=True)
+            ax.set_title('Distances Between Nearest Neighbors (Real)')
+        elif self.gen_rand_cb.isChecked():
+            self.RAND_COORDS.sort_values('dist', inplace=True)
+            ax.set_title('Distances Between Nearest Neighbors (Rand)')
+            cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
+            hist_df = self.RAND_COORDS['dist']
+
+        n, bins, patches = ax.hist(hist_df, bins=(int(n_bins) if n_bins.isdecimal() else n_bins),
+                                       color='green')
         ax.set_xlabel(f'Nearest Neighbor Distance ({output_unit})')
         ax.set_ylabel("Number of Entries")
-        ax.set_title('Distances Between Nearest Neighbors')
 
         # generate palette
         palette = create_color_pal(n_bins=int(len(n)), palette_type=self.pal_type.currentText())

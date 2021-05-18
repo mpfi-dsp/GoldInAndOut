@@ -110,7 +110,7 @@ class HomePage(QWidget):
         self.op_scalr_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.op_scalar_type = QComboBox()
         self.op_scalar_type.addItems(UNIT_OPS)
-        self.csvs_lb = QLabel("Scalar")
+        self.csvs_lb = QLabel("Scalar (Pixel to Metric)")
         self.csvs_lb.setStyleSheet("font-size: 17px; font-weight: 400; margin-left: 5px;")
         self.csvs_ip = QLineEdit()
         self.csvs_ip.setStyleSheet(
