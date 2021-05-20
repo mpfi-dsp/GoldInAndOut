@@ -17,7 +17,7 @@ class Unit(Enum):
 
 class Workflow(Enum):
     NND = 1
-    CLUST = 12
+    CLUST = 2
 
 
 class FileType(Enum):

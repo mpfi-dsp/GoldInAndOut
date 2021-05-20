@@ -1,8 +1,8 @@
 # views
 from globals import PAGE_NAMES
 from home import HomePage
-from typings import Unit
-from utils import pixels_conversion, enum_to_unit
+from typings import Unit, Workflow
+from utils import pixels_conversion, unit_to_enum
 from workflow import WorkflowPage
 # stylesheet
 from styles.stylesheet import styles
@@ -70,8 +70,8 @@ class MainWindow(QWidget):
         mask_drop = self.home_page.mask_le.text() if len(self.home_page.mask_le.text()) > 0 else ["./input/example_mask.tif"]
         csv_drop = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else ["./input/example_csv.csv"]
         # input/output units
-        iu = enum_to_unit(self.home_page.ip_scalar_type.currentText() if self.home_page.ip_scalar_type.currentText() is not None else 'px')
-        ou = enum_to_unit(self.home_page.op_scalar_type.currentText() if self.home_page.op_scalar_type.currentText() is not None else 'px'),
+        iu = unit_to_enum(self.home_page.ip_scalar_type.currentText() if self.home_page.ip_scalar_type.currentText() is not None else 'px')
+        ou = unit_to_enum(self.home_page.op_scalar_type.currentText() if self.home_page.op_scalar_type.currentText() is not None else 'px'),
         # scalar
         s = float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1)
 
@@ -81,6 +81,7 @@ class MainWindow(QWidget):
             if i == 1:
                 self.page_stack.addWidget(
                     WorkflowPage(scaled_df=self.SCALED_DF,
+                                 workflow=Workflow.NND,
                                         header_name="Nearest Neighbor Distance",
                                         desc="Find the nearest neighbor distance between gold particles. Optionally generate random coordinates.",
                                         img_dropdown=img_drop,
@@ -102,7 +103,7 @@ class MainWindow(QWidget):
     """ LOAD AND SCALE DATA """
     def load_data(self):
         path = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else "./input/example_csv.csv"
-        unit = enum_to_unit(self.home_page.ip_scalar_type.currentText()) if self.home_page.ip_scalar_type.currentText() else Unit.PIXEL
+        unit = unit_to_enum(self.home_page.ip_scalar_type.currentText()) if self.home_page.ip_scalar_type.currentText() else Unit.PIXEL
         scalar = float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1)
         self.SCALED_DF = pixels_conversion(csv_path=path, input_unit=unit, csv_scalar=scalar)
 

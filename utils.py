@@ -2,7 +2,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 import pandas as pd
 from PIL import Image
 import seaborn as sns
-from typings import Unit
+from typings import Unit, Workflow
 import io
 
 """ PROGRESS BAR/THREADING  """
@@ -89,6 +89,7 @@ def unit_to_enum(val):
 
 """ TURN ENUM INTO UNIT STRING """
 def enum_to_unit(val):
+    print(val, val == Unit.PIXEL)
     if val == Unit.PIXEL:
         return 'px'
     elif val == Unit.NANOMETER:
@@ -97,3 +98,14 @@ def enum_to_unit(val):
         return 'μm'
     elif val == Unit.METRIC:
         return 'metric'
+    else:
+        return 'undefined'
+
+""" TURN ENUM INTO WORKFLOW NAME """
+def enum_to_workflow(val):
+    if val == Workflow.NND:
+        return "nnd"
+    elif val == Workflow.CLUST:
+        return "clust"
+    else:
+        return 'undefined'

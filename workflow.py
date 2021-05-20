@@ -14,9 +14,18 @@ import seaborn as sns
 import cv2
 # utils
 from globals import PALETTE_OPS
-from typings import Unit
-from utils import Progress, create_color_pal, download_csv, pixels_conversion_w_distance, enum_to_unit
+from typings import Unit, Workflow
+from utils import Progress, create_color_pal, download_csv, pixels_conversion_w_distance, enum_to_unit, enum_to_workflow
 from nnd import run_nnd, draw_length
+
+
+HIST_X = {
+    Workflow.NND: "Nearest Neighbor Distance"
+}
+
+HIST_TITLES = {
+    Workflow.NND: "Distances Between Nearest Neighbors"
+}
 
 """ 
 WORKFLOW PAGE
@@ -166,7 +175,7 @@ class WorkflowPage(QWidget):
         self.download_btn = QPushButton('Download', self)
         self.download_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #ccc; color: white; border-radius: 7px; ")
-        self.download_btn.clicked.connect(partial(self.download, output_unit))
+        self.download_btn.clicked.connect(partial(self.download, output_unit, workflow))
         btn_r = QHBoxLayout()
         btn_r.addWidget(self.run_btn)
         btn_r.addWidget(self.download_btn)
@@ -174,21 +183,24 @@ class WorkflowPage(QWidget):
         # assign layout
         self.setLayout(layout)
         # run on init
-        self.run(scaled_df, scalar, input_unit, output_unit)
+        self.run(workflow, scaled_df, scalar, input_unit, output_unit)
+
+        print("unit", output_unit, enum_to_unit(output_unit))
+
 
     """ UPDATE PROGRESS BAR """
     def on_progress_update(self, value):
         self.progress.setValue(value)
 
     """ DOWNLOAD FILES """
-    def download(self, output_unit):
+    def download(self, output_unit, workflow):
         self.download_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #EBBA22; color: white; border-radius: 7px; ")
         self.download_btn.setText("Download Again")
-        download_csv(self.REAL_COORDS, f'nnd/real_nnd_output_{enum_to_unit(output_unit)}.csv')
-        download_csv(self.RAND_COORDS, f'nnd/rand_nnd_output_{enum_to_unit(output_unit)}.csv')
-        self.display_img.save("./output/nnd/drawn_nnd_img.tif")
-        self.hist.save("./output/nnd/nnd_histogram.jpg")
+        download_csv(self.REAL_COORDS, f'{enum_to_workflow(output_unit)}/real_{enum_to_workflow(output_unit)}output_{enum_to_unit(output_unit)}.csv')
+        download_csv(self.RAND_COORDS, f'{enum_to_workflow(output_unit)}/rand_{enum_to_workflow(output_unit)}_output_{enum_to_unit(output_unit)}.csv')
+        self.display_img.save(f'./output/{enum_to_workflow(workflow)}/drawn_{enum_to_workflow(output_unit)}_img.tif')
+        self.hist.save(f'./output/{enum_to_workflow(workflow)}/{enum_to_workflow(output_unit)}_histogram.jpg')
 
     """ TOGGLE ADV OPTIONS """
     def toggle_adv(self):
@@ -196,30 +208,32 @@ class WorkflowPage(QWidget):
             prop.setVisible(not prop.isVisible())
 
     """ RUN WORKFLOW """
-    def run(self, scaled_df, scalar, input_unit, output_unit):
+    def run(self, workflow, scaled_df, scalar, input_unit, output_unit):
         try:
             prog_wrapper = Progress()
             prog_wrapper.prog.connect(self.on_progress_update)
 
-            # run knn
-            self.REAL_COORDS, self.RAND_COORDS = run_nnd(
-                data=scaled_df,
-                prog_wrapper=prog_wrapper,
-                img_path=self.img_drop.currentText(),
-                pface_path=self.mask_drop.currentText(),
-                n_rand_to_gen=self.n_coord_ip.text()
-            )
-            print("init rand", self.RAND_COORDS.head())
+            if workflow == Workflow.NND:
+                # run knn
+                self.REAL_COORDS, self.RAND_COORDS = run_nnd(
+                    data=scaled_df,
+                    prog_wrapper=prog_wrapper,
+                    img_path=self.img_drop.currentText(),
+                    pface_path=self.mask_drop.currentText(),
+                    n_rand_to_gen=self.n_coord_ip.text()
+                )
+                print("init rand", self.RAND_COORDS.head())
+
             self.progress.setValue(100)
             # create ui scheme
-            self.create_visuals((self.bars_ip.text() if self.bars_ip.text() else 'fd'), input_unit, output_unit, scalar)
+            self.create_visuals(workflow=workflow, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), input_unit=input_unit, output_unit=output_unit, scalar=scalar)
             self.download_btn.setStyleSheet(
                 "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
         except Exception as e:
             print(e)
 
     """ CREATE DATA VISUALIZATIONS """
-    def create_visuals(self, n_bins, input_unit, output_unit, scalar):
+    def create_visuals(self, workflow, n_bins, input_unit, output_unit, scalar):
         # init vars & figure
         hist_df = pd.DataFrame([])
         cm = plt.cm.get_cmap('crest')
@@ -231,16 +245,16 @@ class WorkflowPage(QWidget):
             self.REAL_COORDS.sort_values('dist', inplace=True)
             hist_df = self.REAL_COORDS['dist']
             cm = sns.color_palette(self.pal_type.currentText(), as_cmap=True)
-            ax.set_title('Distances Between Nearest Neighbors (Real)')
+            ax.set_title(f'{HIST_TITLES[workflow]} (Real)')
         elif self.gen_rand_cb.isChecked():
             self.RAND_COORDS.sort_values('dist', inplace=True)
             scaled_rand = pixels_conversion_w_distance(self.RAND_COORDS, scalar)
-            ax.set_title('Distances Between Nearest Neighbors (Rand)')
+            ax.set_title(f'{HIST_TITLES[workflow]} (Rand)')
             cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
             hist_df = scaled_rand['dist']
         # draw hist
         n, bins, patches = ax.hist(hist_df, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), color='green')
-        ax.set_xlabel(f'Nearest Neighbor Distance ({enum_to_unit(output_unit)})')
+        ax.set_xlabel(f'{HIST_X[workflow]} ({enum_to_unit(output_unit)})')
         ax.set_ylabel("Number of Entries")
         # generate palette
         palette = create_color_pal(n_bins=int(len(n)), palette_type=self.pal_type.currentText())
