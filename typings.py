@@ -15,3 +15,13 @@ class Unit(Enum):
     MICRON = 3
     METRIC = 4
 
+class Workflow(Enum):
+    NND = 1
+    CLUST = 12
+
+
+class FileType(Enum):
+    IMAGE = 1
+    MASK = 2
+    CSV = 3
+    CSV2 = 4

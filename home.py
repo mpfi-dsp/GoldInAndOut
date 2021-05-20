@@ -7,6 +7,7 @@ from functools import partial
 from colorthief import ColorThief
 # utils
 from globals import UNIT_OPS
+from typings import FileType
 from utils import get_complimentary_color, pixels_conversion
 
 HEADER = "Gold Cluster Analysis For Freeze Fracture"
@@ -17,19 +18,20 @@ MAIN PAGE
 ________________
 @start: begins running selected workflows and display all subpages
 """
+
 class HomePage(QWidget):
     def __init__(self, start):
         super().__init__()
         layout = QFormLayout()
 
         # header
-        self.header = QLabel(HEADER)
-        self.header.setStyleSheet("font-size: 24px; font-weight: bold; padding-top: 8px; ")
-        layout.addRow(self.header)
-        self.desc = QLabel(DESC)
-        self.desc.setStyleSheet("font-size: 17px; font-weight: 400; padding-top: 3px; padding-bottom: 20px;")
-        self.desc.setWordWrap(True)
-        layout.addRow(self.desc)
+        header = QLabel(HEADER)
+        header.setStyleSheet("font-size: 24px; font-weight: bold; padding-top: 8px; ")
+        layout.addRow(header)
+        desc = QLabel(DESC)
+        desc.setStyleSheet("font-size: 17px; font-weight: 400; padding-top: 3px; padding-bottom: 20px;")
+        desc.setWordWrap(True)
+        layout.addRow(desc)
 
         # upload header
         self.upload_header = QLabel("Upload Files")
@@ -37,7 +39,7 @@ class HomePage(QWidget):
 
         # img btn
         self.img_btn = QPushButton('Upload Image', self)
-        self.img_btn.clicked.connect(partial(self.open_file_picker, "img"))
+        self.img_btn.clicked.connect(partial(self.open_file_picker, FileType.IMAGE))
         # img input
         self.img_le = QLineEdit()
         self.img_le.setPlaceholderText("None Selected")
@@ -46,7 +48,7 @@ class HomePage(QWidget):
 
         # mask btn
         self.mask_btn = QPushButton('Upload Mask', self)
-        self.mask_btn.clicked.connect(partial(self.open_file_picker, "mask"))
+        self.mask_btn.clicked.connect(partial(self.open_file_picker,  FileType.MASK))
         # mask input
         self.mask_le = QLineEdit()
         self.mask_le.setPlaceholderText("None Selected")
@@ -59,7 +61,7 @@ class HomePage(QWidget):
 
         # csv btn
         self.csv_btn = QPushButton('Upload CSV', self)
-        self.csv_btn.clicked.connect(partial(self.open_file_picker, "csv"))
+        self.csv_btn.clicked.connect(partial(self.open_file_picker, FileType.CSV))
         # csv input
         self.csv_le = QLineEdit()
         self.csv_le.setPlaceholderText("None Selected")
@@ -68,7 +70,7 @@ class HomePage(QWidget):
 
         # csv2 btn
         self.csv2_btn = QPushButton('Upload CSV2', self)
-        self.csv2_btn.clicked.connect(partial(self.open_file_picker, "csv2"))
+        self.csv2_btn.clicked.connect(partial(self.open_file_picker, FileType.CSV2))
         # csv2 input
         self.csv2_le = QLineEdit()
         self.csv2_le.setPlaceholderText("None Selected")
@@ -79,8 +81,8 @@ class HomePage(QWidget):
         layout.addItem(spacer)
 
         # workflows header
-        self.workflows_header = QLabel("Select Workflows")
-        layout.addRow(self.workflows_header)
+        workflows_header = QLabel("Select Workflows")
+        layout.addRow(workflows_header)
 
         # workflows
         self.annotate_particles_cb = QCheckBox("Workflow 1")
@@ -98,9 +100,8 @@ class HomePage(QWidget):
         layout.addItem(spacer)
 
         # props header
-        self.props_header = QLabel("Global Parameters")
-        layout.addRow(self.props_header)
-
+        props_header = QLabel("Global Parameters")
+        layout.addRow(props_header)
 
         self.ip_scalr_lb = QLabel("Input Unit")
         self.ip_scalr_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
@@ -110,19 +111,16 @@ class HomePage(QWidget):
         self.op_scalr_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.op_scalar_type = QComboBox()
         self.op_scalar_type.addItems(UNIT_OPS)
-        self.csvs_lb = QLabel("Scalar (Pixel to Metric)")
+        self.csvs_lb = QLabel("Scalar (Input to Output)")
         self.csvs_lb.setStyleSheet("font-size: 17px; font-weight: 400; margin-left: 5px;")
         self.csvs_ip = QLineEdit()
         self.csvs_ip.setStyleSheet(
             "font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 75px;")
         self.csvs_ip.setPlaceholderText("1")
         glob_props = QHBoxLayout()
-        glob_props.addWidget(self.ip_scalr_lb)
-        glob_props.addWidget(self.ip_scalar_type)
-        glob_props.addWidget(self.op_scalr_lb)
-        glob_props.addWidget(self.op_scalar_type)
-        glob_props.addWidget(self.csvs_lb)
-        glob_props.addWidget(self.csvs_ip)
+
+        for glob in [self.ip_scalr_lb, self.ip_scalar_type, self.op_scalr_lb, self.op_scalar_type, self.csvs_lb, self.csvs_ip]:
+            glob_props.addWidget(glob)
         layout.addRow(glob_props)
 
         layout.addItem(spacer)
@@ -142,33 +140,36 @@ class HomePage(QWidget):
         # assign layout
         self.setLayout(layout)
 
-    # open file picker and print file names
+    """ OPEN FILE PICKER """""
     def open_file_picker(self, btn_type):
         root_dir = str(Path.home())
         file = QFileDialog.getOpenFileName(self, 'Open file', root_dir)
         filename = file[0]
         if (len(filename)) > 0:
-            if btn_type == "img":
+            if btn_type == FileType.IMAGE:
                 self.img_le.setText(filename)
-            elif btn_type == "mask":
+            elif btn_type == FileType.MASK:
                 try:
                     self.mask_le.setText(filename)
                     # get dominant color in layer mask and assign to btn bg
                     palette = ColorThief(filename)
                     (r, g, b) = palette.get_color(quality=1)
+
                     def clamp(x):
                         return max(0, min(x, 255))
+
                     hex = "#{0:02x}{1:02x}{2:02x}".format(clamp(r), clamp(g), clamp(b))
                     comp_color = get_complimentary_color(hex)
-                    self.clr_btn.setStyleSheet( f'QWidget {{background-color: {hex}; font-size: 16px; font-weight: 600; padding: 8px; color: {comp_color}; border-radius: 7px; }}')
+                    self.clr_btn.setStyleSheet(f'QWidget {{background-color: {hex}; font-size: 16px; font-weight: 600; padding: 8px; color: {comp_color}; border-radius: 7px; }}')
                     self.clr_btn.setText(hex)
                 except Exception as e:
                     print(e)
-            elif btn_type == "csv":
+            elif btn_type == FileType.CSV:
                 self.csv_le.setText(filename)
-            elif btn_type == "csv2":
+            elif btn_type == FileType.CSV2:
                 self.csv2_le.setText(filename)
 
+    """ MASK COLOR SET """
     def set_mask_clr(self):
         color = QColorDialog.getColor().name(0)
         print(color)
@@ -176,4 +177,3 @@ class HomePage(QWidget):
         self.clr_btn.setStyleSheet(
             f'QWidget {{background-color: {color}; font-size: 16px; font-weight: 600; padding: 8px; color: {comp_color}; border-radius: 7px; }}')
         self.clr_btn.setText(color)
-

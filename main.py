@@ -1,10 +1,8 @@
 # views
-import pandas as pd
-
 from globals import PAGE_NAMES
 from home import HomePage
 from typings import Unit
-from utils import pixels_conversion
+from utils import pixels_conversion, enum_to_unit
 from workflow import WorkflowPage
 # stylesheet
 from styles.stylesheet import styles
@@ -13,11 +11,9 @@ from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (QWidget, QListWidget, QStackedWidget, QHBoxLayout, QListWidgetItem, QLabel, QApplication)
 # general
-from random import randint
 import sys
 
-
-CSV_SCALAR = 1
+NAV_ICON = QIcon('foo.jpg')
 
 """ PARENT WINDOW INITIALIZATION """
 class MainWindow(QWidget):
@@ -42,14 +38,13 @@ class MainWindow(QWidget):
     """ INITIALIZE MAIN CHILD WINDOW """
     def init_ui(self):
         # create interface, hide scrollbar
-        self.nav_list.currentRowChanged.connect(
-            self.page_stack.setCurrentIndex)
+        self.nav_list.currentRowChanged.connect(self.page_stack.setCurrentIndex)
         self.nav_list.setFrameShape(QListWidget.NoFrame)
         self.nav_list.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.nav_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         # add main page to nav
         item = QListWidgetItem(
-            QIcon('foo.jpg'), str("Main"), self.nav_list)
+            NAV_ICON, str("Main"), self.nav_list)
         item.setSizeHint(QSize(60, 60))
         item.setTextAlignment(Qt.AlignCenter)
         # add each page to parent window stack
@@ -66,7 +61,7 @@ class MainWindow(QWidget):
         for i in range(len(PAGE_NAMES)):
             if i > 0:
                 item = QListWidgetItem(
-                    QIcon('foo.jpg'), str(PAGE_NAMES[i]), self.nav_list)
+                    NAV_ICON, str(PAGE_NAMES[i]), self.nav_list)
                 item.setSizeHint(QSize(60, 60))
                 item.setTextAlignment(Qt.AlignCenter)
 
@@ -74,20 +69,28 @@ class MainWindow(QWidget):
         img_drop = self.home_page.img_le.text() if len(self.home_page.img_le.text()) > 0 else ["./input/example_image.tif"]
         mask_drop = self.home_page.mask_le.text() if len(self.home_page.mask_le.text()) > 0 else ["./input/example_mask.tif"]
         csv_drop = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else ["./input/example_csv.csv"]
+        # input/output units
+        iu = enum_to_unit(self.home_page.ip_scalar_type.currentText() if self.home_page.ip_scalar_type.currentText() is not None else 'px')
+        ou = enum_to_unit(self.home_page.op_scalar_type.currentText() if self.home_page.op_scalar_type.currentText() is not None else 'px'),
+        # scalar
+        s = float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1)
 
         # TODO: make each individual child window (for now random suffices)
         for i in range(len(PAGE_NAMES)):
             self.on_progress_update(i * 20)
             if i == 1:
-                nnd_page = WorkflowPage(scaled_df=self.SCALED_DF, header_name="Nearest Neighbor Distance",
+                self.page_stack.addWidget(
+                    WorkflowPage(scaled_df=self.SCALED_DF,
+                                        header_name="Nearest Neighbor Distance",
                                         desc="Find the nearest neighbor distance between gold particles. Optionally generate random coordinates.",
-                                        img_dropdown=img_drop, scalar=float(
-                        self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1),
-                                        mask_dropdown=mask_drop, csv_dropdown=csv_drop,
-                                        input_unit=self.home_page.ip_scalar_type.currentText() if self.home_page.ip_scalar_type.currentText() else 'px',
-                                        output_unit=self.home_page.op_scalar_type.currentText() if self.home_page.op_scalar_type.currentText() else 'px',
+                                        img_dropdown=img_drop,
+                                        scalar=s,
+                                        mask_dropdown=mask_drop,
+                                        csv_dropdown=csv_drop,
+                                        input_unit=iu,
+                                        output_unit=ou,
                                         props=["rand_particles"])
-                self.page_stack.addWidget(nnd_page)
+                )
             # elif i > 1:
             #     label = QLabel(f'{PAGE_NAMES[i]}Page', self)
             #     label.setAlignment(Qt.AlignCenter)
@@ -96,19 +99,19 @@ class MainWindow(QWidget):
             #     self.page_stack.addWidget(label)
         self.on_progress_update(100)
 
+    """ LOAD AND SCALE DATA """
     def load_data(self):
         path = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else "./input/example_csv.csv"
-        unit = self.home_page.ip_scalar_type.currentText() if self.home_page.ip_scalar_type.currentText() else 'px'
+        unit = enum_to_unit(self.home_page.ip_scalar_type.currentText()) if self.home_page.ip_scalar_type.currentText() else Unit.PIXEL
         scalar = float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1)
         self.SCALED_DF = pixels_conversion(csv_path=path, input_unit=unit, csv_scalar=scalar)
 
+    """ UPDATE PROGRESS BAR """
     def on_progress_update(self, value):
         self.home_page.progress.setValue(value)
 
+    """ CLEAR PAGE/NAV STACKS """
     def empty_stack(self):
-        # for item in self.nav_list.selectedItems():
-        #     self.nav_list.takeItem(self.nav_list.row(item))
-        # self.nav_list.clear()
         for i in range(self.page_stack.count()):
             if i > 0:
                 self.nav_list.takeItem(i)

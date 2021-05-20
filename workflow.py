@@ -14,59 +14,64 @@ import seaborn as sns
 import cv2
 # utils
 from globals import PALETTE_OPS
-from utils import Progress, create_color_pal, download_csv
+from typings import Unit
+from utils import Progress, create_color_pal, download_csv, pixels_conversion_w_distance, enum_to_unit
 from nnd import run_nnd, draw_length
 
 """ 
 WORKFLOW PAGE
 __________________
-@workflow: selected workflow
-
+@scaled_df: selected workflow
+@header_name: string displayed as "header"
+@desc: string displayed as "description" below header
+@img_dropdown: array of selected image paths
+@mask_dropdown: array of selected mask paths
+@csv_dropdown: array of selected csv paths
+@input_unit: metric input unit
+@output_unit: metric output unit
+@scalar: multiplier ratio between input metric unit (usually pixels) and desired output metric unit
 """
 class WorkflowPage(QWidget):
     def __init__(self, scaled_df, workflow=None, header_name="Undefined", desc="Undefined", img_dropdown=None,
-                 mask_dropdown=None, csv_dropdown=None, input_unit='px', output_unit='px', scalar=1,
+                 mask_dropdown=None, csv_dropdown=None, input_unit=Unit.PIXEL, output_unit=Unit.PIXEL, scalar=1,
                  props=None):
         super().__init__()
-        if img_dropdown is None:
-            img_dropdown = []
+
         self.OUTPUT_DF = pd.DataFrame()
-
         layout = QFormLayout()
-
         # header
-        self.header = QLabel(header_name)
-        self.header.setStyleSheet("font-size: 24px; font-weight: bold; padding-top: 8px; ")
-        layout.addRow(self.header)
-        self.desc = QLabel(desc)
-        self.desc.setStyleSheet("font-size: 17px; font-weight: 400; padding-top: 3px; padding-bottom: 20px;")
-        self.desc.setWordWrap(True)
-        layout.addRow(self.desc)
+        header = QLabel(header_name)
+        header.setStyleSheet("font-size: 24px; font-weight: bold; padding-top: 8px; ")
+        layout.addRow(header)
+        descr = QLabel(desc)
+        descr.setStyleSheet("font-size: 17px; font-weight: 400; padding-top: 3px; padding-bottom: 20px;")
+        descr.setWordWrap(True)
+        layout.addRow(descr)
 
         """ PARAMETERS """
         self.workflows_header = QLabel("Parameters")
         layout.addRow(self.workflows_header)
+        # csv
         self.csv_lb = QLabel("CSV")
         self.csv_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.csv_drop = QComboBox()
         self.csv_drop.addItems(csv_dropdown)
         layout.addRow(self.csv_lb, self.csv_drop)
-        # hist specific props
+        # num bins
         self.bars_lb = QLabel(
             '<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.hist.html"># Bins in Histogram</a>')
         self.bars_lb.setOpenExternalLinks(True)
         self.bars_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.bars_ip = QLineEdit()
-        # self.bars_ip.setStyleSheet(
-        #     "font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 75px;")
         self.bars_ip.setPlaceholderText("10 OR [1, 2, 3, 4] OR 'fd'")
+        layout.addRow(self.bars_lb, self.bars_ip)
+        # color palette
         self.pal_lb = QLabel('<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">Color Palette</a>')
         self.pal_lb.setOpenExternalLinks(True)
         self.pal_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.pal_type = QComboBox()
         self.pal_type.addItems(PALETTE_OPS)
         layout.addRow(self.pal_lb, self.pal_type)
-        layout.addRow(self.bars_lb, self.bars_ip)
 
         """ ADVANCED: RANDOM COORDS SECTION """
         self.gen_rand_head = QLabel("Advanced: Generate Rand Coords")
@@ -75,18 +80,19 @@ class WorkflowPage(QWidget):
         self.gen_rand_adv_cb.setStyleSheet("font-size: 17px; font-weight: 500; padding-top: 6px;")
         self.gen_rand_adv_cb.clicked.connect(self.toggle_adv)
         layout.addRow(self.gen_rand_head, self.gen_rand_adv_cb)
-
+        # image path
         self.img_lb = QLabel("Image")
         self.img_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.img_drop = QComboBox()
         self.img_drop.addItems(img_dropdown)
-        layout.addRow(self.img_lb, self.img_drop)
+        layout.addRow(self.img_lb, self.img_drop)        # csv
+        # mask path
         self.mask_lb = QLabel("Mask")
         self.mask_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.mask_drop = QComboBox()
         self.mask_drop.addItems(mask_dropdown)
         layout.addRow(self.mask_lb, self.mask_drop)
-
+        # palette random
         self.r_pal_lb = QLabel(
             '<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">Rand Coords Color Palette</a>')
         self.r_pal_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
@@ -95,7 +101,7 @@ class WorkflowPage(QWidget):
         self.r_pal_type.addItems(PALETTE_OPS)
         self.r_pal_type.setCurrentText('crest')
         layout.addRow(self.r_pal_lb, self.r_pal_type)
-
+        # num coords to gen
         self.n_coord_lb = QLabel("# Random Coordinates To Generate")
         self.n_coord_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.n_coord_ip = QLineEdit()
@@ -103,74 +109,64 @@ class WorkflowPage(QWidget):
             "font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 200px;")
         self.n_coord_ip.setPlaceholderText("default is # in real csv")
         layout.addRow(self.n_coord_lb, self.n_coord_ip)
-        self.n_coord_lb.setHidden(True)
-        self.n_coord_ip.setHidden(True)
-        self.img_drop.setHidden(True)
-        self.img_lb.setHidden(True)
-        self.r_pal_lb.setHidden(True)
-        self.r_pal_type.setHidden(True)
-        self.mask_lb.setHidden(True)
-        self.mask_drop.setHidden(True)
-
+        # set adv hidden by default
+        for prop in [self.img_lb, self.img_drop, self.mask_lb, self.mask_drop, self.n_coord_lb, self.n_coord_ip, self.r_pal_type, self.r_pal_lb]:
+            prop.setHidden(True)
         # output header
         self.out_header = QLabel("Output")
         layout.addRow(self.out_header)
-
+        # toggleable output
         self.out_desc = QLabel("Check boxes to toggle output options. Double-click on an image to open it.")
         self.out_desc.setStyleSheet("font-size: 17px; font-weight: 400; padding-top: 3px; padding-bottom: 20px;")
         self.out_desc.setWordWrap(True)
         layout.addRow(self.out_desc)
-
+        # real
         self.gen_real_lb = QLabel("Display Real Coords")
         self.gen_real_lb.setStyleSheet("margin-left: 50px; font-size: 17px; font-weight: 400;")
         self.gen_real_cb = QCheckBox()
         self.gen_real_cb.setChecked(True)
-
+        # rand
         self.gen_rand_lb = QLabel("Display Random Coords")
         self.gen_rand_lb.setStyleSheet("margin-left: 50px; font-size: 17px; font-weight: 400;")
         self.gen_rand_cb = QCheckBox()
-
+        # cb row
         cb_row = QHBoxLayout()
         cb_row.addWidget(self.gen_real_lb)
         cb_row.addWidget(self.gen_real_cb)
         cb_row.addWidget(self.gen_rand_lb)
         cb_row.addWidget(self.gen_rand_cb)
         layout.addRow(cb_row)
-
         # annotated image
         self.image_frame = QLabel()
         self.image_frame.setStyleSheet("padding-top: 3px; background: white;")
         self.image_frame.setMaximumSize(400, 250)
         self.image_frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.image_frame.mouseDoubleClickEvent = lambda event: self.open_large(event, self.display_img)
-
         # hist
         self.hist_frame = QLabel()
         self.hist_frame.setStyleSheet("padding-top: 3px; background: white;")
         self.hist_frame.setMaximumSize(400, 250)
         self.hist_frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.hist_frame.mouseDoubleClickEvent = lambda event: self.open_large(event, self.hist)
-
         # container for visualizers
         self.img_cont = QHBoxLayout()
         self.img_cont.addWidget(self.image_frame)
         self.img_cont.addWidget(self.hist_frame)
         layout.addRow(self.img_cont)
-
+        # loading bar
         self.progress = QProgressBar(self)
         self.progress.setGeometry(0, 0, 300, 25)
         self.progress.setMaximum(100)
         layout.addRow(self.progress)
-
         # run & download btns
         self.run_btn = QPushButton('Run Again', self)
         self.run_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #E89C12; color: white; border-radius: 7px; ")
-        self.run_btn.clicked.connect(partial(self.run, scaled_df, scalar, input_unit))
+        self.run_btn.clicked.connect(partial(self.run, scaled_df, scalar, input_unit, output_unit))
         self.download_btn = QPushButton('Download', self)
         self.download_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #ccc; color: white; border-radius: 7px; ")
-        self.download_btn.clicked.connect(partial(download_csv, self.OUTPUT_DF, "nnd_output.csv"))
+        self.download_btn.clicked.connect(partial(self.download, output_unit))
         btn_r = QHBoxLayout()
         btn_r.addWidget(self.run_btn)
         btn_r.addWidget(self.download_btn)
@@ -178,22 +174,29 @@ class WorkflowPage(QWidget):
         # assign layout
         self.setLayout(layout)
         # run on init
-        self.run(scaled_df=scaled_df, scalar=scalar, input_unit=input_unit, output_unit=output_unit)
+        self.run(scaled_df, scalar, input_unit, output_unit)
 
+    """ UPDATE PROGRESS BAR """
     def on_progress_update(self, value):
         self.progress.setValue(value)
 
-    def toggle_adv(self):
-        self.img_lb.setVisible(not self.img_lb.isVisible())
-        self.img_drop.setVisible(not self.img_drop.isVisible())
-        self.mask_lb.setVisible(not self.mask_lb.isVisible())
-        self.mask_drop.setVisible(not self.mask_drop.isVisible())
-        self.n_coord_ip.setVisible(not self.n_coord_ip.isVisible())
-        self.n_coord_lb.setVisible(not self.n_coord_lb.isVisible())
-        self.r_pal_type.setVisible(not self.r_pal_type.isVisible())
-        self.r_pal_lb.setVisible(not self.r_pal_lb.isVisible())
+    """ DOWNLOAD FILES """
+    def download(self, output_unit):
+        self.download_btn.setStyleSheet(
+            "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #EBBA22; color: white; border-radius: 7px; ")
+        self.download_btn.setText("Download Again")
+        download_csv(self.REAL_COORDS, f'nnd/real_nnd_output_{enum_to_unit(output_unit)}.csv')
+        download_csv(self.RAND_COORDS, f'nnd/rand_nnd_output_{enum_to_unit(output_unit)}.csv')
+        self.display_img.save("./output/nnd/drawn_nnd_img.tif")
+        self.hist.save("./output/nnd/nnd_histogram.jpg")
 
-    def run(self, scaled_df, scalar, output_unit, input_unit):
+    """ TOGGLE ADV OPTIONS """
+    def toggle_adv(self):
+        for prop in [self.img_lb, self.img_drop, self.mask_lb, self.mask_drop, self.n_coord_lb, self.n_coord_ip, self.r_pal_type, self.r_pal_lb]:
+            prop.setVisible(not prop.isVisible())
+
+    """ RUN WORKFLOW """
+    def run(self, scaled_df, scalar, input_unit, output_unit):
         try:
             prog_wrapper = Progress()
             prog_wrapper.prog.connect(self.on_progress_update)
@@ -203,20 +206,20 @@ class WorkflowPage(QWidget):
                 data=scaled_df,
                 prog_wrapper=prog_wrapper,
                 img_path=self.img_drop.currentText(),
-                # csv_path=self.csv_drop.currentText(),
                 pface_path=self.mask_drop.currentText(),
                 n_rand_to_gen=self.n_coord_ip.text()
             )
+            print("init rand", self.RAND_COORDS.head())
             self.progress.setValue(100)
             # create ui scheme
-            self.create_visuals(n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), scalar=scalar,
-                                input_unit=input_unit, output_unit=output_unit)
+            self.create_visuals((self.bars_ip.text() if self.bars_ip.text() else 'fd'), input_unit, output_unit, scalar)
             self.download_btn.setStyleSheet(
                 "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
         except Exception as e:
             print(e)
 
-    def create_visuals(self, n_bins='fd', input_unit='px', output_unit='px', scalar=1):
+    """ CREATE DATA VISUALIZATIONS """
+    def create_visuals(self, n_bins, input_unit, output_unit, scalar):
         # init vars & figure
         hist_df = pd.DataFrame([])
         cm = plt.cm.get_cmap('crest')
@@ -231,13 +234,13 @@ class WorkflowPage(QWidget):
             ax.set_title('Distances Between Nearest Neighbors (Real)')
         elif self.gen_rand_cb.isChecked():
             self.RAND_COORDS.sort_values('dist', inplace=True)
+            scaled_rand = pixels_conversion_w_distance(self.RAND_COORDS, scalar)
             ax.set_title('Distances Between Nearest Neighbors (Rand)')
             cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
-            hist_df = self.RAND_COORDS['dist']
+            hist_df = scaled_rand['dist']
         # draw hist
-        n, bins, patches = ax.hist(hist_df, bins=(int(n_bins) if n_bins.isdecimal() else n_bins),
-                                       color='green')
-        ax.set_xlabel(f'Nearest Neighbor Distance ({output_unit})')
+        n, bins, patches = ax.hist(hist_df, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), color='green')
+        ax.set_xlabel(f'Nearest Neighbor Distance ({enum_to_unit(output_unit)})')
         ax.set_ylabel("Number of Entries")
         # generate palette
         palette = create_color_pal(n_bins=int(len(n)), palette_type=self.pal_type.currentText())
@@ -261,12 +264,12 @@ class WorkflowPage(QWidget):
         drawn_img = cv2.imread(self.img_drop.currentText())
         # if real coords selected, annotate them on img with lines indicating length
         if self.gen_real_cb.isChecked():
-            drawn_img = draw_length(nnd_df=self.REAL_COORDS, bin_counts=n, palette=palette, input_unit=input_unit,
-                                    scalar=scalar, img=drawn_img, circle_c=(103, 114, 0))
+            drawn_img = draw_length(nnd_df=self.REAL_COORDS, bin_counts=n, img=drawn_img,  palette=palette, input_unit=input_unit,
+                                    scalar=scalar, circle_c=(103, 114, 0))
         # if rand coords selected, annotate them on img with lines indicating length
         if self.gen_rand_cb.isChecked():
-            drawn_img = draw_length(nnd_df=self.RAND_COORDS, bin_counts=n, palette=r_palette, input_unit=input_unit,
-                                    scalar=1, img=drawn_img, circle_c=(18, 156, 232))
+            drawn_img = draw_length(nnd_df=self.RAND_COORDS, bin_counts=n, img=drawn_img, palette=r_palette, input_unit=input_unit,
+                                    scalar=1, circle_c=(18, 156, 232))
         # set display img to annotated image
         self.display_img = QImage(drawn_img.data, drawn_img.shape[1], drawn_img.shape[0],
                                   QImage.Format_RGB888).rgbSwapped()
@@ -275,7 +278,7 @@ class WorkflowPage(QWidget):
         smaller_pixmap = pixmap.scaled(200, 200, Qt.KeepAspectRatio, Qt.FastTransformation)
         self.image_frame.setPixmap(smaller_pixmap)
 
+    """ OPEN IMAGE IN VIEWER """
     def open_large(self, event, file):
-        # open image file in custom image viewer
         self.image_viewer = QImageViewer(file)
         self.image_viewer.show()

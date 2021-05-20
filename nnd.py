@@ -4,6 +4,8 @@ import random
 import math
 import cv2
 
+from typings import Unit
+
 """ 
 N NEAREST DISTANCE RUN FUNCTION
 _______________________________
@@ -25,7 +27,7 @@ def run_nnd(data, prog_wrapper, img_path="", pface_path="", n_rand_to_gen=None):
             if mask[x, y] != 0:
                 coordinates.append((x, y))
                 count += 1
-        print(f"The total number of particles inside the p-face are {count}.")
+        # print(f"The total number of particles inside the p-face are {count}.")
         return coordinates
 
     """ FIND DIST TO CLOSEST PARTICLE """
@@ -47,7 +49,7 @@ def run_nnd(data, prog_wrapper, img_path="", pface_path="", n_rand_to_gen=None):
                     particle_jf = (particle_j[1], particle_j[0])
                     dist = ((particle_jf[0] - particle_if[0]) ** 2) + ((particle_jf[1] - particle_if[1]) ** 2)
                     dist = math.sqrt(dist)
-                    if (dist < small_dist):
+                    if dist < small_dist:
                         small_dist = dist
                         templist[1] = particle_jf
                         templist[2] = small_dist
@@ -101,7 +103,8 @@ def run_nnd(data, prog_wrapper, img_path="", pface_path="", n_rand_to_gen=None):
         upper_bound = np.array([254, 254, 254])
         pface_mask = cv2.inRange(img_pface, lower_bound, upper_bound)
         pface_cnts, pface_hierarchy = cv2.findContours(pface_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-        drawn_pface_mask = img_pface.copy()
+        # TODO: use these?
+        # drawn_pface_mask = img_pface.copy()
         # drawn_pface_mask = cv2.drawContours(drawn_pface_mask, pface_cnts, -1, (0, 255, 0), 5)
         pface_area = 0
         for cnt in pface_cnts:
@@ -113,27 +116,30 @@ def run_nnd(data, prog_wrapper, img_path="", pface_path="", n_rand_to_gen=None):
 
 
 """ DRAW LINES TO ANNOTATE N NEAREST DIST ON IMAGE """
-def draw_length(nnd_df, bin_counts, img, palette, input_unit='px', scalar=1,  save_img=True, circle_c=(0, 0, 255)):
+def draw_length(nnd_df, bin_counts, img, palette, input_unit=Unit.PIXEL, scalar=1, save_img=False, circle_c=(0, 0, 255)):
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
     count = 0
     bin_idx = 0
-    # print(nnd_df.head())
+    print(nnd_df.head())
     for idx, entry in nnd_df.iterrows():
         count += 1
+        # print(idx, count)
         particle_1 = entry['og_coord']
         particle_2 = entry['closest_coord']
         # scale back to drawable size
-        if input_unit == 'px':
+        # print("test", input_unit == 'px')
+        if input_unit == Unit.PIXEL:
             particle_1 = tuple(int(scalar * x) for x in particle_1)
             particle_2 = tuple(int(scalar * x) for x in particle_2)
         else:
             particle_1 = tuple(int(x / scalar) for x in particle_1)
             particle_2 = tuple(int(x / scalar) for x in particle_2)
-        if count >= bin_counts[bin_idx]:
+        if count >= bin_counts[bin_idx] and bin_idx < len(bin_counts) - 1:
             bin_idx += 1
             count = 0
+        # print(particle_1)
         img = cv2.circle(img, particle_1, 10, circle_c, -1)
         img = cv2.line(img, particle_1, particle_2, sea_to_rgb(palette[bin_idx]), 5)
     # save image

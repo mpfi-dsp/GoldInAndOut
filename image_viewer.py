@@ -105,7 +105,7 @@ class QImageViewer(QMainWindow):
         self.print_act = QAction("&Print...", self, shortcut="Ctrl+P", enabled=False, triggered=self.print_)
         self.exit_act = QAction("E&xit", self, shortcut="Ctrl+Q", triggered=self.close)
         self.zoom_in_act = QAction("Zoom &In (25%)", self, shortcut="Ctrl++", enabled=False, triggered=self.zoom_in)
-        self.zoom_out_act = QAction("Zoom &Out (25%)", self, shortcut="Ctrl--", enabled=False, triggered=self.zoom_out)
+        self.zoom_out_act = QAction("Zoom &Out (25%)", self, shortcut="Ctrl+-", enabled=False, triggered=self.zoom_out)
         self.normal_size_act = QAction("&Normal Size", self, shortcut="Ctrl+S", enabled=False,
                                        triggered=self.normal_size)
         self.fit_to_window_act = QAction("&Fit to Window", self, enabled=False, checkable=True, shortcut="Ctrl+F",
