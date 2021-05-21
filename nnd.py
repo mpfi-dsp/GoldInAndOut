@@ -69,7 +69,6 @@ def run_nnd(data, prog_wrapper, img_path="", pface_path="", n_rand_to_gen=None):
         if len(pface_path) > 0 and len(img_path) > 0:
             n_to_gen = int(n_rand_to_gen) if n_rand_to_gen is not None and len(n_rand_to_gen) > 0 else len(coordinate_list)
             randomcoords = generate_random_points(pface_mask.shape, n_to_gen, pface_mask)
-            # print("rand coords", randomcoords)
             random_nndlist = distance_to_closest_particle(randomcoords)
             d = {'Nearest Neighbor Distance': random_nndlist}
             rand_df = pd.DataFrame(data=d)

@@ -1,5 +1,5 @@
 # views
-from globals import PAGE_NAMES
+from globals import WORKFLOWS, NAV_ICON
 from home import HomePage
 from typings import Unit, Workflow
 from utils import pixels_conversion, unit_to_enum
@@ -13,14 +13,13 @@ from PyQt5.QtWidgets import (QWidget, QListWidget, QStackedWidget, QHBoxLayout, 
 # general
 import sys
 
-NAV_ICON = QIcon('foo.jpg')
 
 """ PARENT WINDOW INITIALIZATION """
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('MPFI EM Core Pipeline')
-        self.setWindowIcon(QIcon('../gui/assets/logo.jpg'))
+        self.setWindowIcon(QIcon('./assets/logo.jpg'))
         self.setMinimumSize(QSize(900, 950))
         self.setMaximumSize(QSize(900, 950))
         # layout with list on left and stacked widget on right
@@ -57,13 +56,6 @@ class MainWindow(QWidget):
         self.home_page.start_btn.setText("Run Again")
         self.empty_stack()
         self.load_data()
-        # add page tabs
-        for i in range(len(PAGE_NAMES)):
-            if i > 0:
-                item = QListWidgetItem(
-                    NAV_ICON, str(PAGE_NAMES[i]), self.nav_list)
-                item.setSizeHint(QSize(60, 60))
-                item.setTextAlignment(Qt.AlignCenter)
 
         # TODO: remove when no longer using for testing
         img_drop = self.home_page.img_le.text() if len(self.home_page.img_le.text()) > 0 else ["./input/example_image.tif"]
@@ -71,33 +63,29 @@ class MainWindow(QWidget):
         csv_drop = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else ["./input/example_csv.csv"]
         # input/output units
         iu = unit_to_enum(self.home_page.ip_scalar_type.currentText() if self.home_page.ip_scalar_type.currentText() is not None else 'px')
-        ou = unit_to_enum(self.home_page.op_scalar_type.currentText() if self.home_page.op_scalar_type.currentText() is not None else 'px'),
+        ou = unit_to_enum(self.home_page.op_scalar_type.currentText() if self.home_page.op_scalar_type.currentText() is not None else 'px')
         # scalar
         s = float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1)
 
-        # TODO: make each individual child window (for now random suffices)
-        for i in range(len(PAGE_NAMES)):
+        # add page tabs
+        for i in range(len(WORKFLOWS)):
             self.on_progress_update(i * 20)
-            if i == 1:
-                self.page_stack.addWidget(
-                    WorkflowPage(scaled_df=self.SCALED_DF,
-                                 workflow=Workflow.NND,
-                                        header_name="Nearest Neighbor Distance",
-                                        desc="Find the nearest neighbor distance between gold particles. Optionally generate random coordinates.",
-                                        img_dropdown=img_drop,
-                                        scalar=s,
-                                        mask_dropdown=mask_drop,
-                                        csv_dropdown=csv_drop,
-                                        input_unit=iu,
-                                        output_unit=ou,
-                                        props=["rand_particles"])
-                )
-            # elif i > 1:
-            #     label = QLabel(f'{PAGE_NAMES[i]}Page', self)
-            #     label.setAlignment(Qt.AlignCenter)
-            #     label.setStyleSheet('background: rgb(%d, %d, %d); margin: 50px;' % (
-            #         randint(0, 255), randint(0, 255), randint(0, 255)))
-            #     self.page_stack.addWidget(label)
+            item = QListWidgetItem(
+                NAV_ICON, str(WORKFLOWS[i]['name']), self.nav_list)
+            item.setSizeHint(QSize(60, 60))
+            item.setTextAlignment(Qt.AlignCenter)
+            # generate workflow page
+            print(WORKFLOWS[i])
+            self.page_stack.addWidget(
+                WorkflowPage(scaled_df=self.SCALED_DF,
+                             workflow=WORKFLOWS[i],
+                             img=img_drop,
+                             mask=mask_drop,
+                             csv=csv_drop,
+                             scalar=s,
+                             input_unit=iu,
+                             output_unit=ou)
+            )
         self.on_progress_update(100)
 
     """ LOAD AND SCALE DATA """

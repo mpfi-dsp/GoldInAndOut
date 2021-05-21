@@ -36,7 +36,7 @@ class QImageViewer(QMainWindow):
         self.create_menus()
 
         self.setWindowTitle("EM Image Viewer")
-        self.setWindowIcon(QIcon('../gui/assets/logo.jpg'))
+        self.setWindowIcon(QIcon('./assets/logo.jpg'))
         self.resize(800, 600)
         self.open(img)
 

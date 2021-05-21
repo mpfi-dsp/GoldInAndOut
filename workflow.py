@@ -15,47 +15,42 @@ import cv2
 # utils
 from globals import PALETTE_OPS
 from typings import Unit, Workflow
-from utils import Progress, create_color_pal, download_csv, pixels_conversion_w_distance, enum_to_unit, enum_to_workflow
+from utils import Progress, create_color_pal, download_csv, pixels_conversion_w_distance, enum_to_unit
 from nnd import run_nnd, draw_length
-
-
-HIST_X = {
-    Workflow.NND: "Nearest Neighbor Distance"
-}
-
-HIST_TITLES = {
-    Workflow.NND: "Distances Between Nearest Neighbors"
-}
 
 """ 
 WORKFLOW PAGE
 __________________
-@scaled_df: selected workflow
-@header_name: string displayed as "header"
-@desc: string displayed as "description" below header
-@img_dropdown: array of selected image paths
-@mask_dropdown: array of selected mask paths
-@csv_dropdown: array of selected csv paths
+@scaled_df: dataframe containing csv coordinate data of gold particles scaled via scalar to proper unit
+@workflow: JSON object containing the following data:
+    @type: ENUM type of Workflow
+    @header: string displayed as "header"
+    @desc: string displayed as "description" below header
+    @hist: histogram metadata:
+        @title: title of histogram
+        @x_label: x_label of histogram
+        @y_label: y_label of histogram
+@img: array of selected image paths
+@mask: array of selected mask paths
+@csv: array of selected csv paths
 @input_unit: metric input unit
 @output_unit: metric output unit
 @scalar: multiplier ratio between input metric unit (usually pixels) and desired output metric unit
 """
 class WorkflowPage(QWidget):
-    def __init__(self, scaled_df, workflow=None, header_name="Undefined", desc="Undefined", img_dropdown=None,
-                 mask_dropdown=None, csv_dropdown=None, input_unit=Unit.PIXEL, output_unit=Unit.PIXEL, scalar=1,
-                 props=None):
+    def __init__(self, scaled_df, workflow=None, img=None, mask=None, csv=None, input_unit=Unit.PIXEL, output_unit=Unit.PIXEL, scalar=1):
         super().__init__()
 
         self.OUTPUT_DF = pd.DataFrame()
         layout = QFormLayout()
         # header
-        header = QLabel(header_name)
+        header = QLabel(workflow['header'])
         header.setStyleSheet("font-size: 24px; font-weight: bold; padding-top: 8px; ")
         layout.addRow(header)
-        descr = QLabel(desc)
-        descr.setStyleSheet("font-size: 17px; font-weight: 400; padding-top: 3px; padding-bottom: 20px;")
-        descr.setWordWrap(True)
-        layout.addRow(descr)
+        desc = QLabel(workflow['desc'])
+        desc.setStyleSheet("font-size: 17px; font-weight: 400; padding-top: 3px; padding-bottom: 20px;")
+        desc.setWordWrap(True)
+        layout.addRow(desc)
 
         """ PARAMETERS """
         self.workflows_header = QLabel("Parameters")
@@ -64,7 +59,7 @@ class WorkflowPage(QWidget):
         self.csv_lb = QLabel("CSV")
         self.csv_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.csv_drop = QComboBox()
-        self.csv_drop.addItems(csv_dropdown)
+        self.csv_drop.addItems(csv)
         layout.addRow(self.csv_lb, self.csv_drop)
         # num bins
         self.bars_lb = QLabel(
@@ -93,13 +88,13 @@ class WorkflowPage(QWidget):
         self.img_lb = QLabel("Image")
         self.img_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.img_drop = QComboBox()
-        self.img_drop.addItems(img_dropdown)
+        self.img_drop.addItems(img)
         layout.addRow(self.img_lb, self.img_drop)        # csv
         # mask path
         self.mask_lb = QLabel("Mask")
         self.mask_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.mask_drop = QComboBox()
-        self.mask_drop.addItems(mask_dropdown)
+        self.mask_drop.addItems(mask)
         layout.addRow(self.mask_lb, self.mask_drop)
         # palette random
         self.r_pal_lb = QLabel(
@@ -185,9 +180,6 @@ class WorkflowPage(QWidget):
         # run on init
         self.run(workflow, scaled_df, scalar, input_unit, output_unit)
 
-        print("unit", output_unit, enum_to_unit(output_unit))
-
-
     """ UPDATE PROGRESS BAR """
     def on_progress_update(self, value):
         self.progress.setValue(value)
@@ -197,10 +189,10 @@ class WorkflowPage(QWidget):
         self.download_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #EBBA22; color: white; border-radius: 7px; ")
         self.download_btn.setText("Download Again")
-        download_csv(self.REAL_COORDS, f'{enum_to_workflow(output_unit)}/real_{enum_to_workflow(output_unit)}output_{enum_to_unit(output_unit)}.csv')
-        download_csv(self.RAND_COORDS, f'{enum_to_workflow(output_unit)}/rand_{enum_to_workflow(output_unit)}_output_{enum_to_unit(output_unit)}.csv')
-        self.display_img.save(f'./output/{enum_to_workflow(workflow)}/drawn_{enum_to_workflow(output_unit)}_img.tif')
-        self.hist.save(f'./output/{enum_to_workflow(workflow)}/{enum_to_workflow(output_unit)}_histogram.jpg')
+        download_csv(self.REAL_COORDS, f'{workflow["name"]}/real_{workflow["name"]}output_{enum_to_unit(output_unit)}.csv')
+        download_csv(self.RAND_COORDS, f'{workflow["name"]}/rand_{workflow["name"]}_output_{enum_to_unit(output_unit)}.csv')
+        self.display_img.save(f'./output/{workflow.name}/drawn_{workflow["name"]}_img.tif')
+        self.hist.save(f'./output/{workflow["name"]}/{workflow["name"]}_histogram.jpg')
 
     """ TOGGLE ADV OPTIONS """
     def toggle_adv(self):
@@ -212,8 +204,8 @@ class WorkflowPage(QWidget):
         try:
             prog_wrapper = Progress()
             prog_wrapper.prog.connect(self.on_progress_update)
-
-            if workflow == Workflow.NND:
+            # select workflow
+            if workflow['type'] == Workflow.NND:
                 # run knn
                 self.REAL_COORDS, self.RAND_COORDS = run_nnd(
                     data=scaled_df,
@@ -222,8 +214,7 @@ class WorkflowPage(QWidget):
                     pface_path=self.mask_drop.currentText(),
                     n_rand_to_gen=self.n_coord_ip.text()
                 )
-                print("init rand", self.RAND_COORDS.head())
-
+                # print("init rand", self.RAND_COORDS.head())
             self.progress.setValue(100)
             # create ui scheme
             self.create_visuals(workflow=workflow, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), input_unit=input_unit, output_unit=output_unit, scalar=scalar)
@@ -245,17 +236,17 @@ class WorkflowPage(QWidget):
             self.REAL_COORDS.sort_values('dist', inplace=True)
             hist_df = self.REAL_COORDS['dist']
             cm = sns.color_palette(self.pal_type.currentText(), as_cmap=True)
-            ax.set_title(f'{HIST_TITLES[workflow]} (Real)')
+            ax.set_title(f'{workflow["hist"]["title"]} (Real)')
         elif self.gen_rand_cb.isChecked():
             self.RAND_COORDS.sort_values('dist', inplace=True)
             scaled_rand = pixels_conversion_w_distance(self.RAND_COORDS, scalar)
-            ax.set_title(f'{HIST_TITLES[workflow]} (Rand)')
+            ax.set_title(f'{workflow["hist"]["title"]} (Rand)')
             cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
             hist_df = scaled_rand['dist']
         # draw hist
         n, bins, patches = ax.hist(hist_df, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), color='green')
-        ax.set_xlabel(f'{HIST_X[workflow]} ({enum_to_unit(output_unit)})')
-        ax.set_ylabel("Number of Entries")
+        ax.set_xlabel(f'{workflow["hist"]["x_label"]} ({enum_to_unit(output_unit)})')
+        ax.set_ylabel(workflow["hist"]["y_label"])
         # generate palette
         palette = create_color_pal(n_bins=int(len(n)), palette_type=self.pal_type.currentText())
         r_palette = create_color_pal(n_bins=int(len(n)), palette_type=self.r_pal_type.currentText())

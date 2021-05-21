@@ -89,7 +89,6 @@ def unit_to_enum(val):
 
 """ TURN ENUM INTO UNIT STRING """
 def enum_to_unit(val):
-    print(val, val == Unit.PIXEL)
     if val == Unit.PIXEL:
         return 'px'
     elif val == Unit.NANOMETER:
@@ -101,11 +100,11 @@ def enum_to_unit(val):
     else:
         return 'undefined'
 
-""" TURN ENUM INTO WORKFLOW NAME """
-def enum_to_workflow(val):
-    if val == Workflow.NND:
-        return "nnd"
-    elif val == Workflow.CLUST:
-        return "clust"
-    else:
-        return 'undefined'
+# """ TURN ENUM INTO WORKFLOW NAME """
+# def enum_to_workflow(val):
+#     if val == Workflow.NND:
+#         return "nnd"
+#     elif val == Workflow.CLUST:
+#         return "clust"
+#     else:
+#         return 'undefined'
