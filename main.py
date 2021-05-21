@@ -1,15 +1,15 @@
 # views
 from globals import WORKFLOWS, NAV_ICON
-from home import HomePage
-from typings import Unit, Workflow
+from views.home import HomePage
+from typings import Unit
 from utils import pixels_conversion, unit_to_enum
-from workflow import WorkflowPage
+from views.workflow import WorkflowPage
 # stylesheet
 from styles.stylesheet import styles
 # pyQT5
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import (QWidget, QListWidget, QStackedWidget, QHBoxLayout, QListWidgetItem, QLabel, QApplication)
+from PyQt5.QtWidgets import (QWidget, QListWidget, QStackedWidget, QHBoxLayout, QListWidgetItem, QApplication)
 # general
 import sys
 

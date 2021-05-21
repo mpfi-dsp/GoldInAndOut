@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (QLabel, QRadioButton, QCheckBox, QHBoxLayout, QPush
 # general
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
-from image_viewer import QImageViewer
+from views.image_viewer import QImageViewer
 from functools import partial
 import seaborn as sns
 import cv2
@@ -16,7 +16,7 @@ import cv2
 from globals import PALETTE_OPS
 from typings import Unit, Workflow
 from utils import Progress, create_color_pal, download_csv, pixels_conversion_w_distance, enum_to_unit
-from nnd import run_nnd, draw_length
+from workflows.nnd import run_nnd, draw_length
 
 """ 
 WORKFLOW PAGE

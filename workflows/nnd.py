@@ -143,5 +143,5 @@ def draw_length(nnd_df, bin_counts, img, palette, input_unit=Unit.PIXEL, scalar=
         img = cv2.line(img, particle_1, particle_2, sea_to_rgb(palette[bin_idx]), 5)
     # save image
     if save_img:
-        cv2.imwrite('./output/drawn_nnd_img.jpg', img)
+        cv2.imwrite('../output/drawn_nnd_img.jpg', img)
     return img
