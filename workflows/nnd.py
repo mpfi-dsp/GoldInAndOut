@@ -3,11 +3,11 @@ import numpy as np
 import random
 import math
 import cv2
-
+from sklearn.cluster import AgglomerativeClustering
 from typings import Unit
 
 """ 
-N NEAREST DISTANCE RUN FUNCTION
+WORKFLOW RUN FUNCTION
 _______________________________
 @data: dataframe with coordinates scaled to whatever format desired
 @prog_wrapper: progress bar wrapper element, allows us to track how much time is left in process
@@ -30,35 +30,35 @@ def run_nnd(data, prog_wrapper, img_path="", pface_path="", n_rand_to_gen=None):
         # print(f"The total number of particles inside the p-face are {count}.")
         return coordinates
 
-    """ FIND DIST TO CLOSEST PARTICLE """
-    def distance_to_closest_particle(coord_list):
-        nndlist = []
-        coord_list_len = len(coord_list)
-        for i in range(coord_list_len - 1):
-            # update progress bar
-            prog_wrapper.update_progress(i)
-            small_dist = 10000000000000000000
-            # templist = [og coord (x, y), closest coord (x, y), distance]
-            templist = [0, 0, 0]
-            particle_i = coord_list[i]
-            particle_if = (particle_i[1], particle_i[0])
-            templist[0] = particle_if
-            for j in range(0, coord_list_len - 1):
-                if i is not j:
-                    particle_j = coord_list[j]
-                    particle_jf = (particle_j[1], particle_j[0])
-                    dist = ((particle_jf[0] - particle_if[0]) ** 2) + ((particle_jf[1] - particle_if[1]) ** 2)
-                    dist = math.sqrt(dist)
-                    if dist < small_dist:
-                        small_dist = dist
-                        templist[1] = particle_jf
-                        templist[2] = small_dist
-            nndlist.append(templist)
-
-        return nndlist
-
-    """ N NEAREST DISTANCE """
+    """ NEAREST NEIGHBOR DISTANCE """
     def nnd(coordinate_list, pface_mask=None):
+        """ FIND DIST TO CLOSEST PARTICLE """
+        def distance_to_closest_particle(coord_list):
+            nndlist = []
+            coord_list_len = len(coord_list)
+            for i in range(coord_list_len - 1):
+                # update progress bar
+                prog_wrapper.update_progress(i)
+                small_dist = 10000000000000000000
+                # templist = [og coord (x, y), closest coord (x, y), distance]
+                templist = [0, 0, 0]
+                particle_i = coord_list[i]
+                particle_if = (particle_i[1], particle_i[0])
+                templist[0] = particle_if
+                for j in range(0, coord_list_len - 1):
+                    if i is not j:
+                        particle_j = coord_list[j]
+                        particle_jf = (particle_j[1], particle_j[0])
+                        dist = ((particle_jf[0] - particle_if[0]) ** 2) + ((particle_jf[1] - particle_if[1]) ** 2)
+                        dist = math.sqrt(dist)
+                        if dist < small_dist:
+                            small_dist = dist
+                            templist[1] = particle_jf
+                            templist[2] = small_dist
+                nndlist.append(templist)
+
+            return nndlist
+
         # print("mask", pface_mask, pface_mask.shape)
         print("running nnd")
         real_nndlist = distance_to_closest_particle(coordinate_list)

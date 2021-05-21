@@ -1,7 +1,7 @@
 # pyQT5
 import pandas as pd
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtGui import QImage, QPixmap, QCursor
 from PyQt5.QtWidgets import (QLabel, QRadioButton, QCheckBox, QHBoxLayout, QPushButton, QWidget, QSizePolicy,
                              QFormLayout, QLineEdit,
                              QComboBox, QProgressBar)
@@ -16,6 +16,7 @@ import cv2
 from globals import PALETTE_OPS
 from typings import Unit, Workflow
 from utils import Progress, create_color_pal, download_csv, pixels_conversion_w_distance, enum_to_unit
+from workflows.clust import run_clust
 from workflows.nnd import run_nnd, draw_length
 
 """ 
@@ -82,6 +83,7 @@ class WorkflowPage(QWidget):
         self.gen_rand_head.setStyleSheet("font-size: 17px; font-weight: 500;")
         self.gen_rand_adv_cb = QRadioButton()
         self.gen_rand_adv_cb.setStyleSheet("font-size: 17px; font-weight: 500; padding-top: 6px;")
+        self.gen_rand_adv_cb.setCursor(QCursor(Qt.PointingHandCursor))
         self.gen_rand_adv_cb.clicked.connect(self.toggle_adv)
         layout.addRow(self.gen_rand_head, self.gen_rand_adv_cb)
         # image path
@@ -145,6 +147,7 @@ class WorkflowPage(QWidget):
         self.image_frame.setStyleSheet("padding-top: 3px; background: white;")
         self.image_frame.setMaximumSize(400, 250)
         self.image_frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.image_frame.setCursor(QCursor(Qt.PointingHandCursor))
         self.image_frame.mouseDoubleClickEvent = lambda event: self.open_large(event, self.display_img)
         # hist
         self.hist_frame = QLabel()
@@ -152,6 +155,7 @@ class WorkflowPage(QWidget):
         self.hist_frame.setMaximumSize(400, 250)
         self.hist_frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.hist_frame.mouseDoubleClickEvent = lambda event: self.open_large(event, self.hist)
+        self.hist_frame.setCursor(QCursor(Qt.PointingHandCursor))
         # container for visualizers
         self.img_cont = QHBoxLayout()
         self.img_cont.addWidget(self.image_frame)
@@ -166,11 +170,13 @@ class WorkflowPage(QWidget):
         self.run_btn = QPushButton('Run Again', self)
         self.run_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #E89C12; color: white; border-radius: 7px; ")
+        self.run_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.run_btn.clicked.connect(partial(self.run, scaled_df, scalar, input_unit, output_unit))
         self.download_btn = QPushButton('Download', self)
         self.download_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #ccc; color: white; border-radius: 7px; ")
         self.download_btn.clicked.connect(partial(self.download, output_unit, workflow))
+        self.download_btn.setCursor(QCursor(Qt.PointingHandCursor))
         btn_r = QHBoxLayout()
         btn_r.addWidget(self.run_btn)
         btn_r.addWidget(self.download_btn)
@@ -214,6 +220,8 @@ class WorkflowPage(QWidget):
                     pface_path=self.mask_drop.currentText(),
                     n_rand_to_gen=self.n_coord_ip.text()
                 )
+            elif workflow['type'] == Workflow.CLUST:
+                run_clust(scaled_df, )
                 # print("init rand", self.RAND_COORDS.head())
             self.progress.setValue(100)
             # create ui scheme

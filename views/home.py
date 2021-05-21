@@ -1,12 +1,14 @@
 # pyQT5
+from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import (QLabel, QFileDialog, QSpacerItem, QCheckBox, QHBoxLayout, QPushButton, QWidget,
                              QSizePolicy, QFormLayout, QLineEdit, QColorDialog, QComboBox, QProgressBar)
+from PyQt5.QtCore import Qt
 # general
 from pathlib import Path
 from functools import partial
 from colorthief import ColorThief
 # utils
-from globals import UNIT_OPS
+from globals import UNIT_OPS, WORKFLOWS
 from typings import FileType
 from utils import get_complimentary_color, pixels_conversion
 
@@ -39,6 +41,7 @@ class HomePage(QWidget):
 
         # img btn
         self.img_btn = QPushButton('Upload Image', self)
+        self.img_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.img_btn.clicked.connect(partial(self.open_file_picker, FileType.IMAGE))
         # img input
         self.img_le = QLineEdit()
@@ -48,6 +51,7 @@ class HomePage(QWidget):
 
         # mask btn
         self.mask_btn = QPushButton('Upload Mask', self)
+        self.mask_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.mask_btn.clicked.connect(partial(self.open_file_picker,  FileType.MASK))
         # mask input
         self.mask_le = QLineEdit()
@@ -61,6 +65,7 @@ class HomePage(QWidget):
 
         # csv btn
         self.csv_btn = QPushButton('Upload CSV', self)
+        self.csv_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.csv_btn.clicked.connect(partial(self.open_file_picker, FileType.CSV))
         # csv input
         self.csv_le = QLineEdit()
@@ -70,6 +75,7 @@ class HomePage(QWidget):
 
         # csv2 btn
         self.csv2_btn = QPushButton('Upload CSV2', self)
+        self.csv2_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.csv2_btn.clicked.connect(partial(self.open_file_picker, FileType.CSV2))
         # csv2 input
         self.csv2_le = QLineEdit()
@@ -85,18 +91,16 @@ class HomePage(QWidget):
         layout.addRow(workflows_header)
 
         # workflows
-        self.annotate_particles_cb = QCheckBox("Workflow 1")
-
-        self.nnd_cb = QCheckBox("Nearest Neighbor Distance")
-        self.nnd_cb.setChecked(True)
+        self.w1_cb = QCheckBox(WORKFLOWS[0]['header'])
+        self.w1_cb.setChecked(True)
+        self.w2_cb = QCheckBox(WORKFLOWS[1]['header'])
+        self.w2_cb.setChecked(True)
         # TODO: enable other workflows
-        self.calc_dens_cb = QCheckBox("Workflow 3")
+        # self.w3_cb = QCheckBox(WORKFLOWS[2]['header'])
+        # self.w4_cb = QCheckBox(WORKFLOWS[3]['header'])
 
-        self.output_files_cb = QCheckBox("Workflow 4")
-
-        layout.addRow(self.annotate_particles_cb, self.nnd_cb)
-        layout.addRow(self.calc_dens_cb, self.output_files_cb)
-
+        layout.addRow(self.w1_cb, self.w2_cb)
+        # layout.addRow(self.w3_cb, self.w4_cb)
         layout.addItem(spacer)
 
         # props header
@@ -135,6 +139,7 @@ class HomePage(QWidget):
         self.start_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; background: #E89C12; color: white; border-radius: 7px; ")
         self.start_btn.clicked.connect(start)
+        self.start_btn.setCursor(QCursor(Qt.PointingHandCursor))
         layout.addRow(self.start_btn)
 
         # assign layout
