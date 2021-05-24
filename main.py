@@ -8,7 +8,7 @@ from views.workflow import WorkflowPage
 from styles.stylesheet import styles
 # pyQT5
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QCursor
 from PyQt5.QtWidgets import (QWidget, QListWidget, QStackedWidget, QHBoxLayout, QListWidgetItem, QApplication)
 # general
 import sys
@@ -41,6 +41,7 @@ class MainWindow(QWidget):
         self.nav_list.setFrameShape(QListWidget.NoFrame)
         self.nav_list.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.nav_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.nav_list.setCursor(QCursor(Qt.PointingHandCursor))
         # add main page to nav
         item = QListWidgetItem(
             NAV_ICON, str("Main"), self.nav_list)
@@ -66,7 +67,6 @@ class MainWindow(QWidget):
         ou = unit_to_enum(self.home_page.op_scalar_type.currentText() if self.home_page.op_scalar_type.currentText() is not None else 'px')
         # scalar
         s = float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1)
-
         # add page tabs
         for i in range(len(WORKFLOWS)):
             self.on_progress_update(i * 20)
@@ -75,7 +75,7 @@ class MainWindow(QWidget):
             item.setSizeHint(QSize(60, 60))
             item.setTextAlignment(Qt.AlignCenter)
             # generate workflow page
-            print(WORKFLOWS[i])
+            # print(WORKFLOWS[i])
             self.page_stack.addWidget(
                 WorkflowPage(scaled_df=self.SCALED_DF,
                              workflow=WORKFLOWS[i],

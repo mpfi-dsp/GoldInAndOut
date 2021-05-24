@@ -1,5 +1,5 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QImage, QPixmap, QPalette, QPainter, QIcon
+from PyQt5.QtCore import Qt, QEvent
+from PyQt5.QtGui import QImage, QPixmap, QPalette, QPainter, QIcon, QCursor
 from PyQt5.QtPrintSupport import QPrintDialog, QPrinter
 from PyQt5.QtWidgets import QLabel, QSizePolicy, QScrollArea, QMessageBox, QMainWindow, QMenu, QAction, \
     qApp, QFileDialog
@@ -24,6 +24,10 @@ class QImageViewer(QMainWindow):
         self.image_lb.setBackgroundRole(QPalette.Base)
         self.image_lb.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
         self.image_lb.setScaledContents(True)
+        self.image_lb.setAlignment(Qt.AlignCenter)
+        self.image_lb.setCursor(QCursor(Qt.SizeAllCursor))
+        # scroll mousewheel to zoom event
+        self.image_lb.installEventFilter(self)
 
         self.scroll_area = QScrollArea()
         self.scroll_area.setBackgroundRole(QPalette.Dark)
@@ -39,6 +43,18 @@ class QImageViewer(QMainWindow):
         self.setWindowIcon(QIcon('../assets/logo.jpg'))
         self.resize(800, 600)
         self.open(img)
+
+    def eventFilter(self, source, event):
+        if (source == self.image_lb and event.type() == QEvent.Wheel):
+            if event.angleDelta().y() > 0:
+                self.scale_image(1.25)
+            else:
+                self.scale_image(0.8)
+            # do not propagate the event to the scroll area scrollbars
+            return True
+        elif event.type() == QEvent.GraphicsSceneMousePress:
+            print("press mousewheel")
+        return super().eventFilter(source, event)
 
     def save(self):
         print("save file")

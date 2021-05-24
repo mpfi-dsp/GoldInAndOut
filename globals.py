@@ -22,6 +22,7 @@ WORKFLOWS = [{
         "title": "Distances Between Nearest Neighbors",
         "x_label": "Nearest Neighbor Distance",
         "y_label": "Number of Entries",
+        "x_type": "dist"
     }
 },
 {
@@ -30,9 +31,10 @@ WORKFLOWS = [{
     "header": "Ward Hierarchical Clustering",
     "desc": "Cluster gold particles into groups. Optionally generate random coordinates.",
     "hist": {
-            "title": "Distances Between Nearest Neighbors",
-            "x_label": "Nearest Neighbor Distance",
+            "title": "Ward Hierarchical Clusters",
+            "x_label": "Cluster Value",
             "y_label": "Number of Entries",
+            "x_type": "cluster"
         }
 }
 ]

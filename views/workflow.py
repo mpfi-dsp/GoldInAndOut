@@ -16,8 +16,9 @@ import cv2
 from globals import PALETTE_OPS
 from typings import Unit, Workflow
 from utils import Progress, create_color_pal, download_csv, pixels_conversion_w_distance, enum_to_unit
-from workflows.clust import run_clust
+from workflows.clust import run_clust, draw_clust
 from workflows.nnd import run_nnd, draw_length
+from workflows.random import gen_random_coordinates
 
 """ 
 WORKFLOW PAGE
@@ -38,8 +39,11 @@ __________________
 @output_unit: metric output unit
 @scalar: multiplier ratio between input metric unit (usually pixels) and desired output metric unit
 """
+
+
 class WorkflowPage(QWidget):
-    def __init__(self, scaled_df, workflow=None, img=None, mask=None, csv=None, input_unit=Unit.PIXEL, output_unit=Unit.PIXEL, scalar=1):
+    def __init__(self, scaled_df, workflow=None, img=None, mask=None, csv=None, input_unit=Unit.PIXEL,
+                 output_unit=Unit.PIXEL, scalar=1):
         super().__init__()
 
         self.OUTPUT_DF = pd.DataFrame()
@@ -91,7 +95,7 @@ class WorkflowPage(QWidget):
         self.img_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.img_drop = QComboBox()
         self.img_drop.addItems(img)
-        layout.addRow(self.img_lb, self.img_drop)        # csv
+        layout.addRow(self.img_lb, self.img_drop)  # csv
         # mask path
         self.mask_lb = QLabel("Mask")
         self.mask_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
@@ -116,7 +120,8 @@ class WorkflowPage(QWidget):
         self.n_coord_ip.setPlaceholderText("default is # in real csv")
         layout.addRow(self.n_coord_lb, self.n_coord_ip)
         # set adv hidden by default
-        for prop in [self.img_lb, self.img_drop, self.mask_lb, self.mask_drop, self.n_coord_lb, self.n_coord_ip, self.r_pal_type, self.r_pal_lb]:
+        for prop in [self.img_lb, self.img_drop, self.mask_lb, self.mask_drop, self.n_coord_lb, self.n_coord_ip,
+                     self.r_pal_type, self.r_pal_lb]:
             prop.setHidden(True)
         # output header
         self.out_header = QLabel("Output")
@@ -171,7 +176,7 @@ class WorkflowPage(QWidget):
         self.run_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #E89C12; color: white; border-radius: 7px; ")
         self.run_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.run_btn.clicked.connect(partial(self.run, scaled_df, scalar, input_unit, output_unit))
+        self.run_btn.clicked.connect(partial(self.run, workflow, scaled_df, scalar, input_unit, output_unit))
         self.download_btn = QPushButton('Download', self)
         self.download_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #ccc; color: white; border-radius: 7px; ")
@@ -195,14 +200,22 @@ class WorkflowPage(QWidget):
         self.download_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #EBBA22; color: white; border-radius: 7px; ")
         self.download_btn.setText("Download Again")
-        download_csv(self.REAL_COORDS, f'{workflow["name"]}/real_{workflow["name"]}output_{enum_to_unit(output_unit)}.csv')
-        download_csv(self.RAND_COORDS, f'{workflow["name"]}/rand_{workflow["name"]}_output_{enum_to_unit(output_unit)}.csv')
-        self.display_img.save(f'./output/{workflow.name}/drawn_{workflow["name"]}_img.tif')
-        self.hist.save(f'./output/{workflow["name"]}/{workflow["name"]}_histogram.jpg')
+        try:
+            if self.gen_real_cb.isChecked():
+                download_csv(self.real_df,
+                             f'{workflow["name"].lower()}/real_{workflow["name"].lower()}_output_{enum_to_unit(output_unit)}.csv')
+            if self.gen_rand_cb.isChecked():
+                download_csv(self.rand_df,
+                             f'{workflow["name"].lower()}/rand_{workflow["name"].lower()}_output_{enum_to_unit(output_unit)}.csv')
+            self.display_img.save(f'./output/{workflow["name"].lower()}/drawn_{workflow["name"].lower()}_img.tif')
+            self.hist.save(f'./output/{workflow["name"].lower()}/{workflow["name"].lower()}_histogram.jpg')
+        except Exception as e:
+            print(e)
 
     """ TOGGLE ADV OPTIONS """
     def toggle_adv(self):
-        for prop in [self.img_lb, self.img_drop, self.mask_lb, self.mask_drop, self.n_coord_lb, self.n_coord_ip, self.r_pal_type, self.r_pal_lb]:
+        for prop in [self.img_lb, self.img_drop, self.mask_lb, self.mask_drop, self.n_coord_lb, self.n_coord_ip,
+                     self.r_pal_type, self.r_pal_lb]:
             prop.setVisible(not prop.isVisible())
 
     """ RUN WORKFLOW """
@@ -210,22 +223,23 @@ class WorkflowPage(QWidget):
         try:
             prog_wrapper = Progress()
             prog_wrapper.prog.connect(self.on_progress_update)
+
+            # generate random coords
+            random_coords = gen_random_coordinates(
+                data=scaled_df, img_path=self.img_drop.currentText(),
+                                                   pface_path=self.mask_drop.currentText(),
+                                                   n_rand_to_gen=int(self.n_coord_ip.text()) if self.n_coord_ip.text() else len(scaled_df.index))
+
             # select workflow
-            if workflow['type'] == Workflow.NND:
-                # run knn
-                self.REAL_COORDS, self.RAND_COORDS = run_nnd(
-                    data=scaled_df,
-                    prog_wrapper=prog_wrapper,
-                    img_path=self.img_drop.currentText(),
-                    pface_path=self.mask_drop.currentText(),
-                    n_rand_to_gen=self.n_coord_ip.text()
-                )
-            elif workflow['type'] == Workflow.CLUST:
-                run_clust(scaled_df, )
-                # print("init rand", self.RAND_COORDS.head())
+            if workflow["type"] == Workflow.NND:
+                self.real_df, self.rand_df = run_nnd(data=scaled_df, prog=prog_wrapper, random_coordinate_list=random_coords)
+            elif workflow["type"] == Workflow.CLUST:
+                self.real_df, self.rand_df = run_clust(scaled_df, prog=prog_wrapper, distance_threshold=120)
+
             self.progress.setValue(100)
             # create ui scheme
-            self.create_visuals(workflow=workflow, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), input_unit=input_unit, output_unit=output_unit, scalar=scalar)
+            self.create_visuals(workflow=workflow, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'),
+                                input_unit=input_unit, output_unit=output_unit, scalar=scalar)
             self.download_btn.setStyleSheet(
                 "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
         except Exception as e:
@@ -241,16 +255,16 @@ class WorkflowPage(QWidget):
         ax = fig.add_subplot(111)
         # create hist
         if self.gen_real_cb.isChecked():
-            self.REAL_COORDS.sort_values('dist', inplace=True)
-            hist_df = self.REAL_COORDS['dist']
+            self.real_df.sort_values(workflow["hist"]["x_type"], inplace=True)
+            hist_df = self.real_df[workflow["hist"]["x_type"]]
             cm = sns.color_palette(self.pal_type.currentText(), as_cmap=True)
             ax.set_title(f'{workflow["hist"]["title"]} (Real)')
         elif self.gen_rand_cb.isChecked():
-            self.RAND_COORDS.sort_values('dist', inplace=True)
-            scaled_rand = pixels_conversion_w_distance(self.RAND_COORDS, scalar)
+            self.rand_df.sort_values(workflow["hist"]["x_type"], inplace=True)
+            scaled_rand = pixels_conversion_w_distance(self.rand_df, scalar)
             ax.set_title(f'{workflow["hist"]["title"]} (Rand)')
             cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
-            hist_df = scaled_rand['dist']
+            hist_df = scaled_rand[workflow["hist"]["x_type"]]
         # draw hist
         n, bins, patches = ax.hist(hist_df, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), color='green')
         ax.set_xlabel(f'{workflow["hist"]["x_label"]} ({enum_to_unit(output_unit)})')
@@ -275,14 +289,22 @@ class WorkflowPage(QWidget):
         self.hist_frame.setPixmap(smaller_pixmap)
         # load in image
         drawn_img = cv2.imread(self.img_drop.currentText())
-        # if real coords selected, annotate them on img with lines indicating length
-        if self.gen_real_cb.isChecked():
-            drawn_img = draw_length(nnd_df=self.REAL_COORDS, bin_counts=n, img=drawn_img,  palette=palette, input_unit=input_unit,
-                                    scalar=scalar, circle_c=(103, 114, 0))
-        # if rand coords selected, annotate them on img with lines indicating length
-        if self.gen_rand_cb.isChecked():
-            drawn_img = draw_length(nnd_df=self.RAND_COORDS, bin_counts=n, img=drawn_img, palette=r_palette, input_unit=input_unit,
-                                    scalar=1, circle_c=(18, 156, 232))
+
+        if workflow["type"] == Workflow.NND:
+            # if real coords selected, annotate them on img with lines indicating length
+            if self.gen_real_cb.isChecked():
+                drawn_img = draw_length(nnd_df=self.real_df, bin_counts=n, img=drawn_img, palette=palette,
+                                        input_unit=input_unit,
+                                        scalar=scalar, circle_c=(103, 114, 0))
+            # if rand coords selected, annotate them on img with lines indicating length
+            if self.gen_rand_cb.isChecked():
+                drawn_img = draw_length(nnd_df=self.rand_df, bin_counts=n, img=drawn_img, palette=r_palette,
+                                        input_unit=input_unit,
+                                        scalar=1, circle_c=(18, 156, 232))
+        elif workflow["type"] == Workflow.CLUST:
+            if self.gen_real_cb.isChecked():
+                drawn_img = draw_clust(cluster_df=self.real_df, img=drawn_img, palette=palette, scalar=scalar)
+
         # set display img to annotated image
         self.display_img = QImage(drawn_img.data, drawn_img.shape[1], drawn_img.shape[0],
                                   QImage.Format_RGB888).rgbSwapped()
