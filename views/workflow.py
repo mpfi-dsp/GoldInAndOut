@@ -232,9 +232,9 @@ class WorkflowPage(QWidget):
 
             # select workflow
             if workflow["type"] == Workflow.NND:
-                self.real_df, self.rand_df = run_nnd(data=scaled_df, prog=prog_wrapper, random_coordinate_list=random_coords)
+                self.real_df, self.rand_df = run_nnd(df=scaled_df, prog=prog_wrapper, random_coordinate_list=random_coords)
             elif workflow["type"] == Workflow.CLUST:
-                self.real_df, self.rand_df = run_clust(scaled_df, prog=prog_wrapper, distance_threshold=120)
+                self.real_df, self.rand_df = run_clust(df=scaled_df, random_coordinate_list=random_coords, prog=prog_wrapper, distance_threshold=120)
 
             self.progress.setValue(100)
             # create ui scheme
@@ -304,7 +304,8 @@ class WorkflowPage(QWidget):
         elif workflow["type"] == Workflow.CLUST:
             if self.gen_real_cb.isChecked():
                 drawn_img = draw_clust(cluster_df=self.real_df, img=drawn_img, palette=palette, scalar=scalar)
-
+            if self.gen_rand_cb.isChecked():
+                drawn_img = draw_clust(cluster_df=self.rand_df, img=drawn_img, palette=r_palette, scalar=scalar)
         # set display img to annotated image
         self.display_img = QImage(drawn_img.data, drawn_img.shape[1], drawn_img.shape[0],
                                   QImage.Format_RGB888).rgbSwapped()
@@ -314,6 +315,9 @@ class WorkflowPage(QWidget):
         self.image_frame.setPixmap(smaller_pixmap)
 
     """ OPEN IMAGE IN VIEWER """
-    def open_large(self, event, file):
-        self.image_viewer = QImageViewer(file)
-        self.image_viewer.show()
+    def open_large(self, event, img):
+        try:
+            self.image_viewer = QImageViewer(img)
+            self.image_viewer.show()
+        except Exception as e:
+            print(e)

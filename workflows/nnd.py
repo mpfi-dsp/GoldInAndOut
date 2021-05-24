@@ -7,11 +7,11 @@ from typings import Unit
 """ 
 NND RUN FUNCTION
 _______________________________
-@data: dataframe with coordinates scaled to whatever format desired
+@df: dataframe with coordinates scaled to whatever format desired
 @prog: progress bar wrapper element, allows us to track how much time is left in process
 @random_coordinate_list: list of randomly generated coordinates
 """
-def run_nnd(data, prog, random_coordinate_list):
+def run_nnd(df, prog, random_coordinate_list):
     """ NEAREST NEIGHBOR DISTANCE """
     def nnd(coordinate_list, random_coordinate_list):
         """ FIND DIST TO CLOSEST PARTICLE """
@@ -62,8 +62,8 @@ def run_nnd(data, prog, random_coordinate_list):
         return clean_real_df, clean_rand_df
 
     """ START """
-    x_coordinates = np.array(data['X'])
-    y_coordinates = np.array(data['Y'])
+    x_coordinates = np.array(df['X'])
+    y_coordinates = np.array(df['Y'])
     real_coordinates = []
     for i in range(len(x_coordinates)):
         real_coordinates.append((float(y_coordinates[i]), float(x_coordinates[i])))
