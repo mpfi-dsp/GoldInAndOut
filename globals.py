@@ -12,6 +12,9 @@ Array of JSON objects containing the following data:
         @title: title of histogram
         @x_label: x_label of histogram
         @y_label: y_label of histogram
+    @props: array of optional parameters in the following format:
+        @title: title of prop
+        @placeholder: placeholder for prop label
 """
 WORKFLOWS = [{
     "name": "NND",
@@ -23,7 +26,8 @@ WORKFLOWS = [{
         "x_label": "Nearest Neighbor Distance",
         "y_label": "Number of Entries",
         "x_type": "dist"
-    }
+    },
+    "props": [ ]
 },
 {
     "name": "CLUST",
@@ -35,7 +39,19 @@ WORKFLOWS = [{
             "x_label": "Cluster Value",
             "y_label": "Number of Entries",
             "x_type": "cluster"
-        }
+        },
+    "props": [
+            {
+            "title": "distance_threshold",
+              "placeholder": "120"
+            },
+            {"title": "n_clusters",
+             "placeholder": "5"
+             },
+            {  "title": "linkage",
+              "placeholder": "ward"
+            }
+        ]
 }
 ]
 

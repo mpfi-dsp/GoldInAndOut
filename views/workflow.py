@@ -57,54 +57,84 @@ class WorkflowPage(QWidget):
         desc.setWordWrap(True)
         layout.addRow(desc)
 
-        """ PARAMETERS """
+        """ REUSABLE PARAMETERS """
         self.workflows_header = QLabel("Parameters")
         layout.addRow(self.workflows_header)
+
+        if len(workflow['props']) > 0:
+            self.p1_l = QLabel(workflow['props'][0]['title'])
+            self.p1_l.setStyleSheet("font-size: 17px; font-weight: 400;")
+            self.p1_ip = QLineEdit()
+            self.p1_ip.setPlaceholderText(workflow['props'][0]['placeholder'])
+            layout.addRow(self.p1_l, self.p1_ip)
+
+        if len(workflow['props']) > 1:
+            self.p2_l = QLabel(workflow['props'][1]['title'])
+            self.p2_l.setStyleSheet("font-size: 17px; font-weight: 400;")
+            self.p2_ip = QLineEdit()
+            self.p2_ip.setPlaceholderText(workflow['props'][1]['placeholder'])
+            layout.addRow(self.p2_l, self.p2_ip)
+
+        if len(workflow['props']) > 2:
+            self.p3_l = QLabel(workflow['props'][2]['title'])
+            self.p3_l.setStyleSheet("font-size: 17px; font-weight: 400;")
+            self.p3_ip = QLineEdit()
+            self.p3_ip.setPlaceholderText(workflow['props'][2]['placeholder'])
+            layout.addRow(self.p3_l, self.p3_ip)
+
+        """ REAL COORDS SECTION """
+        self.gen_head = QLabel("Real Coordinates")
+        self.gen_head.setStyleSheet("font-size: 17px; font-weight: 500; padding: 0px; margin: 0px;")
+        self.gen_head_cb = QRadioButton()
+        self.gen_head_cb.setCursor(QCursor(Qt.PointingHandCursor))
+        self.gen_head_cb.clicked.connect(self.toggle_gen_adv)
+        layout.addRow(self.gen_head, self.gen_head_cb)
         # csv
-        self.csv_lb = QLabel("CSV")
+        self.csv_lb = QLabel("csv")
         self.csv_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.csv_drop = QComboBox()
         self.csv_drop.addItems(csv)
         layout.addRow(self.csv_lb, self.csv_drop)
         # num bins
         self.bars_lb = QLabel(
-            '<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.hist.html"># Bins in Histogram</a>')
+            '<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.hist.html"># hist bins</a>')
         self.bars_lb.setOpenExternalLinks(True)
         self.bars_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.bars_ip = QLineEdit()
         self.bars_ip.setPlaceholderText("10 OR [1, 2, 3, 4] OR 'fd'")
         layout.addRow(self.bars_lb, self.bars_ip)
         # color palette
-        self.pal_lb = QLabel('<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">Color Palette</a>')
+        self.pal_lb = QLabel('<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">color palette</a>')
         self.pal_lb.setOpenExternalLinks(True)
         self.pal_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.pal_type = QComboBox()
         self.pal_type.addItems(PALETTE_OPS)
         layout.addRow(self.pal_lb, self.pal_type)
+        for prop in [self.csv_lb, self.csv_drop, self.pal_lb, self.pal_type, self.bars_lb, self.bars_ip]:
+            prop.setHidden(True)
 
-        """ ADVANCED: RANDOM COORDS SECTION """
-        self.gen_rand_head = QLabel("Advanced: Generate Rand Coords")
-        self.gen_rand_head.setStyleSheet("font-size: 17px; font-weight: 500;")
+        """ RANDOM COORDS SECTION """
+        self.gen_rand_head = QLabel("Random Coordinates")
+        self.gen_rand_head.setStyleSheet("font-size: 17px; font-weight: 500; padding: 0px; margin: 0px;")
         self.gen_rand_adv_cb = QRadioButton()
-        self.gen_rand_adv_cb.setStyleSheet("font-size: 17px; font-weight: 500; padding-top: 6px;")
         self.gen_rand_adv_cb.setCursor(QCursor(Qt.PointingHandCursor))
-        self.gen_rand_adv_cb.clicked.connect(self.toggle_adv)
+        self.gen_rand_adv_cb.clicked.connect(self.toggle_rand_adv)
         layout.addRow(self.gen_rand_head, self.gen_rand_adv_cb)
         # image path
-        self.img_lb = QLabel("Image")
+        self.img_lb = QLabel("image")
         self.img_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.img_drop = QComboBox()
         self.img_drop.addItems(img)
         layout.addRow(self.img_lb, self.img_drop)  # csv
         # mask path
-        self.mask_lb = QLabel("Mask")
+        self.mask_lb = QLabel("mask")
         self.mask_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.mask_drop = QComboBox()
         self.mask_drop.addItems(mask)
         layout.addRow(self.mask_lb, self.mask_drop)
         # palette random
         self.r_pal_lb = QLabel(
-            '<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">Rand Coords Color Palette</a>')
+            '<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">rand color palette</a>')
         self.r_pal_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.r_pal_lb.setOpenExternalLinks(True)
         self.r_pal_type = QComboBox()
@@ -112,11 +142,11 @@ class WorkflowPage(QWidget):
         self.r_pal_type.setCurrentText('crest')
         layout.addRow(self.r_pal_lb, self.r_pal_type)
         # num coords to gen
-        self.n_coord_lb = QLabel("# Random Coordinates To Generate")
+        self.n_coord_lb = QLabel("# of coords")
         self.n_coord_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.n_coord_ip = QLineEdit()
         self.n_coord_ip.setStyleSheet(
-            "font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 200px;")
+            "font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; ") # max-width: 200px;
         self.n_coord_ip.setPlaceholderText("default is # in real csv")
         layout.addRow(self.n_coord_lb, self.n_coord_ip)
         # set adv hidden by default
@@ -132,12 +162,12 @@ class WorkflowPage(QWidget):
         self.out_desc.setWordWrap(True)
         layout.addRow(self.out_desc)
         # real
-        self.gen_real_lb = QLabel("Display Real Coords")
+        self.gen_real_lb = QLabel("display real coords")
         self.gen_real_lb.setStyleSheet("margin-left: 50px; font-size: 17px; font-weight: 400;")
         self.gen_real_cb = QCheckBox()
         self.gen_real_cb.setChecked(True)
         # rand
-        self.gen_rand_lb = QLabel("Display Random Coords")
+        self.gen_rand_lb = QLabel("display random coords")
         self.gen_rand_lb.setStyleSheet("margin-left: 50px; font-size: 17px; font-weight: 400;")
         self.gen_rand_cb = QCheckBox()
         # cb row
@@ -212,8 +242,14 @@ class WorkflowPage(QWidget):
         except Exception as e:
             print(e)
 
-    """ TOGGLE ADV OPTIONS """
-    def toggle_adv(self):
+    """ TOGGLE GENERAL ADV OPTIONS """
+
+    def toggle_gen_adv(self):
+        for prop in [self.csv_lb, self.csv_drop, self.pal_lb, self.pal_type, self.bars_lb, self.bars_ip]:
+            prop.setVisible(not prop.isVisible())
+
+    """ TOGGLE RAND ADV OPTIONS """
+    def toggle_rand_adv(self):
         for prop in [self.img_lb, self.img_drop, self.mask_lb, self.mask_drop, self.n_coord_lb, self.n_coord_ip,
                      self.r_pal_type, self.r_pal_lb]:
             prop.setVisible(not prop.isVisible())

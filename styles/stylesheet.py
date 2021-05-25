@@ -96,16 +96,23 @@ padding-bottom: 10px;
 color: black;
 }
 
-QToolBar {
-	background-color: rgb(230, 230, 230);
-	spacing: 3px;
-	padding: 2px;
+QRadioButton {
+font-size: 17px; 
+font-weight: 500; 
+padding-top: 6px;
+margin:  0px;
 }
 
-QMenu {
-background-color: rgb(230, 230, 230);
-spacing: 3px;
-padding: 2px;
-color: black;
-}
 """
+# QToolBar {
+# 	background-color: rgb(230, 230, 230);
+# 	spacing: 3px;
+# 	padding: 2px;
+# }
+#
+# QMenu {
+# background-color: rgb(230, 230, 230);
+# spacing: 3px;
+# padding: 2px;
+# color: black;
+# }

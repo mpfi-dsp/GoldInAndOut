@@ -1,9 +1,7 @@
 import pandas as pd
 from sklearn.cluster import AgglomerativeClustering
-import matplotlib.pyplot as plt
 import numpy as np
 import cv2
-
 from utils import create_color_pal
 
 """
