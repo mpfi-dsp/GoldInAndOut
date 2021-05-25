@@ -95,4 +95,17 @@ padding-top: 5px;
 padding-bottom: 10px;
 color: black;
 }
+
+QToolBar {
+	background-color: rgb(230, 230, 230);
+	spacing: 3px;
+	padding: 2px;
+}
+
+QMenu {
+background-color: rgb(230, 230, 230);
+spacing: 3px;
+padding: 2px;
+color: black;
+}
 """
