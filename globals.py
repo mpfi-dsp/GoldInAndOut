@@ -47,4 +47,4 @@ UNIT_OPS = ['px', 'nm', 'μm', 'metric']
 
 
 """ NAVBAR ICON """
-NAV_ICON = QIcon('foo.jpg')
+NAV_ICON = QIcon('foo.png')

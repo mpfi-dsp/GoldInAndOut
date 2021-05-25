@@ -6,14 +6,11 @@ from PyQt5.QtWidgets import QLabel, QSizePolicy, QScrollArea, QMessageBox, QMain
     QHBoxLayout, QFrame, QToolBar, QPushButton
 
 
-class QImageViewer(QGraphicsView):
+class QPhotoViewer(QGraphicsView):
     photoClicked = pyqtSignal(QPoint)
 
-    def __init__(self, img):
-        super(QImageViewer, self).__init__()
-        
-        self.img = img
-        
+    def __init__(self):
+        super(QPhotoViewer, self).__init__()
         self._zoom = 0
         self._empty = True
         self._scene = QGraphicsScene(self)
@@ -24,20 +21,10 @@ class QImageViewer(QGraphicsView):
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setBackgroundBrush(QBrush(QColor(100, 100, 100)))
+        self.setBackgroundBrush(QBrush(QColor(240,240,240)))
         self.setFrameShape(QFrame.NoFrame)
 
-        self.toolbar = QToolBar()
-        self.create_actions()
-        self.create_menus()
-
-        self.setWindowTitle("EM Image Viewer")
-        self.setWindowIcon(QIcon('./assets/logo.jpg'))
-        self.resize(800, 800)
-
-        self.printer = QPrinter()
-
-        self.setPhoto(QPixmap(img))
+        # self.setPhoto(QPixmap(img))
 
     def hasPhoto(self):
         return not self._empty
@@ -68,9 +55,6 @@ class QImageViewer(QGraphicsView):
             self._photo.setPixmap(QPixmap())
         self.fitInView()
 
-        # self.print_act.setEnabled(True)
-        # self.update_actions()
-
     def wheelEvent(self, event):
         if self.hasPhoto():
             if event.angleDelta().y() > 0:
@@ -95,13 +79,46 @@ class QImageViewer(QGraphicsView):
     def mousePressEvent(self, event):
         if self._photo.isUnderMouse():
             self.photoClicked.emit(self.mapToScene(event.pos()).toPoint())
-        super(QImageViewer, self).mousePressEvent(event)
+        super(QPhotoViewer, self).mousePressEvent(event)
+
+    def increment_zoom(self):
+        self._zoom += 1
+        self.scale(1.25, 1.25)
+
+    def decrement_zoom(self):
+        self._zoom -= 1
+        self.scale(0.8, 0.8)
+
+
+class QImageViewer(QWidget):
+    def __init__(self, img):
+        super(QImageViewer, self).__init__()
+        self.viewer = QPhotoViewer()
+
+        self.setWindowTitle("EM Image Viewer")
+        self.setWindowIcon(QIcon('./assets/logo.png'))
+        self.resize(800, 800)
+
+        self.img = img
+        self.printer = QPrinter()
+        self.viewer.setPhoto(QPixmap(img))
+
+        self.toolbar = QToolBar()
+        self.create_actions()
+        self.create_menus()
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.toolbar)
+        layout.addWidget(self.viewer)
+
+        self.viewer.fitInView(True)
+
 
     def save(self):
         print("save file")
         options = QFileDialog.Options()
         # options |= QFileDialog.DontUseNativeDialog
-        path, _ = QFileDialog.getSaveFileName(self, "Save File", "output_file.png", "All Files(*);;", options=options)
+        path, _ = QFileDialog.getSaveFileName(self, "Save File", "output_file.tif", "All Files(*);;", options=options)
         print(path)
         if path:
             self.img.save(path)
@@ -118,22 +135,20 @@ class QImageViewer(QGraphicsView):
             painter.drawPixmap(0, 0, self._photo.pixmap())
 
     def zoom_in(self):
-        self.scale(1.25, 1.25)
-        self._zoom += 1
+        self.viewer.increment_zoom()
 
     def zoom_out(self):
-        self.scale(0.8, 0.8)
-        self._zoom -= 1
-
+        self.viewer.decrement_zoom()
 
     def create_actions(self):
         self.save_act = QAction("&Save...", self, shortcut="Ctrl+S", triggered=self.save)
-        self.print_act = QAction("&Print...", self, shortcut="Ctrl+P", enabled=False, triggered=self.print_)
+        self.print_act = QAction("&Print...", self, shortcut="Ctrl+P", enabled=True, triggered=self.print_)
         self.exit_act = QAction("E&xit", self, shortcut="Ctrl+Q", triggered=self.close)
-        self.zoom_in_act = QAction("Zoom &In (25%)", self, shortcut="Ctrl++", enabled=False, triggered=self.zoom_in)
-        self.zoom_out_act = QAction("Zoom &Out (25%)", self, shortcut="Ctrl+-", enabled=False, triggered=self.zoom_out)
-        self.normal_size_act = QAction("&Normal Size", self, shortcut="Ctrl+S", enabled=False,
-                                       triggered=self.fitInView)
+        self.zoom_in_act = QAction("Zoom &In (25%)", self, shortcut="Ctrl++", enabled=True, triggered=self.zoom_in)
+        self.zoom_out_act = QAction("Zoom &Out (25%)", self, shortcut="Ctrl+-", enabled=True,
+                                    triggered=self.zoom_out)
+        self.normal_size_act = QAction("&Normal Size", self, shortcut="Ctrl+S", enabled=True,
+                                       triggered=self.viewer.fitInView)
         # self.fit_to_window_act = QAction("&Fit to Window", self, enabled=False, checkable=True, shortcut="Ctrl+F",
         #                                  triggered=self.fit_to_window)
 
@@ -154,39 +169,12 @@ class QImageViewer(QGraphicsView):
         file_btn.setMenu(self.file_menu)
         self.file_menu.triggered.connect(lambda action: print(action.text()))
 
-        view_btn = QPushButton("File")
+        view_btn = QPushButton("View")
         view_btn.setMenu(self.view_menu)
         self.file_menu.triggered.connect(lambda action: print(action.text()))
 
         self.toolbar.addWidget(file_btn)
         self.toolbar.addWidget(view_btn)
-
-
-
-
-#
-#
-# class QImageViewer(QWidget):
-#     def __init__(self, img):
-#         super(QImageViewer, self).__init__()
-#         self.viewer = PhotoViewer(self)
-#         # 'Load image' button
-#         self.viewer.setPhoto(QPixmap(img))
-#         # Button to change from drag/pan to getting pixel info
-#         self.btnPixInfo = QToolButton(self)
-#         self.btnPixInfo.setText('Enter pixel info mode')
-#         self.btnPixInfo.clicked.connect(self.pixInfo)
-#         self.editPixInfo = QLineEdit(self)
-#         self.editPixInfo.setReadOnly(True)
-#         self.viewer.photoClicked.connect(self.photoClicked)
-#         # Arrange layout
-#         VBlayout = QVBoxLayout(self)
-#         VBlayout.addWidget(self.viewer)
-#         HBlayout = QHBoxLayout()
-#         HBlayout.setAlignment(Qt.AlignLeft)
-#         HBlayout.addWidget(self.btnPixInfo)
-#         HBlayout.addWidget(self.editPixInfo)
-#         VBlayout.addLayout(HBlayout)
 #
 #     def pixInfo(self):
 #         self.viewer.toggleDragMode()
