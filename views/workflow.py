@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QPixmap, QCursor
 from PyQt5.QtWidgets import (QLabel, QRadioButton, QCheckBox, QHBoxLayout, QPushButton, QWidget, QSizePolicy,
                              QFormLayout, QLineEdit,
-                             QComboBox, QProgressBar)
+                             QComboBox, QProgressBar, QToolButton)
 # general
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
@@ -84,8 +84,9 @@ class WorkflowPage(QWidget):
 
         """ REAL COORDS SECTION """
         self.gen_head = QLabel("Real Coordinates")
-        self.gen_head.setStyleSheet("font-size: 17px; font-weight: 500; padding: 0px; margin: 0px;")
-        self.gen_head_cb = QRadioButton()
+        self.gen_head.setStyleSheet("font-size: 17px; font-weight: 500; padding-top: 0px; padding-bottom: 0px; margin-top: 0px; margin-bottom: 0px;")
+        self.gen_head_cb = QToolButton()
+        self.gen_head_cb.setArrowType(Qt.DownArrow)
         self.gen_head_cb.setCursor(QCursor(Qt.PointingHandCursor))
         self.gen_head_cb.clicked.connect(self.toggle_gen_adv)
         layout.addRow(self.gen_head, self.gen_head_cb)
@@ -115,8 +116,9 @@ class WorkflowPage(QWidget):
 
         """ RANDOM COORDS SECTION """
         self.gen_rand_head = QLabel("Random Coordinates")
-        self.gen_rand_head.setStyleSheet("font-size: 17px; font-weight: 500; padding: 0px; margin: 0px;")
-        self.gen_rand_adv_cb = QRadioButton()
+        self.gen_rand_head.setStyleSheet("font-size: 17px; font-weight: 500; padding-top: 0px; padding-bottom: 0px; margin-top: 0px; margin-bottom: 0px;")
+        self.gen_rand_adv_cb = QToolButton()
+        self.gen_rand_adv_cb.setArrowType(Qt.DownArrow)
         self.gen_rand_adv_cb.setCursor(QCursor(Qt.PointingHandCursor))
         self.gen_rand_adv_cb.clicked.connect(self.toggle_rand_adv)
         layout.addRow(self.gen_rand_head, self.gen_rand_adv_cb)
@@ -245,11 +247,14 @@ class WorkflowPage(QWidget):
     """ TOGGLE GENERAL ADV OPTIONS """
 
     def toggle_gen_adv(self):
+        print(self.gen_head_cb.arrowType())
+        self.gen_head_cb.setArrowType(Qt.UpArrow if self.gen_head_cb.arrowType() == Qt.DownArrow else Qt.DownArrow)
         for prop in [self.csv_lb, self.csv_drop, self.pal_lb, self.pal_type, self.bars_lb, self.bars_ip]:
             prop.setVisible(not prop.isVisible())
 
     """ TOGGLE RAND ADV OPTIONS """
     def toggle_rand_adv(self):
+        self.gen_rand_adv_cb.setArrowType(Qt.UpArrow if self.gen_rand_adv_cb.arrowType() == Qt.DownArrow else Qt.DownArrow)
         for prop in [self.img_lb, self.img_drop, self.mask_lb, self.mask_drop, self.n_coord_lb, self.n_coord_ip,
                      self.r_pal_type, self.r_pal_lb]:
             prop.setVisible(not prop.isVisible())
