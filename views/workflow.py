@@ -247,7 +247,6 @@ class WorkflowPage(QWidget):
     """ TOGGLE GENERAL ADV OPTIONS """
 
     def toggle_gen_adv(self):
-        print(self.gen_head_cb.arrowType())
         self.gen_head_cb.setArrowType(Qt.UpArrow if self.gen_head_cb.arrowType() == Qt.DownArrow else Qt.DownArrow)
         for prop in [self.csv_lb, self.csv_drop, self.pal_lb, self.pal_type, self.bars_lb, self.bars_ip]:
             prop.setVisible(not prop.isVisible())

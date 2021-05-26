@@ -103,6 +103,12 @@ padding-top: 6px;
 margin:  0px;
 }
 
+QToolButton {
+border: 0px;
+outline: none:
+background: #f0f0f0;   
+}
+
 """
 # QToolBar {
 # 	background-color: rgb(230, 230, 230);
