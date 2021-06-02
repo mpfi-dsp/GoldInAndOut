@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QPixmap, QCursor
 from PyQt5.QtWidgets import (QLabel, QRadioButton, QCheckBox, QHBoxLayout, QPushButton, QWidget, QSizePolicy,
                              QFormLayout, QLineEdit,
-                             QComboBox, QProgressBar, QToolButton)
+                             QComboBox, QProgressBar, QToolButton, QVBoxLayout)
 # general
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
@@ -61,99 +61,90 @@ class WorkflowPage(QWidget):
         self.workflows_header = QLabel("Parameters")
         layout.addRow(self.workflows_header)
 
-        if len(workflow['props']) > 0:
-            self.p1_l = QLabel(workflow['props'][0]['title'])
-            self.p1_l.setStyleSheet("font-size: 17px; font-weight: 400;")
-            self.p1_ip = QLineEdit()
-            self.p1_ip.setPlaceholderText(workflow['props'][0]['placeholder'])
-            layout.addRow(self.p1_l, self.p1_ip)
-
-        if len(workflow['props']) > 1:
-            self.p2_l = QLabel(workflow['props'][1]['title'])
-            self.p2_l.setStyleSheet("font-size: 17px; font-weight: 400;")
-            self.p2_ip = QLineEdit()
-            self.p2_ip.setPlaceholderText(workflow['props'][1]['placeholder'])
-            layout.addRow(self.p2_l, self.p2_ip)
-
-        if len(workflow['props']) > 2:
-            self.p3_l = QLabel(workflow['props'][2]['title'])
-            self.p3_l.setStyleSheet("font-size: 17px; font-weight: 400;")
-            self.p3_ip = QLineEdit()
-            self.p3_ip.setPlaceholderText(workflow['props'][2]['placeholder'])
-            layout.addRow(self.p3_l, self.p3_ip)
+        self.cstm_props = []
+        for i in range(len(workflow['props'])):
+            prop_l = QLabel(workflow['props'][i]['title'])
+            prop_l.setStyleSheet("font-size: 17px; font-weight: 400;")
+            prop_le = QLineEdit()
+            prop_le.setPlaceholderText(workflow['props'][i]['placeholder'])
+            layout.addRow(prop_l, prop_le)
+            self.cstm_props.append(prop_le)
 
         """ REAL COORDS SECTION """
-        self.gen_head = QLabel("Real Coordinates")
-        self.gen_head.setStyleSheet("font-size: 17px; font-weight: 500; padding-top: 0px; padding-bottom: 0px; margin-top: 0px; margin-bottom: 0px;")
+        gen_head = QLabel("Real Coordinates")
+        gen_head.setStyleSheet("font-size: 17px; font-weight: 500; padding-top: 0px; padding-bottom: 0px; margin-top: 0px; margin-bottom: 0px;")
         self.gen_head_cb = QToolButton()
         self.gen_head_cb.setArrowType(Qt.DownArrow)
         self.gen_head_cb.setCursor(QCursor(Qt.PointingHandCursor))
         self.gen_head_cb.clicked.connect(self.toggle_gen_adv)
-        layout.addRow(self.gen_head, self.gen_head_cb)
+        layout.addRow(gen_head, self.gen_head_cb)
         # csv
-        self.csv_lb = QLabel("csv")
-        self.csv_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
+        csv_lb = QLabel("csv")
+        csv_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.csv_drop = QComboBox()
         self.csv_drop.addItems(csv)
-        layout.addRow(self.csv_lb, self.csv_drop)
+        layout.addRow(csv_lb, self.csv_drop)
         # num bins
-        self.bars_lb = QLabel(
+        bars_lb = QLabel(
             '<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.hist.html"># hist bins</a>')
-        self.bars_lb.setOpenExternalLinks(True)
-        self.bars_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
+        bars_lb.setOpenExternalLinks(True)
+        bars_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.bars_ip = QLineEdit()
         self.bars_ip.setPlaceholderText("10 OR [1, 2, 3, 4] OR 'fd'")
-        layout.addRow(self.bars_lb, self.bars_ip)
+        layout.addRow(bars_lb, self.bars_ip)
         # color palette
-        self.pal_lb = QLabel('<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">color palette</a>')
-        self.pal_lb.setOpenExternalLinks(True)
-        self.pal_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
+        pal_lb = QLabel('<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">color palette</a>')
+        pal_lb.setOpenExternalLinks(True)
+        pal_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.pal_type = QComboBox()
         self.pal_type.addItems(PALETTE_OPS)
-        layout.addRow(self.pal_lb, self.pal_type)
-        for prop in [self.csv_lb, self.csv_drop, self.pal_lb, self.pal_type, self.bars_lb, self.bars_ip]:
+        layout.addRow(pal_lb, self.pal_type)
+
+        self.real_props = [csv_lb, self.csv_drop, pal_lb, self.pal_type, bars_lb, self.bars_ip]
+        for prop in self.real_props:
             prop.setHidden(True)
 
         """ RANDOM COORDS SECTION """
-        self.gen_rand_head = QLabel("Random Coordinates")
-        self.gen_rand_head.setStyleSheet("font-size: 17px; font-weight: 500; padding-top: 0px; padding-bottom: 0px; margin-top: 0px; margin-bottom: 0px;")
+        gen_rand_head = QLabel("Random Coordinates")
+        gen_rand_head.setStyleSheet("font-size: 17px; font-weight: 500; padding-top: 0px; padding-bottom: 0px; margin-top: 0px; margin-bottom: 0px;")
         self.gen_rand_adv_cb = QToolButton()
         self.gen_rand_adv_cb.setArrowType(Qt.DownArrow)
         self.gen_rand_adv_cb.setCursor(QCursor(Qt.PointingHandCursor))
         self.gen_rand_adv_cb.clicked.connect(self.toggle_rand_adv)
-        layout.addRow(self.gen_rand_head, self.gen_rand_adv_cb)
+        layout.addRow(gen_rand_head, self.gen_rand_adv_cb)
         # image path
-        self.img_lb = QLabel("image")
-        self.img_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
+        img_lb = QLabel("image")
+        img_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.img_drop = QComboBox()
         self.img_drop.addItems(img)
-        layout.addRow(self.img_lb, self.img_drop)  # csv
+        layout.addRow(img_lb, self.img_drop)  # csv
         # mask path
-        self.mask_lb = QLabel("mask")
-        self.mask_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
+        mask_lb = QLabel("mask")
+        mask_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.mask_drop = QComboBox()
         self.mask_drop.addItems(mask)
-        layout.addRow(self.mask_lb, self.mask_drop)
+        layout.addRow(mask_lb, self.mask_drop)
         # palette random
-        self.r_pal_lb = QLabel(
+        r_pal_lb = QLabel(
             '<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">rand color palette</a>')
-        self.r_pal_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
-        self.r_pal_lb.setOpenExternalLinks(True)
+        r_pal_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
+        r_pal_lb.setOpenExternalLinks(True)
         self.r_pal_type = QComboBox()
         self.r_pal_type.addItems(PALETTE_OPS)
         self.r_pal_type.setCurrentText('crest')
-        layout.addRow(self.r_pal_lb, self.r_pal_type)
+        layout.addRow(r_pal_lb, self.r_pal_type)
         # num coords to gen
-        self.n_coord_lb = QLabel("# of coords")
-        self.n_coord_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
+        n_coord_lb = QLabel("# of coords")
+        n_coord_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.n_coord_ip = QLineEdit()
         self.n_coord_ip.setStyleSheet(
             "font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; ") # max-width: 200px;
         self.n_coord_ip.setPlaceholderText("default is # in real csv")
-        layout.addRow(self.n_coord_lb, self.n_coord_ip)
+        layout.addRow(n_coord_lb, self.n_coord_ip)
         # set adv hidden by default
-        for prop in [self.img_lb, self.img_drop, self.mask_lb, self.mask_drop, self.n_coord_lb, self.n_coord_ip,
-                     self.r_pal_type, self.r_pal_lb]:
+        self.rand_props = [img_lb, self.img_drop, mask_lb, self.mask_drop, n_coord_lb, self.n_coord_ip,
+                     self.r_pal_type, r_pal_lb]
+        for prop in self.rand_props:
             prop.setHidden(True)
         # output header
         self.out_header = QLabel("Output")
@@ -248,14 +239,13 @@ class WorkflowPage(QWidget):
 
     def toggle_gen_adv(self):
         self.gen_head_cb.setArrowType(Qt.UpArrow if self.gen_head_cb.arrowType() == Qt.DownArrow else Qt.DownArrow)
-        for prop in [self.csv_lb, self.csv_drop, self.pal_lb, self.pal_type, self.bars_lb, self.bars_ip]:
+        for prop in self.real_props:
             prop.setVisible(not prop.isVisible())
 
     """ TOGGLE RAND ADV OPTIONS """
     def toggle_rand_adv(self):
         self.gen_rand_adv_cb.setArrowType(Qt.UpArrow if self.gen_rand_adv_cb.arrowType() == Qt.DownArrow else Qt.DownArrow)
-        for prop in [self.img_lb, self.img_drop, self.mask_lb, self.mask_drop, self.n_coord_lb, self.n_coord_ip,
-                     self.r_pal_type, self.r_pal_lb]:
+        for prop in self.rand_props:
             prop.setVisible(not prop.isVisible())
 
     """ RUN WORKFLOW """
@@ -271,11 +261,14 @@ class WorkflowPage(QWidget):
                                                    n_rand_to_gen=int(self.n_coord_ip.text()) if self.n_coord_ip.text() else len(scaled_df.index))
 
             # select workflow
+            """ ADD NEW WORKFLOWS HERE """
             if workflow["type"] == Workflow.NND:
                 self.real_df, self.rand_df = run_nnd(df=scaled_df, prog=prog_wrapper, random_coordinate_list=random_coords)
             elif workflow["type"] == Workflow.CLUST:
-                self.real_df, self.rand_df = run_clust(df=scaled_df, random_coordinate_list=random_coords, prog=prog_wrapper, distance_threshold=(self.p1_ip.text() if self.p1_ip.text() else 120), n_clusters=(self.p2_ip.text() if self.p2_ip.text() else None), linkage=self.p3_ip.text() if self.p3_ip.text() else 'ward')
+                vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else workflow['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
+                self.real_df, self.rand_df = run_clust(df=scaled_df, random_coordinate_list=random_coords, prog=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1], linkage=vals[2])
 
+            """ END OF ADD WORKFLOWS """
             self.progress.setValue(100)
             # create ui scheme
             self.create_visuals(workflow=workflow, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'),

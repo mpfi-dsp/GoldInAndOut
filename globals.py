@@ -47,7 +47,7 @@ WORKFLOWS = [{
               "placeholder": "120"
             },
             {"title": "n_clusters",
-             "placeholder": "5"
+             "placeholder": "None"
              },
             {  "title": "linkage",
               "placeholder": "ward"

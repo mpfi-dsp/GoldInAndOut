@@ -30,8 +30,14 @@ def run_clust(df, prog, random_coordinate_list, distance_threshold=120, n_cluste
     # real coords
     prog.update_progress(30)
     real_coordinates = np.array(real_coordinates)
-    hc = AgglomerativeClustering(n_clusters=n_clusters, distance_threshold=(distance_threshold if n_clusters is None else None), affinity=affinity,
-                                 linkage=linkage)
+    print(distance_threshold, n_clusters)
+    if n_clusters != "None":
+        distance_threshold = None
+        n_clusters = int(n_clusters)
+    else:
+        n_clusters = None
+        distance_threshold = int(distance_threshold)
+    hc = AgglomerativeClustering(n_clusters=n_clusters, distance_threshold=distance_threshold, affinity=affinity, linkage=linkage)
     cluster = hc.fit_predict(real_coordinates)
     df['cluster'] = cluster
 

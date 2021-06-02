@@ -18,7 +18,7 @@ import sys
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('GoldInAndOut') # | MPFI EM Core Pipeline
+        self.setWindowTitle('GoldInAndOut')
         self.setWindowIcon(QIcon('./assets/logo.png'))
         self.setMinimumSize(QSize(900, 950))
         self.setMaximumSize(QSize(900, 950))
@@ -70,22 +70,23 @@ class MainWindow(QWidget):
         # add page tabs
         for i in range(len(WORKFLOWS)):
             self.on_progress_update(i * 20)
-            item = QListWidgetItem(
-                NAV_ICON, str(WORKFLOWS[i]['name']), self.nav_list)
-            item.setSizeHint(QSize(60, 60))
-            item.setTextAlignment(Qt.AlignCenter)
-            # generate workflow page
-            # print(WORKFLOWS[i])
-            self.page_stack.addWidget(
-                WorkflowPage(scaled_df=self.SCALED_DF,
-                             workflow=WORKFLOWS[i],
-                             img=img_drop,
-                             mask=mask_drop,
-                             csv=csv_drop,
-                             scalar=s,
-                             input_unit=iu,
-                             output_unit=ou)
-            )
+            if self.home_page.workflow_cbs[i].isChecked():
+                item = QListWidgetItem(
+                    NAV_ICON, str(WORKFLOWS[i]['name']), self.nav_list)
+                item.setSizeHint(QSize(60, 60))
+                item.setTextAlignment(Qt.AlignCenter)
+                # generate workflow page
+                # print(WORKFLOWS[i])
+                self.page_stack.addWidget(
+                    WorkflowPage(scaled_df=self.SCALED_DF,
+                                 workflow=WORKFLOWS[i],
+                                 img=img_drop,
+                                 mask=mask_drop,
+                                 csv=csv_drop,
+                                 scalar=s,
+                                 input_unit=iu,
+                                 output_unit=ou)
+                )
         self.on_progress_update(100)
 
     """ LOAD AND SCALE DATA """

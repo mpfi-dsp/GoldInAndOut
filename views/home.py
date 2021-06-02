@@ -1,7 +1,7 @@
 # pyQT5
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import (QLabel, QFileDialog, QSpacerItem, QCheckBox, QHBoxLayout, QPushButton, QWidget,
-                             QSizePolicy, QFormLayout, QLineEdit, QColorDialog, QComboBox, QProgressBar)
+                             QSizePolicy, QFormLayout, QLineEdit, QColorDialog, QComboBox, QProgressBar, QVBoxLayout)
 from PyQt5.QtCore import Qt
 # general
 from pathlib import Path
@@ -91,16 +91,14 @@ class HomePage(QWidget):
         layout.addRow(workflows_header)
 
         # workflows
-        self.w1_cb = QCheckBox(WORKFLOWS[0]['header'])
-        self.w1_cb.setChecked(True)
-        self.w2_cb = QCheckBox(WORKFLOWS[1]['header'])
-        self.w2_cb.setChecked(True)
-        # TODO: enable other workflows
-        # self.w3_cb = QCheckBox(WORKFLOWS[2]['header'])
-        # self.w4_cb = QCheckBox(WORKFLOWS[3]['header'])
-
-        layout.addRow(self.w1_cb, self.w2_cb)
-        # layout.addRow(self.w3_cb, self.w4_cb)
+        self.workflow_cbs = []
+        v_cb = QVBoxLayout()
+        for i in range(len(WORKFLOWS)):
+            cb = QCheckBox(WORKFLOWS[i]['header'])
+            cb.setChecked(True)
+            self.workflow_cbs.append(cb)
+            v_cb.addWidget(cb)
+        layout.addRow(v_cb)
         layout.addItem(spacer)
 
         # props header
