@@ -22,6 +22,7 @@ def create_color_pal(n_bins=10, palette_type="crest"):
         for value in color:
             value *= 255
         color_palette.append(color)
+    color_palette.reverse()
     return color_palette
 
 

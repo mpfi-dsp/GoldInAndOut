@@ -5,6 +5,7 @@ from typings import Workflow
 WORKFLOW METADATA 
 ___________________
 Array of JSON objects containing the following data:
+    @name: 
     @type: ENUM type of Workflow
     @header: string displayed as "header"
     @desc: string displayed as "description" below header
@@ -56,7 +57,7 @@ WORKFLOWS = [{
 ]
 
 """ COLOR PALETTE OPTIONS """
-PALETTE_OPS = ["rocket_r", "crest", "rocket", "mako", "flare", "viridis", "magma", "cubehelix", "mako_r",  "crest_r",  "flare_r", "viridis_r", "magma_r", ]
+PALETTE_OPS =  ["rocket", "crest",  "mako", "flare", "viridis", "magma", "cubehelix", "rocket_r", "mako_r",  "crest_r",  "flare_r", "viridis_r", "magma_r", ]
 
 """ METRIC UNIT OPTIONS """
 UNIT_OPS = ['px', 'nm', 'μm', 'metric']

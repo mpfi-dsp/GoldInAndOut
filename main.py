@@ -18,7 +18,7 @@ import sys
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('MPFI EM Core Pipeline')
+        self.setWindowTitle('GoldInAndOut') # | MPFI EM Core Pipeline
         self.setWindowIcon(QIcon('./assets/logo.png'))
         self.setMinimumSize(QSize(900, 950))
         self.setMaximumSize(QSize(900, 950))

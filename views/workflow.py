@@ -274,7 +274,7 @@ class WorkflowPage(QWidget):
             if workflow["type"] == Workflow.NND:
                 self.real_df, self.rand_df = run_nnd(df=scaled_df, prog=prog_wrapper, random_coordinate_list=random_coords)
             elif workflow["type"] == Workflow.CLUST:
-                self.real_df, self.rand_df = run_clust(df=scaled_df, random_coordinate_list=random_coords, prog=prog_wrapper, distance_threshold=120)
+                self.real_df, self.rand_df = run_clust(df=scaled_df, random_coordinate_list=random_coords, prog=prog_wrapper, distance_threshold=(self.p1_ip.text() if self.p1_ip.text() else 120), n_clusters=(self.p2_ip.text() if self.p2_ip.text() else None), linkage=self.p3_ip.text() if self.p3_ip.text() else 'ward')
 
             self.progress.setValue(100)
             # create ui scheme
