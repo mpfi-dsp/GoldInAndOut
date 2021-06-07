@@ -26,11 +26,11 @@ def run_nnd_clust(df, prog, random_coordinate_list, min_clust_size=3, distance_t
     def find_centroids(cl_df, clust):
         centroids = []
         for j in range(len(set(clust))):
-            cl_df = cl_df.loc[cl_df['cluster_id'] == j]
+            cl = cl_df.loc[cl_df['cluster_id'] == j]
             n = 0
             x = 0
             y = 0
-            for idx, entry in cl_df.iterrows():
+            for idx, entry in cl.iterrows():
                 x += entry['X']
                 y += entry['Y']
                 n += 1
@@ -74,9 +74,9 @@ def run_nnd_clust(df, prog, random_coordinate_list, min_clust_size=3, distance_t
         """ FIND DIST TO CLOSEST PARTICLE """
         def distance_to_closest_particle(coord_list):
             nndlist = []
-            print(coord_list)
+            # print(coord_list)
             coord_list_len = len(coord_list)
-            print(coord_list_len)
+            # print(coord_list_len)
             for i in range(coord_list_len - 1):
                 # update progress bar
                 small_dist = 10000000000000000000
@@ -103,23 +103,22 @@ def run_nnd_clust(df, prog, random_coordinate_list, min_clust_size=3, distance_t
         real_nndlist = distance_to_closest_particle(coordinate_list)
         print(real_nndlist)
 
-        #
-        # d = {'NND': real_nndlist}
-        # real_df = pd.DataFrame(data=d)
-        # # clean up df
-        # clean_real_df = pd.DataFrame()
-        # clean_real_df[['og_centroid', 'closest_centroid', 'dist']] = pd.DataFrame(
-        #     [x for x in real_df['NND'].tolist()])
-        #
-        # random_nndlist = distance_to_closest_particle(random_coordinate_list)
-        # d = {'NND': random_nndlist}
-        # rand_df = pd.DataFrame(data=d)
-        #
-        # clean_rand_df = pd.DataFrame()
-        # clean_rand_df[['og_centroid', 'closest_centroid', 'dist']] = pd.DataFrame(
-        #     [x for x in rand_df['NND'].tolist()])
-        #
-        # return clean_real_df, clean_rand_df
+        d = {'NND': real_nndlist}
+        real_df = pd.DataFrame(data=d)
+        # clean up df
+        clean_real_df = pd.DataFrame()
+        clean_real_df[['og_centroid', 'closest_centroid', 'dist']] = pd.DataFrame(
+            [x for x in real_df['NND'].tolist()])
+
+        random_nndlist = distance_to_closest_particle(random_coordinate_list)
+        d = {'NND': random_nndlist}
+        rand_df = pd.DataFrame(data=d)
+
+        clean_rand_df = pd.DataFrame()
+        clean_rand_df[['og_centroid', 'closest_centroid', 'dist']] = pd.DataFrame(
+            [x for x in rand_df['NND'].tolist()])
+
+        return clean_real_df, clean_rand_df
 
 
     print("nearest neighbor distance between clusters")
@@ -142,14 +141,14 @@ def run_nnd_clust(df, prog, random_coordinate_list, min_clust_size=3, distance_t
     real_centroids = find_centroids(real_df, cluster)
     rand_centroids = find_centroids(rand_df, rand_cluster)
 
-    print(real_centroids)
-
     clean_real_df, clean_rand_df = nnd(real_centroids, rand_centroids)
 
     print(clean_real_df)
 
     clean_real_df['cluster_id'] = real_df['cluster_id']
     clean_rand_df['cluster_id'] = rand_df['cluster_id']
+
+    print(clean_real_df.head())
 
     return clean_real_df, clean_rand_df
 
