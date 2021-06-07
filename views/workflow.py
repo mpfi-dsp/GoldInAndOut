@@ -18,6 +18,7 @@ from typings import Unit, Workflow
 from utils import Progress, create_color_pal, download_csv, pixels_conversion_w_distance, enum_to_unit
 from workflows.clust import run_clust, draw_clust
 from workflows.nnd import run_nnd, draw_length
+from workflows.nnd_clust import run_nnd_clust
 from workflows.random import gen_random_coordinates
 
 """ 
@@ -28,10 +29,10 @@ __________________
     @type: ENUM type of Workflow
     @header: string displayed as "header"
     @desc: string displayed as "description" below header
-    @hist: histogram metadata:
-        @title: title of histogram
-        @x_label: x_label of histogram
-        @y_label: y_label of histogram
+    @graph: graph metadata:
+        @title: title of graph
+        @x_label: x_label of graph
+        @y_label: y_label of graph
 @img: array of selected image paths
 @mask: array of selected mask paths
 @csv: array of selected csv paths
@@ -177,17 +178,17 @@ class WorkflowPage(QWidget):
         self.image_frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.image_frame.setCursor(QCursor(Qt.PointingHandCursor))
         self.image_frame.mouseDoubleClickEvent = lambda event: self.open_large(event, self.display_img)
-        # hist
-        self.hist_frame = QLabel()
-        self.hist_frame.setStyleSheet("padding-top: 3px; background: white;")
-        self.hist_frame.setMaximumSize(400, 250)
-        self.hist_frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.hist_frame.mouseDoubleClickEvent = lambda event: self.open_large(event, self.hist)
-        self.hist_frame.setCursor(QCursor(Qt.PointingHandCursor))
+        # graph
+        self.graph_frame = QLabel()
+        self.graph_frame.setStyleSheet("padding-top: 3px; background: white;")
+        self.graph_frame.setMaximumSize(400, 250)
+        self.graph_frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.graph_frame.mouseDoubleClickEvent = lambda event: self.open_large(event, self.graph)
+        self.graph_frame.setCursor(QCursor(Qt.PointingHandCursor))
         # container for visualizers
         self.img_cont = QHBoxLayout()
         self.img_cont.addWidget(self.image_frame)
-        self.img_cont.addWidget(self.hist_frame)
+        self.img_cont.addWidget(self.graph_frame)
         layout.addRow(self.img_cont)
         # loading bar
         self.progress = QProgressBar(self)
@@ -231,7 +232,7 @@ class WorkflowPage(QWidget):
                 download_csv(self.rand_df,
                              f'{workflow["name"].lower()}/rand_{workflow["name"].lower()}_output_{enum_to_unit(output_unit)}.csv')
             self.display_img.save(f'./output/{workflow["name"].lower()}/drawn_{workflow["name"].lower()}_img.tif')
-            self.hist.save(f'./output/{workflow["name"].lower()}/{workflow["name"].lower()}_histogram.jpg')
+            self.graph.save(f'./output/{workflow["name"].lower()}/{workflow["name"].lower()}_graph.jpg')
         except Exception as e:
             print(e)
 
@@ -266,7 +267,10 @@ class WorkflowPage(QWidget):
                 self.real_df, self.rand_df = run_nnd(df=scaled_df, prog=prog_wrapper, random_coordinate_list=random_coords)
             elif workflow["type"] == Workflow.CLUST:
                 vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else workflow['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
-                self.real_df, self.rand_df = run_clust(df=scaled_df, random_coordinate_list=random_coords, prog=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1], linkage=vals[2])
+                self.real_df, self.rand_df = run_clust(df=scaled_df, random_coordinate_list=random_coords, prog=prog_wrapper,distance_threshold=vals[0], n_clusters=vals[1])
+            elif workflow["type"] == Workflow.NND_CLUST:
+                vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else workflow['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
+                self.real_df, self.rand_df = run_nnd_clust(df=scaled_df, random_coordinate_list=random_coords,prog=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1], min_clust_size=vals[2])
 
             """ END OF ADD WORKFLOWS """
             self.progress.setValue(100)
@@ -281,27 +285,27 @@ class WorkflowPage(QWidget):
     """ CREATE DATA VISUALIZATIONS """
     def create_visuals(self, workflow, n_bins, input_unit, output_unit, scalar):
         # init vars & figure
-        hist_df = pd.DataFrame([])
+        graph_df = pd.DataFrame([])
         cm = plt.cm.get_cmap('crest')
         fig = plt.figure()
         canvas = FigureCanvas(fig)
         ax = fig.add_subplot(111)
         # create hist
         if self.gen_real_cb.isChecked():
-            self.real_df.sort_values(workflow["hist"]["x_type"], inplace=True)
-            hist_df = self.real_df[workflow["hist"]["x_type"]]
+            self.real_df.sort_values(workflow["graph"]["x_type"], inplace=True)
+            graph_df = self.real_df[workflow["graph"]["x_type"]]
             cm = sns.color_palette(self.pal_type.currentText(), as_cmap=True)
-            ax.set_title(f'{workflow["hist"]["title"]} (Real)')
+            ax.set_title(f'{workflow["graph"]["title"]} (Real)')
         elif self.gen_rand_cb.isChecked():
-            self.rand_df.sort_values(workflow["hist"]["x_type"], inplace=True)
+            self.rand_df.sort_values(workflow["graph"]["x_type"], inplace=True)
             scaled_rand = pixels_conversion_w_distance(self.rand_df, scalar)
-            ax.set_title(f'{workflow["hist"]["title"]} (Rand)')
+            ax.set_title(f'{workflow["graph"]["title"]} (Rand)')
             cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
-            hist_df = scaled_rand[workflow["hist"]["x_type"]]
-        # draw hist
-        n, bins, patches = ax.hist(hist_df, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), color='green')
-        ax.set_xlabel(f'{workflow["hist"]["x_label"]} ({enum_to_unit(output_unit)})')
-        ax.set_ylabel(workflow["hist"]["y_label"])
+            graph_df = scaled_rand[workflow["graph"]["x_type"]]
+        # draw graph
+        n, bins, patches = ax.hist(graph_df, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), color='green')
+        ax.set_xlabel(f'{workflow["graph"]["x_label"]} ({enum_to_unit(output_unit)})')
+        ax.set_ylabel(workflow["graph"]["y_label"])
         # generate palette
         palette = create_color_pal(n_bins=int(len(n)), palette_type=self.pal_type.currentText())
         r_palette = create_color_pal(n_bins=int(len(n)), palette_type=self.r_pal_type.currentText())
@@ -314,14 +318,15 @@ class WorkflowPage(QWidget):
         # determine shape of canvas
         size = canvas.size()
         width, height = size.width(), size.height()
-        # set hist to image of plotted hist
-        self.hist = QImage(canvas.buffer_rgba(), width, height, QImage.Format_ARGB32)
+        # set graph to image of plotted hist
+        self.graph = QImage(canvas.buffer_rgba(), width, height, QImage.Format_ARGB32)
         # display img
-        pixmap = QPixmap.fromImage(self.hist)
+        pixmap = QPixmap.fromImage(self.graph)
         smaller_pixmap = pixmap.scaled(300, 250, Qt.KeepAspectRatio, Qt.FastTransformation)
-        self.hist_frame.setPixmap(smaller_pixmap)
+        self.graph_frame.setPixmap(smaller_pixmap)
         # load in image
         drawn_img = cv2.imread(self.img_drop.currentText())
+        """ ADD NEW GRAPHS HERE """
 
         if workflow["type"] == Workflow.NND:
             # if real coords selected, annotate them on img with lines indicating length
@@ -336,9 +341,11 @@ class WorkflowPage(QWidget):
                                         scalar=1, circle_c=(18, 156, 232))
         elif workflow["type"] == Workflow.CLUST:
             if self.gen_real_cb.isChecked():
-                drawn_img = draw_clust(cluster_df=self.real_df, img=drawn_img, palette=palette, scalar=scalar)
+                drawn_img = draw_clust(cluster_df=self.real_df, img=drawn_img, palette=palette, scalar=scalar,)
             if self.gen_rand_cb.isChecked():
-                drawn_img = draw_clust(cluster_df=self.rand_df, img=drawn_img, palette=r_palette, scalar=scalar)
+                drawn_img = draw_clust(cluster_df=self.rand_df, img=drawn_img, palette=r_palette, scalar=scalar,)
+
+        """ END GRAPH DISPLAY """
         # set display img to annotated image
         self.display_img = QImage(drawn_img.data, drawn_img.shape[1], drawn_img.shape[0],
                                   QImage.Format_RGB888).rgbSwapped()

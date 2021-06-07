@@ -39,7 +39,7 @@ def run_clust(df, prog, random_coordinate_list, distance_threshold=120, n_cluste
         distance_threshold = int(distance_threshold)
     hc = AgglomerativeClustering(n_clusters=n_clusters, distance_threshold=distance_threshold, affinity=affinity, linkage=linkage)
     cluster = hc.fit_predict(real_coordinates)
-    df['cluster'] = cluster
+    df['cluster_id'] = cluster
 
     # random coords
     prog.update_progress(70)
@@ -47,7 +47,7 @@ def run_clust(df, prog, random_coordinate_list, distance_threshold=120, n_cluste
     rand_cluster = hc.fit_predict(rand_coordinates)
 
     rand_df = pd.DataFrame(rand_coordinates, columns=["X", "Y"])
-    rand_df['cluster'] = rand_cluster
+    rand_df['cluster_id'] = rand_cluster
 
     print(rand_df.head())
     # print(cluster)
@@ -64,9 +64,9 @@ def draw_clust(cluster_df, img, palette="rocket_r", scalar=1):
         color = [val * 255 for val in color]
         return color
 
-    palette = create_color_pal(n_bins=len(set(cluster_df['cluster'])), palette_type=palette)
+    palette = create_color_pal(n_bins=len(set(cluster_df['cluster_id'])), palette_type=palette)
 
     for idx, entry in cluster_df.iterrows():
         particle = tuple(int(scalar * x) for x in [entry['X'], entry['Y']])
-        img = cv2.circle(img, particle, 10, sea_to_rgb(palette[cluster_df['cluster'][idx]]), -1)
+        img = cv2.circle(img, particle, 10, sea_to_rgb(palette[cluster_df['cluster_id'][idx]]), -1)
     return img

@@ -9,7 +9,7 @@ Array of JSON objects containing the following data:
     @type: ENUM type of Workflow
     @header: string displayed as "header"
     @desc: string displayed as "description" below header
-    @hist: histogram metadata:
+    @graph: histogram metadata:
         @title: title of histogram
         @x_label: x_label of histogram
         @y_label: y_label of histogram
@@ -22,7 +22,7 @@ WORKFLOWS = [{
     "type": Workflow.NND,
     "header": "Nearest Neighbor Distance",
     "desc": "Find the nearest neighbor distance between gold particles. Optionally generate random coordinates.",
-    "hist": {
+    "graph": {
         "title": "Distances Between Nearest Neighbors",
         "x_label": "Nearest Neighbor Distance",
         "y_label": "Number of Entries",
@@ -35,11 +35,11 @@ WORKFLOWS = [{
     "type": Workflow.CLUST,
     "header": "Ward Hierarchical Clustering",
     "desc": "Cluster gold particles into groups. Optionally generate random coordinates.",
-    "hist": {
+    "graph": {
             "title": "Ward Hierarchical Clusters",
             "x_label": "Cluster Value",
             "y_label": "Number of Entries",
-            "x_type": "cluster"
+            "x_type": "cluster_id"
         },
     "props": [
             {
@@ -49,9 +49,31 @@ WORKFLOWS = [{
             {"title": "n_clusters",
              "placeholder": "None"
              },
-            {  "title": "linkage",
-              "placeholder": "ward"
-            }
+        ]
+},
+{
+    "name": "NND-CLUST",
+    "type": Workflow.NND_CLUST,
+    "header": "Nearest Neighbor Distance Between Clusters",
+    "desc": "Find the nearest neighbor distance between clusters. Optionally generate random coordinates.",
+    "graph": {
+            "title": "Nearest Neighbor Distance for Ward Hierarchical Clusters",
+            "x_label": "Cluster Value",
+            "y_label": "Number of Entries",
+            "x_type": "cluster_id"
+        },
+    "props": [
+        {
+        "title": "distance_threshold",
+          "placeholder": "120"
+        },
+        {"title": "n_clusters",
+         "placeholder": "None"
+         },
+        {
+            "title": "min_cluster_size",
+            "placeholder": "3"
+        },
         ]
 }
 ]
