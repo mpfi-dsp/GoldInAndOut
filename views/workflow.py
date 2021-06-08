@@ -267,10 +267,10 @@ class WorkflowPage(QWidget):
                 self.real_df, self.rand_df = run_nnd(df=scaled_df, prog=prog_wrapper, random_coordinate_list=random_coords)
             elif workflow["type"] == Workflow.CLUST:
                 vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else workflow['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
-                self.real_df, self.rand_df = run_clust(df=scaled_df, random_coordinate_list=random_coords, prog=prog_wrapper,distance_threshold=vals[0], n_clusters=vals[1])
+                self.real_df, self.rand_df = run_clust(df=scaled_df, random_coordinate_list=random_coords, prog=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1])
             elif workflow["type"] == Workflow.NND_CLUST:
                 vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else workflow['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
-                self.real_df, self.rand_df = run_nnd_clust(df=scaled_df, random_coordinate_list=random_coords,prog=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1], min_clust_size=vals[2])
+                self.real_df, self.rand_df = run_nnd_clust(df=scaled_df, random_coordinate_list=random_coords, prog=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1], min_clust_size=vals[2])
 
             """ END OF ADD WORKFLOWS """
             self.progress.setValue(100)
