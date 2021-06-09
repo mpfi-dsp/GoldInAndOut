@@ -1,4 +1,7 @@
 # pyQT5
+import datetime
+import os
+
 import pandas as pd
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QPixmap, QCursor
@@ -15,7 +18,7 @@ import cv2
 # utils
 from globals import PALETTE_OPS
 from typings import Unit, Workflow
-from utils import Progress, create_color_pal, download_csv, pixels_conversion_w_distance, enum_to_unit
+from utils import Progress, create_color_pal, pixels_conversion_w_distance, enum_to_unit
 from workflows.clust import run_clust, draw_clust
 from workflows.nnd import run_nnd, draw_length
 from workflows.nnd_clust import run_nnd_clust, draw_nnd_clust
@@ -201,7 +204,7 @@ class WorkflowPage(QWidget):
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #E89C12; color: white; border-radius: 7px; ")
         self.run_btn.setCursor(QCursor(Qt.PointingHandCursor))
         self.run_btn.clicked.connect(partial(self.run, workflow, scaled_df, scalar, input_unit, output_unit))
-        self.download_btn = QPushButton('Download', self)
+        self.download_btn = QPushButton('Download Again', self)
         self.download_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #ccc; color: white; border-radius: 7px; ")
         self.download_btn.clicked.connect(partial(self.download, output_unit, workflow))
@@ -221,18 +224,13 @@ class WorkflowPage(QWidget):
 
     """ DOWNLOAD FILES """
     def download(self, output_unit, workflow):
-        self.download_btn.setStyleSheet(
-            "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #EBBA22; color: white; border-radius: 7px; ")
-        self.download_btn.setText("Download Again")
         try:
-            if self.gen_real_cb.isChecked():
-                download_csv(self.real_df,
-                             f'{workflow["name"].lower()}/real_{workflow["name"].lower()}_output_{enum_to_unit(output_unit)}.csv')
-            if self.gen_rand_cb.isChecked():
-                download_csv(self.rand_df,
-                             f'{workflow["name"].lower()}/rand_{workflow["name"].lower()}_output_{enum_to_unit(output_unit)}.csv')
-            self.display_img.save(f'./output/{workflow["name"].lower()}/drawn_{workflow["name"].lower()}_img.tif')
-            self.graph.save(f'./output/{workflow["name"].lower()}/{workflow["name"].lower()}_graph.jpg')
+            out_dir = f'./output/{workflow["name"].lower()}/{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
+            os.makedirs(out_dir, exist_ok=True)
+            self.real_df.to_csv(f'{out_dir}/real_{workflow["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False, header=True)
+            self.rand_df.to_csv(f'{out_dir}/rand_{workflow["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False, header=True)
+            self.display_img.save(f'{out_dir}/drawn_{workflow["name"].lower()}_img.tif')
+            self.graph.save(f'{out_dir}/{workflow["name"].lower()}_graph.jpg')
         except Exception as e:
             print(e)
 
@@ -277,6 +275,8 @@ class WorkflowPage(QWidget):
             # create ui scheme
             self.create_visuals(workflow=workflow, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'),
                                 input_unit=input_unit, output_unit=output_unit, scalar=scalar)
+            # download files automatically
+            self.download(output_unit=output_unit, workflow=workflow)
             self.download_btn.setStyleSheet(
                 "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
         except Exception as e:

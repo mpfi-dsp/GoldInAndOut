@@ -34,15 +34,6 @@ def get_complimentary_color(hexcode):
     return comp_color
 
 
-""" DOWNLOAD CSV FILE """
-def download_csv(df, file_name):
-    if df.shape[0] > 0 and df.shape[1] > 0:
-        try:
-            df.to_csv(f'./output/{file_name}', index=False, header=True)
-        except Exception as e:
-            print(e)
-
-
 """ CONVERT FIGURE TO IMG """
 def figure_to_img(fig):
     # convert Matplotlib figure to PIL Image
