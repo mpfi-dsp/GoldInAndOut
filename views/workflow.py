@@ -224,6 +224,14 @@ class WorkflowPage(QWidget):
 
     """ DOWNLOAD FILES """
     def download(self, output_unit, workflow):
+        # delete old files to make space if applicable
+        try:
+            o_dir = f'./output/{workflow["name"].lower()}'
+            oldest_dir = sorted([os.path.abspath(f'{o_dir}/{f}') for f in os.listdir(o_dir)], key=os.path.getctime)[0]
+            print(len(os.listdir(o_dir)), oldest_dir)
+        except Exception as e:
+            print(e)
+        # download files
         try:
             out_dir = f'./output/{workflow["name"].lower()}/{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
             os.makedirs(out_dir, exist_ok=True)
