@@ -28,7 +28,7 @@ WORKFLOWS = [{
         "y_label": "Number of Entries",
         "x_type": "dist"
     },
-    "props": [ ]
+    "props": []
 },
 {
     "name": "CLUST",
@@ -37,8 +37,8 @@ WORKFLOWS = [{
     "desc": "Cluster gold particles into groups. Optionally generate random coordinates.",
     "graph": {
             "title": "Ward Hierarchical Clusters",
-            "x_label": "Cluster Value",
-            "y_label": "Number of Entries",
+            "x_label": "Cluster ID",
+            "y_label": "Cluster Size",
             "x_type": "cluster_id"
         },
     "props": [
@@ -58,9 +58,9 @@ WORKFLOWS = [{
     "desc": "Find the nearest neighbor distance between clusters. Optionally generate random coordinates.",
     "graph": {
             "title": "Nearest Neighbor Distance for Ward Hierarchical Clusters",
-            "x_label": "Cluster Value",
+            "x_label": "Nearest Neighbor Distance",
             "y_label": "Number of Entries",
-            "x_type": "cluster_id"
+            "x_type": "dist"
         },
     "props": [
         {

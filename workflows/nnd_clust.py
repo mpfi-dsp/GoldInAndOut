@@ -4,6 +4,8 @@ import pandas as pd
 from sklearn.cluster import AgglomerativeClustering
 import numpy as np
 import cv2
+
+from typings import Unit
 from utils import create_color_pal
 from collections import Counter
 
@@ -137,7 +139,7 @@ def run_nnd_clust(df, prog, random_coordinate_list, min_clust_size=3, distance_t
         print("found nnd")
         return cleaned_real_df, cleaned_rand_df
 
-    print("nearest neighbor distance between clusters")
+    print("running nearest neighbor distance between clusters")
     # turn into coordinate list
     x_coordinates = np.array(df['X'])
     y_coordinates = np.array(df['Y'])
@@ -150,24 +152,24 @@ def run_nnd_clust(df, prog, random_coordinate_list, min_clust_size=3, distance_t
     real_coordinates = np.array(real_coordinates)
 
     # cluster
-    real_df, rand_df, cluster, rand_cluster = cluster(df, n_clusters, distance_threshold, min_clust_size)
+    full_real_df, full_rand_df, cluster, rand_cluster = cluster(df, n_clusters, distance_threshold, min_clust_size)
 
     # generate centroids of clusters
-    real_centroids, real_clust_ids = find_centroids(real_df, cluster)
-    rand_centroids, rand_clust_ids = find_centroids(rand_df, rand_cluster)
-
+    real_centroids, real_clust_ids = find_centroids(full_real_df, cluster)
+    rand_centroids, rand_clust_ids = find_centroids(full_rand_df, rand_cluster)
     # print(real_centroids, rand_centroids)
-    clean_real_df, clean_rand_df = nnd(real_centroids, rand_centroids)
+    real_df, rand_df = nnd(real_centroids, rand_centroids)
     # print(clean_real_df.head())
-    print(clean_real_df, real_clust_ids)
-    clean_real_df['cluster_id'] = real_clust_ids
-    clean_rand_df['cluster_id'] = rand_clust_ids
-    print(clean_real_df.head())
+    # print(clean_real_df, real_clust_ids)
+    real_df['cluster_id'] = real_clust_ids
+    rand_df['cluster_id'] = rand_clust_ids
+    # print(clean_real_df.head())
 
-    return real_df, rand_df, clean_real_df, clean_rand_df
+    return full_real_df, full_rand_df, real_df, rand_df
 
 
-def draw_nnd_clust(cluster_df, img, palette="rocket_r", scalar=1):
+def draw_nnd_clust(nnd_df, cluster_df, img, bin_counts, palette="rocket_r", input_unit=Unit.PIXEL, scalar=1, circle_c=(0, 0, 255)):
+    # draw clusters
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
@@ -177,4 +179,29 @@ def draw_nnd_clust(cluster_df, img, palette="rocket_r", scalar=1):
     for idx, entry in cluster_df.iterrows():
         particle = tuple(int(scalar * x) for x in [entry['X'], entry['Y']])
         img = cv2.circle(img, particle, 10, sea_to_rgb(palette[cluster_df['cluster_id'][idx]]), -1)
+
+    # draw nnd
+    count = 0
+    bin_idx = 0
+    # print(nnd_df.head())
+    for idx, entry in nnd_df.iterrows():
+        count += 1
+        # print(idx, count)
+        particle_1 = entry['og_centroid']
+        particle_2 = entry['closest_centroid']
+        # scale back to drawable size
+        # print("test", input_unit == 'px')
+        if input_unit == Unit.PIXEL:
+            particle_1 = tuple(int(scalar * x) for x in particle_1)
+            particle_2 = tuple(int(scalar * x) for x in particle_2)
+        else:
+            particle_1 = tuple(int(x / scalar) for x in particle_1)
+            particle_2 = tuple(int(x / scalar) for x in particle_2)
+        if count >= bin_counts[bin_idx] and bin_idx < len(bin_counts) - 1:
+            bin_idx += 1
+            count = 0
+        # print(particle_1)
+        img = cv2.circle(img, particle_1, 10, circle_c, -1)
+        img = cv2.line(img, particle_1, particle_2, sea_to_rgb(palette[bin_idx]), 5)
+
     return img

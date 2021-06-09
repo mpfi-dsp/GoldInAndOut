@@ -63,7 +63,7 @@ class MainWindow(QWidget):
         mask_drop = self.home_page.mask_le.text() if len(self.home_page.mask_le.text()) > 0 else ["./input/example_mask.tif"]
         csv_drop = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else ["./input/example_csv.csv"]
         # input/output units
-        iu = unit_to_enum(self.home_page.ip_scalar_type.currentText() if self.home_page.ip_scalar_type.currentText() is not None else 'px')
+        # TODO: iu = unit_to_enum(self.home_page.ip_scalar_type.currentText() if self.home_page.ip_scalar_type.currentText() is not None else 'px')
         ou = unit_to_enum(self.home_page.op_scalar_type.currentText() if self.home_page.op_scalar_type.currentText() is not None else 'px')
         # scalar
         s = float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1)
@@ -84,7 +84,7 @@ class MainWindow(QWidget):
                                  mask=mask_drop,
                                  csv=csv_drop,
                                  scalar=s,
-                                 input_unit=iu,
+                                 input_unit=Unit.PIXEL,
                                  output_unit=ou)
                 )
         self.on_progress_update(100)
@@ -92,9 +92,9 @@ class MainWindow(QWidget):
     """ LOAD AND SCALE DATA """
     def load_data(self):
         path = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else "./input/example_csv.csv"
-        unit = unit_to_enum(self.home_page.ip_scalar_type.currentText()) if self.home_page.ip_scalar_type.currentText() else Unit.PIXEL
+        # TODO: unit = unit_to_enum(self.home_page.ip_scalar_type.currentText()) if self.home_page.ip_scalar_type.currentText() else Unit.PIXEL
         scalar = float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1)
-        self.SCALED_DF = pixels_conversion(csv_path=path, input_unit=unit, csv_scalar=scalar)
+        self.SCALED_DF = pixels_conversion(csv_path=path, input_unit=Unit.PIXEL, csv_scalar=scalar)
 
     """ UPDATE PROGRESS BAR """
     def on_progress_update(self, value):

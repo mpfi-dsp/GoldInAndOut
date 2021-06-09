@@ -18,7 +18,7 @@ from typings import Unit, Workflow
 from utils import Progress, create_color_pal, download_csv, pixels_conversion_w_distance, enum_to_unit
 from workflows.clust import run_clust, draw_clust
 from workflows.nnd import run_nnd, draw_length
-from workflows.nnd_clust import run_nnd_clust
+from workflows.nnd_clust import run_nnd_clust, draw_nnd_clust
 from workflows.random import gen_random_coordinates
 
 """ 
@@ -270,7 +270,7 @@ class WorkflowPage(QWidget):
                 self.real_df, self.rand_df = run_clust(df=scaled_df, random_coordinate_list=random_coords, prog=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1])
             elif workflow["type"] == Workflow.NND_CLUST:
                 vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else workflow['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
-                self.real_df, self.rand_df = run_nnd_clust(df=scaled_df, random_coordinate_list=random_coords, prog=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1], min_clust_size=vals[2])
+                self.full_real_df, self.full_rand_df, self.real_df, self.rand_df = run_nnd_clust(df=scaled_df, random_coordinate_list=random_coords, prog=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1], min_clust_size=vals[2])
 
             """ END OF ADD WORKFLOWS """
             self.progress.setValue(100)
@@ -290,6 +290,15 @@ class WorkflowPage(QWidget):
         fig = plt.figure()
         canvas = FigureCanvas(fig)
         ax = fig.add_subplot(111)
+
+        """ IF YOU WANT TO CUSTOMIZE BIN COUNT TO YOUR WORKFLOW, ADD THAT HERE """
+        if workflow['type'] == Workflow.CLUST:
+            if self.gen_real_cb.isChecked():
+                temp_df = self.real_df
+            elif self.gen_rand_cb.isChecked():
+                temp_df = self.rand_df
+            n_bins = str(len(set(temp_df['cluster_id'])))
+
         # create hist
         if self.gen_real_cb.isChecked():
             self.real_df.sort_values(workflow["graph"]["x_type"], inplace=True)
@@ -344,6 +353,11 @@ class WorkflowPage(QWidget):
                 drawn_img = draw_clust(cluster_df=self.real_df, img=drawn_img, palette=palette, scalar=scalar,)
             if self.gen_rand_cb.isChecked():
                 drawn_img = draw_clust(cluster_df=self.rand_df, img=drawn_img, palette=r_palette, scalar=scalar,)
+        elif workflow["type"] == Workflow.NND_CLUST:
+            if self.gen_real_cb.isChecked():
+                drawn_img = draw_nnd_clust(nnd_df=self.real_df, cluster_df=self.full_real_df, img=drawn_img, palette=palette, bin_counts=n, scalar=scalar, circle_c=(18, 156, 232), input_unit=input_unit)
+            if self.gen_rand_cb.isChecked():
+                drawn_img = draw_clust(cluster_df=self.rand_df, img=drawn_img, palette=r_palette, scalar=scalar, )
 
         """ END GRAPH DISPLAY """
         # set display img to annotated image
