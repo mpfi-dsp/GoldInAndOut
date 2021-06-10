@@ -8,7 +8,7 @@ from pathlib import Path
 from functools import partial
 from colorthief import ColorThief
 # utils
-from globals import UNIT_OPS, WORKFLOWS
+from globals import UNIT_OPS, WORKFLOWS, MAX_DIRS_PRUNE
 from typings import FileType
 from utils import get_complimentary_color, pixels_conversion
 
@@ -105,24 +105,27 @@ class HomePage(QWidget):
         props_header = QLabel("Global Parameters")
         layout.addRow(props_header)
 
+        self.dod_cb = QCheckBox(f'prune old output (delete folders older than {MAX_DIRS_PRUNE} runs)')
+        layout.addRow(self.dod_cb)
+
         # TODO: Add back ability to set input unit
         # self.ip_scalr_lb = QLabel("Input Unit")
         # self.ip_scalr_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         # self.ip_scalar_type = QComboBox()
         # self.ip_scalar_type.addItems(UNIT_OPS)
-        self.op_scalr_lb = QLabel("output unit")
-        self.op_scalr_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
+        op_scalr_lb = QLabel("output unit")
+        op_scalr_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.op_scalar_type = QComboBox()
         self.op_scalar_type.addItems(UNIT_OPS)
-        self.csvs_lb = QLabel("scalar (px to output unit ratio)")
-        self.csvs_lb.setStyleSheet("font-size: 17px; font-weight: 400; margin-left: 15px; ")
+        csvs_lb = QLabel("scalar (px to output unit ratio)")
+        csvs_lb.setStyleSheet("font-size: 17px; font-weight: 400; margin-left: 15px; ")
         self.csvs_ip = QLineEdit()
         self.csvs_ip.setStyleSheet("font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 150px; ")
         self.csvs_ip.setPlaceholderText("1")
         glob_props = QHBoxLayout()
 
         # for glob in [self.ip_scalr_lb, self.ip_scalar_type, self.op_scalr_lb, self.op_scalar_type, self.csvs_lb, self.csvs_ip]:
-        for glob in [self.op_scalr_lb, self.op_scalar_type, self.csvs_lb, self.csvs_ip]:
+        for glob in [op_scalr_lb, self.op_scalar_type, csvs_lb, self.csvs_ip]:
             glob_props.addWidget(glob)
         layout.addRow(glob_props)
 

@@ -67,6 +67,7 @@ class MainWindow(QWidget):
         ou = unit_to_enum(self.home_page.op_scalar_type.currentText() if self.home_page.op_scalar_type.currentText() is not None else 'px')
         # scalar
         s = float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1)
+        dod = self.home_page.dod_cb.isChecked()
         # add page tabs
         for i in range(len(WORKFLOWS)):
             self.on_progress_update(i * 20)
@@ -85,7 +86,9 @@ class MainWindow(QWidget):
                                  csv=csv_drop,
                                  scalar=s,
                                  input_unit=Unit.PIXEL,
-                                 output_unit=ou)
+                                 output_unit=ou,
+                                 delete_old_dirs=dod
+                                 )
                 )
         self.on_progress_update(100)
 

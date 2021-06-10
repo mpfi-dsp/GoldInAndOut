@@ -87,3 +87,7 @@ UNIT_OPS = ['px', 'nm', 'μm', 'metric']
 
 """ NAVBAR ICON """
 NAV_ICON = QIcon('foo.png')
+
+
+""" MAX DIRS TO KEEP WHEN PRUNING OLD DIRS """
+MAX_DIRS_PRUNE = 5

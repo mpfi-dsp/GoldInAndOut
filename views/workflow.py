@@ -1,6 +1,7 @@
 # pyQT5
 import datetime
 import os
+import shutil
 
 import pandas as pd
 from PyQt5.QtCore import Qt
@@ -16,7 +17,7 @@ from functools import partial
 import seaborn as sns
 import cv2
 # utils
-from globals import PALETTE_OPS
+from globals import PALETTE_OPS, MAX_DIRS_PRUNE
 from typings import Unit, Workflow
 from utils import Progress, create_color_pal, pixels_conversion_w_distance, enum_to_unit
 from workflows.clust import run_clust, draw_clust
@@ -47,10 +48,14 @@ __________________
 
 class WorkflowPage(QWidget):
     def __init__(self, scaled_df, workflow=None, img=None, mask=None, csv=None, input_unit=Unit.PIXEL,
-                 output_unit=Unit.PIXEL, scalar=1):
+                 output_unit=Unit.PIXEL, scalar=1, delete_old_dirs=False):
         super().__init__()
 
-        self.OUTPUT_DF = pd.DataFrame()
+        self.real_df = pd.DataFrame()
+        self.full_real_df = pd.DataFrame()
+        self.rand_df = pd.DataFrame()
+        self.full_rand_df = pd.DataFrame()
+
         layout = QFormLayout()
         # header
         header = QLabel(workflow['header'])
@@ -216,19 +221,23 @@ class WorkflowPage(QWidget):
         # assign layout
         self.setLayout(layout)
         # run on init
-        self.run(workflow, scaled_df, scalar, input_unit, output_unit)
+        self.run(workflow, scaled_df, scalar, input_unit, output_unit, delete_old_dirs)
 
     """ UPDATE PROGRESS BAR """
     def on_progress_update(self, value):
         self.progress.setValue(value)
 
     """ DOWNLOAD FILES """
-    def download(self, output_unit, workflow):
+    def download(self, output_unit, workflow, delete_old_dirs):
         # delete old files to make space if applicable
         try:
             o_dir = f'./output/{workflow["name"].lower()}'
-            oldest_dir = sorted([os.path.abspath(f'{o_dir}/{f}') for f in os.listdir(o_dir)], key=os.path.getctime)[0]
-            print(len(os.listdir(o_dir)), oldest_dir)
+            if delete_old_dirs:
+                while len(os.listdir(o_dir)) >= MAX_DIRS_PRUNE:
+                    oldest_dir = sorted([os.path.abspath(f'{o_dir}/{f}') for f in os.listdir(o_dir)], key=os.path.getctime)[0]
+                    print("pruning ", oldest_dir)
+                    shutil.rmtree(oldest_dir)
+
         except Exception as e:
             print(e)
         # download files
@@ -239,6 +248,10 @@ class WorkflowPage(QWidget):
             self.rand_df.to_csv(f'{out_dir}/rand_{workflow["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False, header=True)
             self.display_img.save(f'{out_dir}/drawn_{workflow["name"].lower()}_img.tif')
             self.graph.save(f'{out_dir}/{workflow["name"].lower()}_graph.jpg')
+            # if workflow fills full dfs, output those two
+            if not self.full_real_df.empty and not self.full_rand_df.empty:
+                self.full_real_df.to_csv(f'{out_dir}/full_real_{workflow["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False, header=True)
+                self.full_rand_df.to_csv(f'{out_dir}/full_rand_{workflow["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False, header=True)
         except Exception as e:
             print(e)
 
@@ -256,7 +269,7 @@ class WorkflowPage(QWidget):
             prop.setVisible(not prop.isVisible())
 
     """ RUN WORKFLOW """
-    def run(self, workflow, scaled_df, scalar, input_unit, output_unit):
+    def run(self, workflow, scaled_df, scalar, input_unit, output_unit, delete_old_dirs):
         try:
             prog_wrapper = Progress()
             prog_wrapper.prog.connect(self.on_progress_update)
@@ -284,7 +297,7 @@ class WorkflowPage(QWidget):
             self.create_visuals(workflow=workflow, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'),
                                 input_unit=input_unit, output_unit=output_unit, scalar=scalar)
             # download files automatically
-            self.download(output_unit=output_unit, workflow=workflow)
+            self.download(output_unit=output_unit, workflow=workflow, delete_old_dirs=delete_old_dirs)
             self.download_btn.setStyleSheet(
                 "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
         except Exception as e:
