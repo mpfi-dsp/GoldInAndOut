@@ -378,7 +378,7 @@ class WorkflowPage(QWidget):
             if self.gen_real_cb.isChecked():
                 drawn_img = draw_nnd_clust(nnd_df=self.real_df, cluster_df=self.full_real_df, img=drawn_img, palette=palette, bin_counts=n, scalar=scalar, circle_c=(18, 156, 232), input_unit=input_unit)
             if self.gen_rand_cb.isChecked():
-                drawn_img = draw_clust(cluster_df=self.rand_df, img=drawn_img, palette=r_palette, scalar=scalar, )
+                drawn_img = draw_nnd_clust(nnd_df=self.rand_df, cluster_df=self.full_rand_df, img=drawn_img, palette=r_palette, bin_counts=n, scalar=scalar, circle_c=(18, 156, 232), input_unit=input_unit)
 
         """ END GRAPH DISPLAY """
         # set display img to annotated image
