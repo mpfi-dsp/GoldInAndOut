@@ -301,14 +301,13 @@ class WorkflowPage(QWidget):
                 self.full_real_df, self.full_rand_df, self.real_df, self.rand_df = run_nnd_clust(df=df,
                                                                                                  random_coordinate_list=random_coords,
                                                                                                  pb=prog_wrapper,
-                                                                                                 distance_threshold=
-                                                                                                 vals[0],
+                                                                                                 distance_threshold=vals[0],
                                                                                                  n_clusters=vals[1],
                                                                                                  min_clust_size=vals[2])
             elif wf["type"] == Workflow.RIPPLER:
                 vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder']
                         for i in range(len(self.cstm_props))]
-                self.real_df, self.rand_df = run_rippler(df=df, maxsteps=vals[1], stepsize=vals[2])
+                self.real_df, self.rand_df = run_rippler(df=df, img_path=self.img_drop.currentText(), mask_path=self.mask_drop.currentText(), max_steps=vals[1], step_size=vals[2])
 
             # end workflow funcs
             self.progress.setValue(100)
