@@ -4,9 +4,11 @@ import cv2
 
 
 def run_rippler(df, img_path, mask_path, max_steps=10, step_size=60):
+    # find Spine Correlated Particles Per P-face Area (SC3PA)
+    print("running gold rippler (SC3PA)")
     img_og = cv2.imread(img_path)
     img_pface = cv2.imread(mask_path)
-
+    print("load imgs and find pface area")
     lower_bound = np.array([239, 174, 0])
     upper_bound = np.array([254, 254, 254])
     pface_mask = cv2.inRange(img_pface, lower_bound, upper_bound)
@@ -45,8 +47,6 @@ def run_rippler(df, img_path, mask_path, max_steps=10, step_size=60):
     # perm_scale_mask = np.zeros((img_size[0], img_size[1], 3), np.uint8)
     original_copy = img_og.copy()
 
-    # find Spine Correlated Particles Per P-face Area (SC3PA)
-    print("running gold rippler (SC3PA)")
     # turn into coordinate list
     x_coordinates = np.array(df['X'])
     y_coordinates = np.array(df['Y'])

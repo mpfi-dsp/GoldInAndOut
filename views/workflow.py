@@ -307,7 +307,7 @@ class WorkflowPage(QWidget):
             elif wf["type"] == Workflow.RIPPLER:
                 vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder']
                         for i in range(len(self.cstm_props))]
-                self.real_df, self.rand_df = run_rippler(df=df, img_path=self.img_drop.currentText(), mask_path=self.mask_drop.currentText(), max_steps=vals[1], step_size=vals[2])
+                self.real_df, self.rand_df = run_rippler(df=df, img_path=self.img_drop.currentText(), mask_path=self.mask_drop.currentText(), max_steps=vals[0], step_size=vals[1])
 
             # end workflow funcs
             self.progress.setValue(100)
