@@ -17,6 +17,7 @@ Array of JSON objects containing the following data:
         @title: title of prop
         @placeholder: placeholder for prop label
 """
+# TODO: ADD NEW WORKFLOW METADATA HERE
 WORKFLOWS = [{
     "name": "NND",
     "type": Workflow.NND,
@@ -74,6 +75,27 @@ WORKFLOWS = [{
             "title": "min_cluster_size",
             "placeholder": "3"
         },
+        ]
+},
+{
+    "name": "RIPPLER",
+    "type": Workflow.RIPPLER,
+    "header": "Gold Rippler: Spine-Particle Correlation",
+    "desc": "Separate spine masks as individual components, grow components until they contain X gold particles, calculate Spine Correlated Particles Per P-face Area (SC3PA) (% of gold particles within spine masks) / (% of total area of p-face taken up by spine masks)",
+    "graph": {
+            "title": "Nearest Neighbor Distance for Ward Hierarchical Clusters",
+            "x_label": "Nearest Neighbor Distance",
+            "y_label": "Number of Entries",
+            "x_type": "dist"
+        },
+    "props": [
+        {
+        "title": "max_steps",
+          "placeholder": "10"
+        },
+        {"title": "step_size",
+         "placeholder": "60"
+         }
         ]
 }
 ]

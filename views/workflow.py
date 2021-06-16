@@ -21,67 +21,67 @@ from globals import PALETTE_OPS, MAX_DIRS_PRUNE
 from typings import Unit, Workflow
 from utils import Progress, create_color_pal, pixels_conversion_w_distance, enum_to_unit
 from workflows.clust import run_clust, draw_clust
+from workflows.gold_rippler import run_rippler
 from workflows.nnd import run_nnd, draw_length
 from workflows.nnd_clust import run_nnd_clust, draw_nnd_clust
 from workflows.random import gen_random_coordinates
 
-""" 
-WORKFLOW PAGE
-__________________
-@scaled_df: dataframe containing csv coordinate data of gold particles scaled via scalar to proper unit
-@workflow: JSON object containing the following data:
-    @type: ENUM type of Workflow
-    @header: string displayed as "header"
-    @desc: string displayed as "description" below header
-    @graph: graph metadata:
-        @title: title of graph
-        @x_label: x_label of graph
-        @y_label: y_label of graph
-@img: array of selected image paths
-@mask: array of selected mask paths
-@csv: array of selected csv paths
-@input_unit: metric input unit
-@output_unit: metric output unit
-@scalar: multiplier ratio between input metric unit (usually pixels) and desired output metric unit
-"""
-
 
 class WorkflowPage(QWidget):
-    def __init__(self, scaled_df, workflow=None, img=None, mask=None, csv=None, input_unit=Unit.PIXEL,
-                 output_unit=Unit.PIXEL, scalar=1, delete_old_dirs=False):
+    """
+    WORKFLOW PAGE
+    __________________
+    @scaled_df: dataframe containing csv coordinate data of gold particles scaled via scalar to proper unit
+    @wf: selected workflow, JSON object containing the following data:
+        @type: ENUM type of Workflow
+        @header: string displayed as "header"
+        @desc: string displayed as "description" below header
+        @graph: graph metadata:
+            @title: title of graph
+            @x_label: x_label of graph
+            @y_label: y_label of graph
+    @img: array of selected image paths
+    @mask: array of selected mask paths
+    @csv: array of selected csv paths
+    @input_unit: metric input unit
+    @output_unit: metric output unit
+    @scalar: multiplier ratio between input metric unit (usually pixels) and desired output metric unit
+    @delete_old: delete output data older than 5 runs
+    """
+    def __init__(self, df, wf=None, img=None, mask=None, csv=None, input_unit=Unit.PIXEL,
+                 output_unit=Unit.PIXEL, scalar=1, delete_old=False):
         super().__init__()
-
+        # init dfs
         self.real_df = pd.DataFrame()
         self.full_real_df = pd.DataFrame()
         self.rand_df = pd.DataFrame()
         self.full_rand_df = pd.DataFrame()
-
+        # init layout
         layout = QFormLayout()
         # header
-        header = QLabel(workflow['header'])
+        header = QLabel(wf['header'])
         header.setStyleSheet("font-size: 24px; font-weight: bold; padding-top: 8px; ")
         layout.addRow(header)
-        desc = QLabel(workflow['desc'])
+        desc = QLabel(wf['desc'])
         desc.setStyleSheet("font-size: 17px; font-weight: 400; padding-top: 3px; padding-bottom: 20px;")
         desc.setWordWrap(True)
         layout.addRow(desc)
-
-        """ REUSABLE PARAMETERS """
+        # REUSABLE PARAMETERS
         self.workflows_header = QLabel("Parameters")
         layout.addRow(self.workflows_header)
-
+        # custom props
         self.cstm_props = []
-        for i in range(len(workflow['props'])):
-            prop_l = QLabel(workflow['props'][i]['title'])
+        for i in range(len(wf['props'])):
+            prop_l = QLabel(wf['props'][i]['title'])
             prop_l.setStyleSheet("font-size: 17px; font-weight: 400;")
             prop_le = QLineEdit()
-            prop_le.setPlaceholderText(workflow['props'][i]['placeholder'])
+            prop_le.setPlaceholderText(wf['props'][i]['placeholder'])
             layout.addRow(prop_l, prop_le)
             self.cstm_props.append(prop_le)
-
-        """ REAL COORDS SECTION """
+        # REAL COORDS SECTION
         gen_head = QLabel("Real Coordinates")
-        gen_head.setStyleSheet("font-size: 17px; font-weight: 500; padding-top: 0px; padding-bottom: 0px; margin-top: 0px; margin-bottom: 0px;")
+        gen_head.setStyleSheet(
+            "font-size: 17px; font-weight: 500; padding-top: 0px; padding-bottom: 0px; margin-top: 0px; margin-bottom: 0px;")
         self.gen_head_cb = QToolButton()
         self.gen_head_cb.setArrowType(Qt.DownArrow)
         self.gen_head_cb.setCursor(QCursor(Qt.PointingHandCursor))
@@ -108,14 +108,14 @@ class WorkflowPage(QWidget):
         self.pal_type = QComboBox()
         self.pal_type.addItems(PALETTE_OPS)
         layout.addRow(pal_lb, self.pal_type)
-
+        # hide hidden props by default
         self.real_props = [csv_lb, self.csv_drop, pal_lb, self.pal_type, bars_lb, self.bars_ip]
         for prop in self.real_props:
             prop.setHidden(True)
-
-        """ RANDOM COORDS SECTION """
+        # RANDOM COORDS SECTION
         gen_rand_head = QLabel("Random Coordinates")
-        gen_rand_head.setStyleSheet("font-size: 17px; font-weight: 500; padding-top: 0px; padding-bottom: 0px; margin-top: 0px; margin-bottom: 0px;")
+        gen_rand_head.setStyleSheet(
+            "font-size: 17px; font-weight: 500; padding-top: 0px; padding-bottom: 0px; margin-top: 0px; margin-bottom: 0px;")
         self.gen_rand_adv_cb = QToolButton()
         self.gen_rand_adv_cb.setArrowType(Qt.DownArrow)
         self.gen_rand_adv_cb.setCursor(QCursor(Qt.PointingHandCursor))
@@ -147,12 +147,12 @@ class WorkflowPage(QWidget):
         n_coord_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.n_coord_ip = QLineEdit()
         self.n_coord_ip.setStyleSheet(
-            "font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; ") # max-width: 200px;
+            "font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; ")  # max-width: 200px;
         self.n_coord_ip.setPlaceholderText("default is # in real csv")
         layout.addRow(n_coord_lb, self.n_coord_ip)
         # set adv hidden by default
         self.rand_props = [img_lb, self.img_drop, mask_lb, self.mask_drop, n_coord_lb, self.n_coord_ip,
-                     self.r_pal_type, r_pal_lb]
+                           self.r_pal_type, r_pal_lb]
         for prop in self.rand_props:
             prop.setHidden(True)
         # output header
@@ -208,11 +208,11 @@ class WorkflowPage(QWidget):
         self.run_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #E89C12; color: white; border-radius: 7px; ")
         self.run_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.run_btn.clicked.connect(partial(self.run, workflow, scaled_df, scalar, input_unit, output_unit))
+        self.run_btn.clicked.connect(partial(self.run, wf, df, scalar, input_unit, output_unit))
         self.download_btn = QPushButton('Download Again', self)
         self.download_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #ccc; color: white; border-radius: 7px; ")
-        self.download_btn.clicked.connect(partial(self.download, output_unit, workflow))
+        self.download_btn.clicked.connect(partial(self.download, output_unit, wf))
         self.download_btn.setCursor(QCursor(Qt.PointingHandCursor))
         btn_r = QHBoxLayout()
         btn_r.addWidget(self.run_btn)
@@ -221,20 +221,21 @@ class WorkflowPage(QWidget):
         # assign layout
         self.setLayout(layout)
         # run on init
-        self.run(workflow, scaled_df, scalar, input_unit, output_unit, delete_old_dirs)
+        self.run(wf, df, scalar, input_unit, output_unit, delete_old)
 
-    """ UPDATE PROGRESS BAR """
-    def on_progress_update(self, value):
+    def update_progress(self, value):
+        """ UPDATE PROGRESS BAR """
         self.progress.setValue(value)
 
-    """ DOWNLOAD FILES """
-    def download(self, output_unit, workflow, delete_old_dirs):
-        # delete old files to make space if applicable
+    def download(self, output_unit, wf, delete_old):
+        """ DOWNLOAD FILES """
         try:
-            o_dir = f'./output/{workflow["name"].lower()}'
-            if delete_old_dirs:
+            # delete old files to make space if applicable
+            o_dir = f'./output/{wf["name"].lower()}'
+            if delete_old:
                 while len(os.listdir(o_dir)) >= MAX_DIRS_PRUNE:
-                    oldest_dir = sorted([os.path.abspath(f'{o_dir}/{f}') for f in os.listdir(o_dir)], key=os.path.getctime)[0]
+                    oldest_dir = \
+                        sorted([os.path.abspath(f'{o_dir}/{f}') for f in os.listdir(o_dir)], key=os.path.getctime)[0]
                     print("pruning ", oldest_dir)
                     shutil.rmtree(oldest_dir)
 
@@ -242,78 +243,95 @@ class WorkflowPage(QWidget):
             print(e)
         # download files
         try:
-            out_dir = f'./output/{workflow["name"].lower()}/{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
+            out_dir = f'./output/{wf["name"].lower()}/{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
             os.makedirs(out_dir, exist_ok=True)
-            self.real_df.to_csv(f'{out_dir}/real_{workflow["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False, header=True)
-            self.rand_df.to_csv(f'{out_dir}/rand_{workflow["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False, header=True)
-            self.display_img.save(f'{out_dir}/drawn_{workflow["name"].lower()}_img.tif')
-            self.graph.save(f'{out_dir}/{workflow["name"].lower()}_graph.jpg')
+            self.real_df.to_csv(f'{out_dir}/real_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv',
+                                index=False, header=True)
+            self.rand_df.to_csv(f'{out_dir}/rand_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv',
+                                index=False, header=True)
+            self.display_img.save(f'{out_dir}/drawn_{wf["name"].lower()}_img.tif')
+            self.graph.save(f'{out_dir}/{wf["name"].lower()}_graph.jpg')
             # if workflow fills full dfs, output those two
             if not self.full_real_df.empty and not self.full_rand_df.empty:
-                self.full_real_df.to_csv(f'{out_dir}/full_real_{workflow["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False, header=True)
-                self.full_rand_df.to_csv(f'{out_dir}/full_rand_{workflow["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False, header=True)
+                self.full_real_df.to_csv(
+                    f'{out_dir}/full_real_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False,
+                    header=True)
+                self.full_rand_df.to_csv(
+                    f'{out_dir}/full_rand_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False,
+                    header=True)
         except Exception as e:
             print(e)
 
-    """ TOGGLE GENERAL ADV OPTIONS """
-
     def toggle_gen_adv(self):
+        """ TOGGLE GENERAL ADV OPTIONS """
         self.gen_head_cb.setArrowType(Qt.UpArrow if self.gen_head_cb.arrowType() == Qt.DownArrow else Qt.DownArrow)
         for prop in self.real_props:
             prop.setVisible(not prop.isVisible())
 
-    """ TOGGLE RAND ADV OPTIONS """
     def toggle_rand_adv(self):
-        self.gen_rand_adv_cb.setArrowType(Qt.UpArrow if self.gen_rand_adv_cb.arrowType() == Qt.DownArrow else Qt.DownArrow)
+        """ TOGGLE RAND ADV OPTIONS """
+        self.gen_rand_adv_cb.setArrowType(
+            Qt.UpArrow if self.gen_rand_adv_cb.arrowType() == Qt.DownArrow else Qt.DownArrow)
         for prop in self.rand_props:
             prop.setVisible(not prop.isVisible())
 
-    """ RUN WORKFLOW """
-    def run(self, workflow, scaled_df, scalar, input_unit, output_unit, delete_old_dirs):
+    def run(self, wf, df, scalar, input_unit, output_unit, delete_old):
+        """ RUN WORKFLOW """
         try:
             prog_wrapper = Progress()
-            prog_wrapper.prog.connect(self.on_progress_update)
+            prog_wrapper.prog.connect(self.update_progress)
 
             # generate random coords
             random_coords = gen_random_coordinates(
-                data=scaled_df, img_path=self.img_drop.currentText(),
-                                                   pface_path=self.mask_drop.currentText(),
-                                                   n_rand_to_gen=int(self.n_coord_ip.text()) if self.n_coord_ip.text() else len(scaled_df.index))
+                data=df, img_path=self.img_drop.currentText(),
+                mask_path=self.mask_drop.currentText(),
+                count=int(self.n_coord_ip.text()) if self.n_coord_ip.text() else len(df.index))
 
-            # select workflow
-            """ ADD NEW WORKFLOWS HERE """
-            if workflow["type"] == Workflow.NND:
-                self.real_df, self.rand_df = run_nnd(df=scaled_df, prog=prog_wrapper, random_coordinate_list=random_coords)
-            elif workflow["type"] == Workflow.CLUST:
-                vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else workflow['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
-                self.real_df, self.rand_df = run_clust(df=scaled_df, random_coordinate_list=random_coords, prog=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1])
-            elif workflow["type"] == Workflow.NND_CLUST:
-                vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else workflow['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
-                self.full_real_df, self.full_rand_df, self.real_df, self.rand_df = run_nnd_clust(df=scaled_df, random_coordinate_list=random_coords, prog=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1], min_clust_size=vals[2])
+            # TODO: ADD NEW WORKFLOW FUNCTION CALLS HERE
+            if wf["type"] == Workflow.NND:
+                self.real_df, self.rand_df = run_nnd(df=df, pb=prog_wrapper, rand_coords=random_coords)
+            elif wf["type"] == Workflow.CLUST:
+                vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i
+                        in range(len(self.cstm_props))]
+                self.real_df, self.rand_df = run_clust(df=df, random_coordinate_list=random_coords, pb=prog_wrapper,
+                                                       distance_threshold=vals[0], n_clusters=vals[1])
+            elif wf["type"] == Workflow.NND_CLUST:
+                vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i
+                        in range(len(self.cstm_props))]
+                self.full_real_df, self.full_rand_df, self.real_df, self.rand_df = run_nnd_clust(df=df,
+                                                                                                 random_coordinate_list=random_coords,
+                                                                                                 pb=prog_wrapper,
+                                                                                                 distance_threshold=
+                                                                                                 vals[0],
+                                                                                                 n_clusters=vals[1],
+                                                                                                 min_clust_size=vals[2])
+            elif wf["type"] == Workflow.RIPPLER:
+                vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder']
+                        for i in range(len(self.cstm_props))]
+                self.real_df, self.rand_df = run_rippler(df=df, maxsteps=vals[1], stepsize=vals[2])
 
-            """ END OF ADD WORKFLOWS """
+            # end workflow funcs
             self.progress.setValue(100)
             # create ui scheme
-            self.create_visuals(workflow=workflow, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'),
+            self.create_visuals(wf=wf, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'),
                                 input_unit=input_unit, output_unit=output_unit, scalar=scalar)
             # download files automatically
-            self.download(output_unit=output_unit, workflow=workflow, delete_old_dirs=delete_old_dirs)
+            self.download(output_unit=output_unit, wf=wf, delete_old=delete_old)
             self.download_btn.setStyleSheet(
                 "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
         except Exception as e:
             print(e)
 
-    """ CREATE DATA VISUALIZATIONS """
-    def create_visuals(self, workflow, n_bins, input_unit, output_unit, scalar):
-        # init vars & figure
+    def create_visuals(self, wf, n_bins, input_unit, output_unit, scalar):
+        """ CREATE DATA VISUALIZATIONS """
         graph_df = pd.DataFrame([])
         cm = plt.cm.get_cmap('crest')
         fig = plt.figure()
         canvas = FigureCanvas(fig)
         ax = fig.add_subplot(111)
 
-        """ IF YOU WANT TO CUSTOMIZE BIN COUNT TO YOUR WORKFLOW, ADD THAT HERE """
-        if workflow['type'] == Workflow.CLUST:
+        # TODO: IF YOU WANT TO CUSTOMIZE BIN COUNT IN YOUR WORKFLOW, DO THAT HERE
+        if wf['type'] == Workflow.CLUST:
             if self.gen_real_cb.isChecked():
                 temp_df = self.real_df
             elif self.gen_rand_cb.isChecked():
@@ -322,20 +340,20 @@ class WorkflowPage(QWidget):
 
         # create hist
         if self.gen_real_cb.isChecked():
-            self.real_df.sort_values(workflow["graph"]["x_type"], inplace=True)
-            graph_df = self.real_df[workflow["graph"]["x_type"]]
+            self.real_df.sort_values(wf["graph"]["x_type"], inplace=True)
+            graph_df = self.real_df[wf["graph"]["x_type"]]
             cm = sns.color_palette(self.pal_type.currentText(), as_cmap=True)
-            ax.set_title(f'{workflow["graph"]["title"]} (Real)')
+            ax.set_title(f'{wf["graph"]["title"]} (Real)')
         elif self.gen_rand_cb.isChecked():
-            self.rand_df.sort_values(workflow["graph"]["x_type"], inplace=True)
+            self.rand_df.sort_values(wf["graph"]["x_type"], inplace=True)
             scaled_rand = pixels_conversion_w_distance(self.rand_df, scalar)
-            ax.set_title(f'{workflow["graph"]["title"]} (Rand)')
+            ax.set_title(f'{wf["graph"]["title"]} (Rand)')
             cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
-            graph_df = scaled_rand[workflow["graph"]["x_type"]]
+            graph_df = scaled_rand[wf["graph"]["x_type"]]
         # draw graph
         n, bins, patches = ax.hist(graph_df, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), color='green')
-        ax.set_xlabel(f'{workflow["graph"]["x_label"]} ({enum_to_unit(output_unit)})')
-        ax.set_ylabel(workflow["graph"]["y_label"])
+        ax.set_xlabel(f'{wf["graph"]["x_label"]} ({enum_to_unit(output_unit)})')
+        ax.set_ylabel(wf["graph"]["y_label"])
         # generate palette
         palette = create_color_pal(n_bins=int(len(n)), palette_type=self.pal_type.currentText())
         r_palette = create_color_pal(n_bins=int(len(n)), palette_type=self.r_pal_type.currentText())
@@ -356,9 +374,8 @@ class WorkflowPage(QWidget):
         self.graph_frame.setPixmap(smaller_pixmap)
         # load in image
         drawn_img = cv2.imread(self.img_drop.currentText())
-        """ ADD NEW GRAPHS HERE """
-
-        if workflow["type"] == Workflow.NND:
+        # TODO: ADD NEW GRAPHS HERE
+        if wf["type"] == Workflow.NND:
             # if real coords selected, annotate them on img with lines indicating length
             if self.gen_real_cb.isChecked():
                 drawn_img = draw_length(nnd_df=self.real_df, bin_counts=n, img=drawn_img, palette=palette,
@@ -369,19 +386,22 @@ class WorkflowPage(QWidget):
                 drawn_img = draw_length(nnd_df=self.rand_df, bin_counts=n, img=drawn_img, palette=r_palette,
                                         input_unit=input_unit,
                                         scalar=1, circle_c=(18, 156, 232))
-        elif workflow["type"] == Workflow.CLUST:
+        elif wf["type"] == Workflow.CLUST:
             if self.gen_real_cb.isChecked():
-                drawn_img = draw_clust(cluster_df=self.real_df, img=drawn_img, palette=palette, scalar=scalar,)
+                drawn_img = draw_clust(clust_df=self.real_df, img=drawn_img, palette=palette, scalar=scalar)
             if self.gen_rand_cb.isChecked():
-                drawn_img = draw_clust(cluster_df=self.rand_df, img=drawn_img, palette=r_palette, scalar=scalar,)
-        elif workflow["type"] == Workflow.NND_CLUST:
+                drawn_img = draw_clust(clust_df=self.rand_df, img=drawn_img, palette=r_palette, scalar=scalar)
+        elif wf["type"] == Workflow.NND_CLUST:
             if self.gen_real_cb.isChecked():
-                drawn_img = draw_nnd_clust(nnd_df=self.real_df, cluster_df=self.full_real_df, img=drawn_img, palette=palette, bin_counts=n, scalar=scalar, circle_c=(18, 156, 232), input_unit=input_unit)
+                drawn_img = draw_nnd_clust(nnd_df=self.real_df, clust_df=self.full_real_df, img=drawn_img,
+                                           palette=palette, bin_counts=n, scalar=scalar, circle_c=(18, 156, 232),
+                                           input_unit=input_unit)
             if self.gen_rand_cb.isChecked():
-                drawn_img = draw_nnd_clust(nnd_df=self.rand_df, cluster_df=self.full_rand_df, img=drawn_img, palette=r_palette, bin_counts=n, scalar=scalar, circle_c=(18, 156, 232), input_unit=input_unit)
+                drawn_img = draw_nnd_clust(nnd_df=self.rand_df, clust_df=self.full_rand_df, img=drawn_img,
+                                           palette=r_palette, bin_counts=n, scalar=scalar, circle_c=(18, 156, 232),
+                                           input_unit=input_unit)
 
-        """ END GRAPH DISPLAY """
-        # set display img to annotated image
+        # end graph display, set display img to annotated image
         self.display_img = QImage(drawn_img.data, drawn_img.shape[1], drawn_img.shape[0],
                                   QImage.Format_RGB888).rgbSwapped()
         # resize to fit on gui
@@ -389,8 +409,8 @@ class WorkflowPage(QWidget):
         smaller_pixmap = pixmap.scaled(200, 200, Qt.KeepAspectRatio, Qt.FastTransformation)
         self.image_frame.setPixmap(smaller_pixmap)
 
-    """ OPEN IMAGE IN VIEWER """
     def open_large(self, event, img):
+        """ OPEN IMAGE IN VIEWER """
         try:
             self.image_viewer = QImageViewer(img)
             self.image_viewer.show()

@@ -4,6 +4,8 @@ class Workflow(Enum):
     NND = 1
     CLUST = 2
     NND_CLUST = 3
+    RIPPLER = 4
+
 
 class Unit(Enum):
     PIXEL = 1

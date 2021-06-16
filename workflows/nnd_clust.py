@@ -25,7 +25,7 @@ _______________________________
 @random_coordinate_list: list of randomly generated coordinates
 """
 
-def run_nnd_clust(df, prog, random_coordinate_list, min_clust_size=3, distance_threshold=120, n_clusters=None,
+def run_nnd_clust(df, pb, random_coordinate_list, min_clust_size=3, distance_threshold=120, n_clusters=None,
                   affinity='euclidean', linkage='ward'):
     # remove elements of list that show up less than k times
     def minify_list(lst, k):
@@ -70,7 +70,7 @@ def run_nnd_clust(df, prog, random_coordinate_list, min_clust_size=3, distance_t
         # append cluster ids to df
         data['cluster_id'] = clust
         # setup random coords
-        prog.update_progress(70)
+        pb.update_progress(70)
         rand_coordinates = np.array(random_coordinate_list)
         rand_cluster = hc.fit_predict(rand_coordinates)
         # fill random df
@@ -128,7 +128,7 @@ def run_nnd_clust(df, prog, random_coordinate_list, min_clust_size=3, distance_t
     for i in range(len(x_coordinates)):
         real_coordinates.append([float(y_coordinates[i]), float(x_coordinates[i])])
     # make numpy array
-    prog.update_progress(30)
+    pb.update_progress(30)
     real_coordinates = np.array(real_coordinates)
     # cluster
     full_real_df, full_rand_df, cluster, rand_cluster = cluster(df, n_clusters, distance_threshold, min_clust_size)
@@ -144,16 +144,16 @@ def run_nnd_clust(df, prog, random_coordinate_list, min_clust_size=3, distance_t
     return full_real_df, full_rand_df, real_df, rand_df
 
 
-def draw_nnd_clust(nnd_df, cluster_df, img, bin_counts, palette="rocket_r", input_unit=Unit.PIXEL, scalar=1, circle_c=(0, 0, 255)):
+def draw_nnd_clust(nnd_df, clust_df, img, bin_counts, palette="rocket_r", input_unit=Unit.PIXEL, scalar=1, circle_c=(0, 0, 255)):
     # color palette
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
     # draw clusters
-    cl_palette = create_color_pal(n_bins=len(set(cluster_df['cluster_id'])), palette_type=palette)
-    for idx, entry in cluster_df.iterrows():
+    cl_palette = create_color_pal(n_bins=len(set(clust_df['cluster_id'])), palette_type=palette)
+    for idx, entry in clust_df.iterrows():
         particle = tuple(int(scalar * x) for x in [entry['X'], entry['Y']])
-        img = cv2.circle(img, particle, 10, sea_to_rgb(cl_palette[cluster_df['cluster_id'][idx]]), -1)
+        img = cv2.circle(img, particle, 10, sea_to_rgb(cl_palette[clust_df['cluster_id'][idx]]), -1)
     # draw nnd
     count = 0
     bin_idx = 0

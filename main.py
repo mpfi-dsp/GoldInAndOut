@@ -14,8 +14,8 @@ from PyQt5.QtWidgets import (QWidget, QListWidget, QStackedWidget, QHBoxLayout, 
 import sys
 
 
-""" PARENT WINDOW INITIALIZATION """
 class MainWindow(QWidget):
+    """ PARENT WINDOW INITIALIZATION """
     def __init__(self):
         super().__init__()
         self.setWindowTitle('GoldInAndOut')
@@ -34,9 +34,8 @@ class MainWindow(QWidget):
         # init ui
         self.init_ui()
 
-    """ INITIALIZE MAIN CHILD WINDOW """
     def init_ui(self):
-        # create interface, hide scrollbar
+        """ INITIALIZE MAIN CHILD WINDOW """
         self.nav_list.currentRowChanged.connect(self.page_stack.setCurrentIndex)
         self.nav_list.setFrameShape(QListWidget.NoFrame)
         self.nav_list.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -52,8 +51,8 @@ class MainWindow(QWidget):
         # select first page by default
         self.nav_list.item(0).setSelected(True)
 
-    """ INITIALIZE CHILD WORKFLOW WINDOWS """
     def init_workflows(self):
+        """ INITIALIZE CHILD WORKFLOW WINDOWS """
         self.home_page.start_btn.setText("Run Again")
         self.empty_stack()
         self.load_data()
@@ -70,7 +69,7 @@ class MainWindow(QWidget):
         dod = self.home_page.dod_cb.isChecked()
         # add page tabs
         for i in range(len(WORKFLOWS)):
-            self.on_progress_update(i * 20)
+            self.update_main_progress(i * 20)
             if self.home_page.workflow_cbs[i].isChecked():
                 item = QListWidgetItem(
                     NAV_ICON, str(WORKFLOWS[i]['name']), self.nav_list)
@@ -79,32 +78,32 @@ class MainWindow(QWidget):
                 # generate workflow page
                 # print(WORKFLOWS[i])
                 self.page_stack.addWidget(
-                    WorkflowPage(scaled_df=self.SCALED_DF,
-                                 workflow=WORKFLOWS[i],
+                    WorkflowPage(df=self.SCALED_DF,
+                                 wf=WORKFLOWS[i],
                                  img=img_drop,
                                  mask=mask_drop,
                                  csv=csv_drop,
                                  scalar=s,
                                  input_unit=Unit.PIXEL,
                                  output_unit=ou,
-                                 delete_old_dirs=dod
+                                 delete_old=dod
                                  )
                 )
-        self.on_progress_update(100)
+        self.update_main_progress(100)
 
-    """ LOAD AND SCALE DATA """
     def load_data(self):
+        """ LOAD AND SCALE DATA """
         path = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else "./input/example_csv.csv"
         # TODO: unit = unit_to_enum(self.home_page.ip_scalar_type.currentText()) if self.home_page.ip_scalar_type.currentText() else Unit.PIXEL
         scalar = float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1)
         self.SCALED_DF = pixels_conversion(csv_path=path, input_unit=Unit.PIXEL, csv_scalar=scalar)
 
-    """ UPDATE PROGRESS BAR """
-    def on_progress_update(self, value):
+    def update_main_progress(self, value):
+        """ UPDATE PROGRESS BAR """
         self.home_page.progress.setValue(value)
 
-    """ CLEAR PAGE/NAV STACKS """
     def empty_stack(self):
+        """ CLEAR PAGE/NAV STACKS """
         for i in range(self.page_stack.count()):
             if i > 0:
                 self.nav_list.takeItem(i)

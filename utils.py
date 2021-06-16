@@ -5,16 +5,16 @@ import seaborn as sns
 from typings import Unit, Workflow
 import io
 
-""" PROGRESS BAR/THREADING  """
 class Progress(QThread):
+    """ PROGRESS BAR/THREADING  """
     prog = pyqtSignal(int)
 
     def update_progress(self, count):
         self.prog.emit(count)
 
 
-""" GENERATE COLOR PALETTE USING SEABORN """
 def create_color_pal(n_bins=10, palette_type="crest"):
+    """ GENERATE COLOR PALETTE USING SEABORN """
     palette = sns.color_palette(palette_type, n_colors=n_bins)
     color_palette = []
     for i in range(n_bins):
@@ -26,26 +26,26 @@ def create_color_pal(n_bins=10, palette_type="crest"):
     return color_palette
 
 
-""" GENERATE COMPLIMENTARY COLOR PALETTE """
 def get_complimentary_color(hexcode):
+    """ GENERATE COMPLIMENTARY COLOR PALETTE """
     color = int(hexcode[1:], 16)
     comp_color = 0xFFFFFF ^ color
     comp_color = "#%06X" % comp_color
     return comp_color
 
 
-""" CONVERT FIGURE TO IMG """
 def figure_to_img(fig):
-    # convert Matplotlib figure to PIL Image
+    """ CONVERT FIGURE TO IMG """
     buf = io.BytesIO()
+    # convert Matplotlib figure to PIL Image
     fig.savefig(buf)
     buf.seek(0)
     img = Image.open(buf)
     return img
 
 
-""" UPLOAD CSV AND CONVERT DF FROM ONE METRIC UNIT TO ANOTHER """
 def pixels_conversion(csv_path, input_unit=Unit.PIXEL, csv_scalar=1, round=5):
+    """ UPLOAD CSV AND CONVERT DF FROM ONE METRIC UNIT TO ANOTHER """
     data = pd.read_csv(csv_path, sep=",")
     if input_unit == Unit.PIXEL:
         data['X'] = data['X'].div(csv_scalar).round(round)
@@ -56,8 +56,8 @@ def pixels_conversion(csv_path, input_unit=Unit.PIXEL, csv_scalar=1, round=5):
     return data
 
 
-""" CONVERT DF FROM ONE METRIC UNIT TO ANOTHER INCLUDING DISTANCE """
 def pixels_conversion_w_distance(data, scalar=1):
+    """ CONVERT DF FROM ONE METRIC UNIT TO ANOTHER INCLUDING DISTANCE """
     scaled_data = data.copy()
     if scalar > 1:
         for idx, entry in scaled_data.iterrows():
@@ -67,8 +67,8 @@ def pixels_conversion_w_distance(data, scalar=1):
     return scaled_data
 
 
-""" TURN UNIT STRING INTO ENUM """
 def unit_to_enum(val):
+    """ TURN UNIT STRING INTO ENUM """
     if val == 'px':
         return Unit.PIXEL
     elif val == 'nm':
@@ -79,8 +79,8 @@ def unit_to_enum(val):
         return Unit.METRIC
 
 
-""" TURN ENUM INTO UNIT STRING """
 def enum_to_unit(val):
+    """ TURN ENUM INTO UNIT STRING """
     if val == Unit.PIXEL:
         return 'px'
     elif val == Unit.NANOMETER:

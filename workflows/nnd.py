@@ -4,23 +4,22 @@ import math
 import cv2
 from typings import Unit
 
-""" 
-NND RUN FUNCTION
-_______________________________
-@df: dataframe with coordinates scaled to whatever format desired
-@prog: progress bar wrapper element, allows us to track how much time is left in process
-@random_coordinate_list: list of randomly generated coordinates
-"""
-def run_nnd(df, prog, random_coordinate_list):
-    # find nearest neighbor distance
+def run_nnd(df, pb, rand_coords):
+    """
+    NEAREST NEIGHBOR DISTANCE
+    _______________________________
+    @df: dataframe with coordinates scaled to whatever format desired
+    @prog: progress bar wrapper element, allows us to track how much time is left in process
+    @random_coordinate_list: list of randomly generated coordinates
+    """
     def nnd(coordinate_list, random_coordinate_list):
         # find dist to closest particle
         def distance_to_closest_particle(coord_list):
-            nndlist = []
+            nnd_list = []
             coord_list_len = len(coord_list)
             for z in range(coord_list_len - 1):
                 # update progress bar
-                prog.update_progress(z)
+                pb.update_progress(z)
                 small_dist = 10000000000000000000
                 # temp_list = [og coord (x, y), closest coord (x, y), distance]
                 temp_list = [0, 0, 0]
@@ -37,8 +36,8 @@ def run_nnd(df, prog, random_coordinate_list):
                             small_dist = dist
                             temp_list[1] = particle_jf
                             temp_list[2] = small_dist
-                nndlist.append(temp_list)
-            return nndlist
+                nnd_list.append(temp_list)
+            return nnd_list
 
         print("running nnd")
         real_nnd_list = distance_to_closest_particle(coordinate_list)
@@ -58,18 +57,18 @@ def run_nnd(df, prog, random_coordinate_list):
             [x for x in rand_df['Nearest Neighbor Distance'].tolist()])
         return clean_real_df, clean_rand_df
 
-    """ FIND NND """
+    # FIND NND
     x_coordinates = np.array(df['X'])
     y_coordinates = np.array(df['Y'])
     real_coordinates = []
     for i in range(len(x_coordinates)):
         real_coordinates.append((float(y_coordinates[i]), float(x_coordinates[i])))
     # if generate_random prop enabled, create random coordinates and return results, else return real coordinates
-    return nnd(coordinate_list=real_coordinates, random_coordinate_list=random_coordinate_list)
+    return nnd(coordinate_list=real_coordinates, random_coordinate_list=rand_coords)
 
 
-""" DRAW LINES TO ANNOTATE N NEAREST DIST ON IMAGE """
 def draw_length(nnd_df, bin_counts, img, palette, input_unit=Unit.PIXEL, scalar=1, circle_c=(0, 0, 255)):
+    """ DRAW LINES TO ANNOTATE N NEAREST DIST ON IMAGE """
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
