@@ -4,6 +4,7 @@ import cv2
 
 
 def run_rippler(df, img_path, mask_path, max_steps=10, step_size=60):
+    print(df.head())
     # find Spine Correlated Particles Per P-face Area (SC3PA)
     print("running gold rippler (SC3PA)")
     img_og = cv2.imread(img_path)
@@ -55,24 +56,26 @@ def run_rippler(df, img_path, mask_path, max_steps=10, step_size=60):
         real_coordinates.append([float(y_coordinates[i]), float(x_coordinates[i])])
 
     circleRadius = 100
-    max = (max_steps * step_size) + circleRadius
-
+    max = (int(max_steps) * int(step_size)) + circleRadius
+    print("max", max)
     while circleRadius <= max:
-
         total_captured_particles = 0
         scale_mask = np.zeros(pface_mask.shape, np.uint8)
+        # print(scale_mask, original_copy)
         colorstep = step % 11
 
         for entry in real_coordinates:
-            cv2.circle(scale_mask, entry, circleRadius, 255, -1)
-            cv2.circle(original_copy, entry, circleRadius, color_list[colorstep], 5)
+            cv2.circle(scale_mask, tuple(int(x) for x in entry), circleRadius, 255, -1)
+            cv2.circle(original_copy, tuple(int(x) for x in entry), circleRadius, color_list[colorstep], 5)
 
         step += 1
-
+        print("gen circles")
         # Find Number of Gold Particles Within Spine Contours
         # cv2_imshow(scale_mask)
-        for pair in df:
-            if (circleRadius == max):
+        for pair in df.drop(columns=' ').T.values:
+            print(pair)
+            print(pair[0], pair[1])
+            if circleRadius == max:
                 if scale_mask[pair[0], pair[1]] != 0:
                     total_captured_particles += 1
                     cv2.circle(original_copy, (pair[1], pair[0]), 8, (0, 0, 255), -1)
@@ -82,9 +85,9 @@ def run_rippler(df, img_path, mask_path, max_steps=10, step_size=60):
                 if scale_mask[pair[0], pair[1]] != 0:
                     total_captured_particles += 1
                     cv2.circle(original_copy, (pair[1], pair[0]), 8, (0, 0, 255), -1)
-
+        print("draw circles")
         GP_within_spine = total_captured_particles / len(df)
-
+        print("find gp in spine")
         # Find Spine Contour Area / P-face Contour Area
         mask_combined = cv2.bitwise_and(scale_mask, pface_mask.copy())
         mask_cnts, mask_hierarchy = cv2.findContours(mask_combined, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
@@ -101,14 +104,14 @@ def run_rippler(df, img_path, mask_path, max_steps=10, step_size=60):
         for cnt in mask_cnts:
             area = cv2.contourArea(cnt)
             scale_area_tree += area
-
+        print("find cts")
         difference = (scale_area_tree - scale_area_external)
         scale_area = scale_area_external - difference
 
         percent_area = scale_area / pface_area
 
         # Calculate SC3PA
-
+        print("before appending")
         scaled_SC3PA = GP_within_spine / percent_area
         SC3PA.append(scaled_SC3PA)
         radius.append(circleRadius)
