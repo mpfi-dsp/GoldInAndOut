@@ -84,17 +84,18 @@ WORKFLOWS = [{
     "desc": "Separate spine masks as individual components, grow components until they contain X gold particles, calculate Spine Correlated Particles Per P-face Area (SC3PA) (% of gold particles within spine masks) / (% of total area of p-face taken up by spine masks)",
     "graph": {
             "title": "Nearest Neighbor Distance for Ward Hierarchical Clusters",
-            "x_label": "Nearest Neighbor Distance",
+            "x_label": "%_pface_covered",
             "y_label": "Number of Entries",
-            "x_type": "dist"
+            "x_type": "%_pface_covered"
         },
     "props": [
         {
-        "title": "max_steps",
-          "placeholder": "10"
+            "title": "max_steps",
+            "placeholder": "10"
         },
-        {"title": "step_size",
-         "placeholder": "60"
+        {
+            "title": "step_size",
+            "placeholder": "60"
          }
         ]
 }
