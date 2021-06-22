@@ -299,12 +299,11 @@ class WorkflowPage(QWidget):
             elif wf["type"] == Workflow.RIPPLER:
                 vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
                 self.real_df, self.rand_df = run_rippler(df=df, pb=prog_wrapper, rand_coords=random_coords, img_path=self.img_drop.currentText(), mask_path=self.mask_drop.currentText(), max_steps=vals[0], step_size=vals[1])
-
+                print("rippler out", self.real_df.head(), self.rand_df.head())
             # end workflow funcs
             self.progress.setValue(100)
             # create ui scheme
-            self.create_visuals(wf=wf, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'),
-                                input_unit=input_unit, output_unit=output_unit, scalar=scalar)
+            self.create_visuals(wf=wf, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), input_unit=input_unit, output_unit=output_unit, scalar=scalar)
             # download files automatically
             self.download(output_unit=output_unit, wf=wf, delete_old=delete_old)
             self.download_btn.setStyleSheet(
@@ -381,6 +380,15 @@ class WorkflowPage(QWidget):
                 drawn_img = draw_clust(clust_df=self.real_df, img=drawn_img, palette=palette, scalar=scalar)
             if self.gen_rand_cb.isChecked():
                 drawn_img = draw_clust(clust_df=self.rand_df, img=drawn_img, palette=r_palette, scalar=scalar)
+        elif wf["type"] == Workflow.NND_CLUST:
+            if self.gen_real_cb.isChecked():
+                drawn_img = draw_nnd_clust(nnd_df=self.real_df, clust_df=self.full_real_df, img=drawn_img,
+                                           palette=palette, bin_counts=n, scalar=scalar, circle_c=(18, 156, 232),
+                                           input_unit=input_unit)
+            if self.gen_rand_cb.isChecked():
+                drawn_img = draw_nnd_clust(nnd_df=self.rand_df, clust_df=self.full_rand_df, img=drawn_img,
+                                           palette=r_palette, bin_counts=n, scalar=scalar, circle_c=(18, 156, 232),
+                                           input_unit=input_unit)
         elif wf["type"] == Workflow.NND_CLUST:
             if self.gen_real_cb.isChecked():
                 drawn_img = draw_nnd_clust(nnd_df=self.real_df, clust_df=self.full_real_df, img=drawn_img,

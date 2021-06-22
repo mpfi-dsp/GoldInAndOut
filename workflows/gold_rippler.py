@@ -58,59 +58,67 @@ def run_rippler(df, img_path, mask_path, pb, rand_coords, max_steps=10, step_siz
     for i in range(len(x_coordinates)):
         coords.append([float(y_coordinates[i]), float(x_coordinates[i])])
 
-    rad = 100
-    max = (int(max_steps) * int(step_size)) + rad
-    while rad <= max:
-        total_captured_particles = 0
-        scale_mask = np.zeros(pface_mask.shape, np.uint8)
-        color_step = step % 11
-        for entry in coords:
-            cv2.circle(scale_mask, tuple(int(x) for x in entry), rad, 255, -1)
-            cv2.circle(original_copy, tuple(int(x) for x in entry), rad, color_list[color_step], 5)
-        step += 1
-        for c in coords:
-            x, y = int(c[1]), int(c[0])
-            if rad == max:
-                if scale_mask[y, x] != 0:
-                    cv2.circle(original_copy, (y, x), 8, (0, 0, 255), -1)
-                    total_captured_particles += 1
+    rippler_out = []
+    for coord_list in [coords, rand_coords]:
+        rad = 100
+        max = (int(max_steps) * int(step_size)) + rad
+        while rad <= max:
+            total_captured_particles = 0
+            scale_mask = np.zeros(pface_mask.shape, np.uint8)
+            color_step = step % 11
+            for entry in coord_list:
+                cv2.circle(scale_mask, tuple(int(x) for x in entry), rad, 255, -1)
+                cv2.circle(original_copy, tuple(int(x) for x in entry), rad, color_list[color_step], 5)
+            step += 1
+            for c in coord_list:
+                x, y = int(c[1]), int(c[0])
+                if rad == max:
+                    if scale_mask[y, x] != 0:
+                        cv2.circle(original_copy, (y, x), 8, (0, 0, 255), -1)
+                        total_captured_particles += 1
+                    else:
+                        cv2.circle(original_copy, (y, x), 8, (255, 0, 255), -1)
                 else:
-                    cv2.circle(original_copy, (y, x), 8, (255, 0, 255), -1)
-            else:
-                if scale_mask[y, x] != 0:
-                    total_captured_particles += 1
-                    cv2.circle(original_copy, (y, x), 8, (0, 0, 255), -1)
-        gp_in_spine = total_captured_particles / len(df)
-        # find spine contour area and pface contour area
-        mask_combined = cv2.bitwise_and(scale_mask, pface_mask.copy())
-        mask_cnts, mask_hierarchy = cv2.findContours(mask_combined, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-        mask_cnts2, mask_hierarchy2 = cv2.findContours(mask_combined, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-        # find scale area
-        scale_area_external = 0
-        scale_area_tree = 0
-        # find cts
-        for cnt in mask_cnts2:
-            area = cv2.contourArea(cnt)
-            scale_area_external += area
-        for cnt in mask_cnts:
-            area = cv2.contourArea(cnt)
-            scale_area_tree += area
-        # find stats
-        difference = (scale_area_tree - scale_area_external)
-        scale_area = scale_area_external - difference
-        percent_area = scale_area / pface_area
-        # calculate SC3PA
-        scaled_SC3PA = gp_in_spine / percent_area
-        SC3PA.append(scaled_SC3PA)
-        radius.append(rad)
-        gp_captured.append(gp_in_spine)
-        pface_covered.append(percent_area)
-        total_gp.append(len(df))
-        rad += int(step_size)
-        pb.update_progress(rad)
+                    if scale_mask[y, x] != 0:
+                        total_captured_particles += 1
+                        cv2.circle(original_copy, (y, x), 8, (0, 0, 255), -1)
+            gp_in_spine = total_captured_particles / len(df)
+            # find spine contour area and pface contour area
+            mask_combined = cv2.bitwise_and(scale_mask, pface_mask.copy())
+            mask_cnts, mask_hierarchy = cv2.findContours(mask_combined, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+            mask_cnts2, mask_hierarchy2 = cv2.findContours(mask_combined, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            # find scale area
+            scale_area_external = 0
+            scale_area_tree = 0
+            # find cts
+            for cnt in mask_cnts2:
+                area = cv2.contourArea(cnt)
+                scale_area_external += area
+            for cnt in mask_cnts:
+                area = cv2.contourArea(cnt)
+                scale_area_tree += area
+            # find stats
+            difference = (scale_area_tree - scale_area_external)
+            scale_area = scale_area_external - difference
+            percent_area = scale_area / pface_area
+            # calculate SC3PA
+            scaled_SC3PA = gp_in_spine / percent_area
+            SC3PA.append(scaled_SC3PA)
+            radius.append(rad)
+            gp_captured.append(gp_in_spine)
+            pface_covered.append(percent_area)
+            total_gp.append(len(df))
+            rad += int(step_size)
+            pb.update_progress(rad)
 
-    # generate new df and return
-    new_df = pd.DataFrame(data={'radius': radius, '%_gp_captured': gp_captured, '%_pface_covered': pface_covered, 'SC3PA': SC3PA, 'total_gp': total_gp})
-    print(new_df.head())
-    return new_df, original_copy
+        # generate new df and return
+        new_df = pd.DataFrame(data={'radius': radius, '%_gp_captured': gp_captured, '%_pface_covered': pface_covered, 'SC3PA': SC3PA, 'total_gp': total_gp})
+        print(new_df.head())
+        rippler_out.append(new_df)
 
+    return rippler_out
+
+
+
+# def draw_rippler():
+#     TODO: draw ripples
