@@ -24,7 +24,7 @@ from workflows.clust import run_clust, draw_clust
 from workflows.gold_rippler import run_rippler
 from workflows.nnd import run_nnd, draw_length
 from workflows.nnd_clust import run_nnd_clust, draw_nnd_clust
-from workflows.random import gen_random_coordinates
+from workflows.random_coords import gen_random_coordinates
 
 
 class WorkflowPage(QWidget):
@@ -292,13 +292,13 @@ class WorkflowPage(QWidget):
                 self.real_df, self.rand_df = run_nnd(df=df, pb=prog_wrapper, rand_coords=random_coords)
             elif wf["type"] == Workflow.CLUST:
                 vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
-                self.real_df, self.rand_df = run_clust(df=df, random_coordinate_list=random_coords, pb=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1])
+                self.real_df, self.rand_df = run_clust(df=df, rand_coords=random_coords, pb=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1])
             elif wf["type"] == Workflow.NND_CLUST:
                 vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
                 self.full_real_df, self.full_rand_df, self.real_df, self.rand_df = run_nnd_clust(df=df, pb=prog_wrapper, rand_coords=random_coords, distance_threshold=vals[0], n_clusters=vals[1], min_clust_size=vals[2])
             elif wf["type"] == Workflow.RIPPLER:
                 vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
-                self.real_df, self.rand_df = run_rippler(df=df, pb=prog_wrapper, img_path=self.img_drop.currentText(), mask_path=self.mask_drop.currentText(), max_steps=vals[0], step_size=vals[1])
+                self.real_df, self.rand_df = run_rippler(df=df, pb=prog_wrapper, rand_coords=random_coords, img_path=self.img_drop.currentText(), mask_path=self.mask_drop.currentText(), max_steps=vals[0], step_size=vals[1])
 
             # end workflow funcs
             self.progress.setValue(100)

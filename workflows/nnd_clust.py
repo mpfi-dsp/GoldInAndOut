@@ -45,7 +45,7 @@ def run_nnd_clust(df, pb, rand_coords, min_clust_size=3, distance_threshold=120,
                 y /= n
                 centroids.append((round(y, 3), round(x, 3)))
                 centroid_ids.append(c)
-        print("generated centroids")
+        # print("generated centroids")
         return centroids, centroid_ids
 
     # cluster data
@@ -70,7 +70,7 @@ def run_nnd_clust(df, pb, rand_coords, min_clust_size=3, distance_threshold=120,
         # fill random df
         rand_df = pd.DataFrame(rand_coordinates, columns=["X", "Y"])
         rand_df['cluster_id'] = rand_cluster
-        print("generated clusters")
+        # print("generated clusters")
         return data, rand_df, minify_list(clust, float(min_size)), minify_list(rand_cluster, float(min_size))
 
     def nnd(coordinate_list, random_coordinate_list):
@@ -101,12 +101,12 @@ def run_nnd_clust(df, pb, rand_coords, min_clust_size=3, distance_threshold=120,
                 # clean up df
                 clean_df[['og_centroid', 'closest_centroid', 'dist']] = pd.DataFrame(
                     [x for x in data['NND'].tolist()])
-                print("generated nnd list")
+                # print("generated nnd list")
             return clean_df
         # find nnd
         cleaned_real_df = distance_to_closest_particle(coordinate_list)
         cleaned_rand_df = distance_to_closest_particle(random_coordinate_list)
-        print("found nnd")
+        # print("found nnd")
         return cleaned_real_df, cleaned_rand_df
 
     """ NND BETWEEN CLUSTERS """
@@ -148,7 +148,8 @@ def draw_nnd_clust(nnd_df, clust_df, img, bin_counts, palette="rocket_r", input_
     count, bin_idx = 0, 0
     for idx, entry in nnd_df.iterrows():
         count += 1
-        particle, particle_2 = entry['og_centroid'], entry['closest_centroid']
+        particle_1 = entry['og_centroid']
+        particle_2 = entry['closest_centroid']
         if input_unit == Unit.PIXEL:
             particle_1 = tuple(int(scalar * x) for x in particle_1)
             particle_2 = tuple(int(scalar * x) for x in particle_2)

@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 from utils import create_color_pal
 
-def run_clust(df, pb, random_coordinate_list, distance_threshold=120, n_clusters=None, affinity='euclidean', linkage='ward'):
+def run_clust(df, pb, rand_coords, distance_threshold=120, n_clusters=None, affinity='euclidean', linkage='ward'):
     """
     WARD HIERARCHICAL CLUSTERING
     _______________________________
@@ -29,7 +29,7 @@ def run_clust(df, pb, random_coordinate_list, distance_threshold=120, n_clusters
     # real coords
     pb.update_progress(30)
     real_coordinates = np.array(real_coordinates)
-    print(distance_threshold, n_clusters)
+    # print(distance_threshold, n_clusters)
     if n_clusters != "None":
         distance_threshold = None
         n_clusters = int(n_clusters)
@@ -41,17 +41,11 @@ def run_clust(df, pb, random_coordinate_list, distance_threshold=120, n_clusters
     df['cluster_id'] = cluster
     # random coords
     pb.update_progress(70)
-    rand_coordinates = np.array(random_coordinate_list)
+    rand_coordinates = np.array(rand_coords)
     rand_cluster = hc.fit_predict(rand_coordinates)
     rand_df = pd.DataFrame(rand_coordinates, columns=["X", "Y"])
     rand_df['cluster_id'] = rand_cluster
-    print(rand_df.head())
-    # print(cluster)
-    #     # plt.figure(2)
-    #     # plt.scatter(real_coordinates[:, 0], real_coordinates[:, 1], c=cluster, cmap='rainbow')
-    #     # plt.savefig('./output/a.png')
-    #     #
-    #     # img = cv2.imread("./input/example_image.tif")
+    # print(rand_df.head())
     return df, rand_df
 
 
