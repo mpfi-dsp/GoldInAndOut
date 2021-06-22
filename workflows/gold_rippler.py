@@ -3,10 +3,16 @@ import numpy as np
 import cv2
 
 
-def run_rippler(df, img_path, mask_path, max_steps=10, step_size=60):
-    print(df.head())
-    # find Spine Correlated Particles Per P-face Area (SC3PA)
+def run_rippler(df, img_path, mask_path, pb, max_steps=10, step_size=60):
+    """
+    GOLD RIPPLER (SC3PA)
+    _______________________________
+    @df: dataframe with centroids coordinates scaled to whatever format desired
+    @pb: progress bar wrapper element, allows us to track how much time is left in process
+    @random_coordinate_list: list of randomly generated coordinates
+    """
     print("running gold rippler (SC3PA)")
+    # find Spine Correlated Particles Per P-face Area (SC3PA)
     img_og = cv2.imread(img_path)
     img_pface = cv2.imread(mask_path)
     print("load imgs and find pface area")
@@ -51,9 +57,9 @@ def run_rippler(df, img_path, mask_path, max_steps=10, step_size=60):
     # turn into coordinate list
     x_coordinates = np.array(df['X'])
     y_coordinates = np.array(df['Y'])
-    real_coordinates = []
+    coords = []
     for i in range(len(x_coordinates)):
-        real_coordinates.append([float(y_coordinates[i]), float(x_coordinates[i])])
+        coords.append([float(y_coordinates[i]), float(x_coordinates[i])])
 
     circleRadius = 100
     max = (int(max_steps) * int(step_size)) + circleRadius
@@ -64,7 +70,7 @@ def run_rippler(df, img_path, mask_path, max_steps=10, step_size=60):
         # print(scale_mask, original_copy)
         colorstep = step % 11
 
-        for entry in real_coordinates:
+        for entry in coords:
             cv2.circle(scale_mask, tuple(int(x) for x in entry), circleRadius, 255, -1)
             cv2.circle(original_copy, tuple(int(x) for x in entry), circleRadius, color_list[colorstep], 5)
 
@@ -72,21 +78,24 @@ def run_rippler(df, img_path, mask_path, max_steps=10, step_size=60):
         print("gen circles")
         # Find Number of Gold Particles Within Spine Contours
         # cv2_imshow(scale_mask)
-        print(df.drop(columns=' ').T.head())
+        # print(df.drop(columns=' ').T.head())
         # for pair in df.drop(columns=' ').T.values:
-        for index, row in df.drop(columns=' ').iterrows():
-            print(row)
-            print(row[0], row[1])
+        # for index, row in df.iterrows():
+        for c in coords:
+            x = int(c[1])
+            y = int(c[0])
+
             if circleRadius == max:
-                if scale_mask[int(row[0]), int(row[1])] != 0:
+                if scale_mask[y, x] != 0:
                     total_captured_particles += 1
-                    cv2.circle(original_copy, (row[1], row[0]), 8, (0, 0, 255), -1)
+                    cv2.circle(original_copy, (y, x), 8, (0, 0, 255), -1)
                 else:
-                    cv2.circle(original_copy, (row[1], row[0]), 8, (255, 0, 255), -1)
+                    cv2.circle(original_copy, (y, x), 8, (255, 0, 255), -1)
             else:
-                if scale_mask[int(row[0]), int(row[1])] != 0:
+                if scale_mask[y, x] != 0:
                     total_captured_particles += 1
-                    cv2.circle(original_copy, (row[1], row[0]), 8, (0, 0, 255), -1)
+                    cv2.circle(original_copy, (y, x), 8, (0, 0, 255), -1)
+
         print("draw circles")
         GP_within_spine = total_captured_particles / len(df)
         print("find gp in spine")
@@ -120,7 +129,7 @@ def run_rippler(df, img_path, mask_path, max_steps=10, step_size=60):
         gp_captured.append(GP_within_spine)
         pface_covered.append(percent_area)
         total_gp.append(len(df))
-        circleRadius += step_size
+        circleRadius += int(step_size)
 
     d = {'Radius': radius, 'Percent GP Captured': gp_captured, 'Percent P-face Covered': pface_covered, 'SC3PA': SC3PA,
          'Total GP': total_gp}

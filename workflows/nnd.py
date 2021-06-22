@@ -9,8 +9,8 @@ def run_nnd(df, pb, rand_coords):
     NEAREST NEIGHBOR DISTANCE
     _______________________________
     @df: dataframe with coordinates scaled to whatever format desired
-    @prog: progress bar wrapper element, allows us to track how much time is left in process
-    @random_coordinate_list: list of randomly generated coordinates
+    @pb: progress bar wrapper element, allows us to track how much time is left in process
+    @rand_coords: list of randomly generated coordinates
     """
     def nnd(coordinate_list, random_coordinate_list):
         # find dist to closest particle

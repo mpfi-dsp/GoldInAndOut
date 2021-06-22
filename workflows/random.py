@@ -8,8 +8,8 @@ def gen_random_coordinates(data, img_path="", mask_path="", count=None):
     _______________________________
     @data: dataframe with coordinates scaled to whatever format desired
     @img_path: path to image we are finding the n nearest distance of (only needed if gen_rand is True)
-    @pface_path: path to mask we are finding the n nearest distance of (only needed if gen_rand is True)
-    @n_rand_to_gen: number of random particles to generate
+    @mask_path: path to mask we are finding the n nearest distance of (only needed if gen_rand is True)
+    @count: number of random particles to generate
     """
     def generate_random_points(boundary, quantity, mask):
         # generate faux particles within the pface
