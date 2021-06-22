@@ -113,3 +113,4 @@ def run_rippler(df, img_path, mask_path, pb, rand_coords, max_steps=10, step_siz
     new_df = pd.DataFrame(data={'radius': radius, '%_gp_captured': gp_captured, '%_pface_covered': pface_covered, 'SC3PA': SC3PA, 'total_gp': total_gp})
     print(new_df.head())
     return new_df, original_copy
+
