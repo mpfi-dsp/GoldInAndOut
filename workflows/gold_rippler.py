@@ -72,19 +72,21 @@ def run_rippler(df, img_path, mask_path, max_steps=10, step_size=60):
         print("gen circles")
         # Find Number of Gold Particles Within Spine Contours
         # cv2_imshow(scale_mask)
-        for pair in df.drop(columns=' ').T.values:
-            print(pair)
-            print(pair[0], pair[1])
+        print(df.drop(columns=' ').T.head())
+        # for pair in df.drop(columns=' ').T.values:
+        for index, row in df.drop(columns=' ').iterrows():
+            print(row)
+            print(row[0], row[1])
             if circleRadius == max:
-                if scale_mask[pair[0], pair[1]] != 0:
+                if scale_mask[int(row[0]), int(row[1])] != 0:
                     total_captured_particles += 1
-                    cv2.circle(original_copy, (pair[1], pair[0]), 8, (0, 0, 255), -1)
+                    cv2.circle(original_copy, (row[1], row[0]), 8, (0, 0, 255), -1)
                 else:
-                    cv2.circle(original_copy, (pair[1], pair[0]), 8, (255, 0, 255), -1)
+                    cv2.circle(original_copy, (row[1], row[0]), 8, (255, 0, 255), -1)
             else:
-                if scale_mask[pair[0], pair[1]] != 0:
+                if scale_mask[int(row[0]), int(row[1])] != 0:
                     total_captured_particles += 1
-                    cv2.circle(original_copy, (pair[1], pair[0]), 8, (0, 0, 255), -1)
+                    cv2.circle(original_copy, (row[1], row[0]), 8, (0, 0, 255), -1)
         print("draw circles")
         GP_within_spine = total_captured_particles / len(df)
         print("find gp in spine")
