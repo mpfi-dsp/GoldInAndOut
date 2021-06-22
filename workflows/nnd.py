@@ -16,41 +16,35 @@ def run_nnd(df, pb, rand_coords):
         # find dist to closest particle
         def distance_to_closest_particle(coord_list):
             nnd_list = []
-            coord_list_len = len(coord_list)
-            for z in range(coord_list_len - 1):
-                # update progress bar
+            for z in range(len(coord_list)):
                 pb.update_progress(z)
                 small_dist = 10000000000000000000
-                # temp_list = [og coord (x, y), closest coord (x, y), distance]
-                temp_list = [0, 0, 0]
-                particle_i = coord_list[z]
-                particle_if = (particle_i[1], particle_i[0])
-                temp_list[0] = particle_if
-                for j in range(0, coord_list_len - 1):
+                # og coord (x, y), closest coord (x, y), distance
+                nnd_obj = [(0, 0), (0, 0), 0]
+                p_if = (round(coord_list[z][1], 3), round(coord_list[z][0], 3))
+                p_if_y, p_if_x = p_if
+                nnd_obj[0] = p_if
+                for j in range(0, len(coord_list)):
                     if z is not j:
-                        particle_j = coord_list[j]
-                        particle_jf = (particle_j[1], particle_j[0])
-                        dist = ((particle_jf[0] - particle_if[0]) ** 2) + ((particle_jf[1] - particle_if[1]) ** 2)
-                        dist = math.sqrt(dist)
+                        p_jf = (round(coord_list[j][1], 3), round(coord_list[j][0], 3))
+                        p_jf_y, p_jf_x = p_jf
+                        dist = math.sqrt(((p_jf_y - p_if_y) ** 2) + ((p_jf_x - p_if_x) ** 2))
                         if dist < small_dist:
-                            small_dist = dist
-                            temp_list[1] = particle_jf
-                            temp_list[2] = small_dist
-                nnd_list.append(temp_list)
+                            small_dist = round(dist, 3)
+                            nnd_obj[1], nnd_obj[2] = p_jf, small_dist
+                nnd_list.append(nnd_obj)
             return nnd_list
 
         print("running nnd")
         real_nnd_list = distance_to_closest_particle(coordinate_list)
-        d = {'Nearest Neighbor Distance': real_nnd_list}
-        real_df = pd.DataFrame(data=d)
+        real_df = pd.DataFrame(data={'Nearest Neighbor Distance': real_nnd_list})
         # clean up df
         clean_real_df = pd.DataFrame()
         clean_real_df[['og_coord', 'closest_coord', 'dist']] = pd.DataFrame(
             [x for x in real_df['Nearest Neighbor Distance'].tolist()])
         # find random dist
         random_nnd_list = distance_to_closest_particle(random_coordinate_list)
-        d = {'Nearest Neighbor Distance': random_nnd_list}
-        rand_df = pd.DataFrame(data=d)
+        rand_df = pd.DataFrame(data={'Nearest Neighbor Distance': random_nnd_list})
         # fill clean random df
         clean_rand_df = pd.DataFrame()
         clean_rand_df[['og_coord', 'closest_coord', 'dist']] = pd.DataFrame(
@@ -72,8 +66,8 @@ def draw_length(nnd_df, bin_counts, img, palette, input_unit=Unit.PIXEL, scalar=
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
-    count = 0
-    bin_idx = 0
+
+    count, bin_idx = 0, 0
     for idx, entry in nnd_df.iterrows():
         count += 1
         particle_1 = entry['og_coord']

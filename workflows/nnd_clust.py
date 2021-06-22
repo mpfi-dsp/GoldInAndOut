@@ -1,32 +1,30 @@
-import math
-
 import pandas as pd
 from sklearn.cluster import AgglomerativeClustering
 import numpy as np
-import cv2
-
 from typings import Unit
 from utils import create_color_pal
 from collections import Counter
+import math
+import cv2
 
-"""
-NEAREST NEIGHBOR DISTANCE OF WARD HIERARCHICAL CLUSTERING
-_______________________________
-@df: dataframe with coordinates scaled to whatever format desired
-@prog: progress bar wrapper element, allows us to track how much time is left in process
-@distance_threshold: using a distance threshold to automatically cluster particles
-@n_clusters: set number of clusters to use
-@affinity: metric used to calc linkage
-@linkage: linkage criteria to use - determines which distance to use between sets of observation
-    @ward: minimizes the variance of the clusters being merged
-    @average: uses the average of the distances of each observation of the two sets
-    @maximum: linkage uses the maximum distances between all observations of the two sets
-    @single: uses the minimum of the distances between all observations of the two sets
-@random_coordinate_list: list of randomly generated coordinates
-"""
+def run_nnd_clust(df, pb, rand_coords, min_clust_size=3, distance_threshold=120, n_clusters=None, affinity='euclidean', linkage='ward'):
+    """
+    NEAREST NEIGHBOR DISTANCE OF WARD HIERARCHICAL CLUSTERING
+    _______________________________
+    @df: dataframe with coordinates scaled to whatever format desired
+    @pb: progress bar wrapper element, allows us to track how much time is left in process
+    @rand_coords: list of randomly generated coordinates
+    @min_clust_size: minimum number of coords required to be considered a "cluster"
+    @distance_threshold: using a distance threshold to automatically cluster particles
+    @n_clusters: set number of clusters to use
+    @affinity: metric used to calc linkage (default euclidean)
+    @linkage: linkage criteria to use - determines which distance to use between sets of observation
+        @ward: minimizes the variance of the clusters being merged
+        @average: uses the average of the distances of each observation of the two sets
+        @maximum: linkage uses the maximum distances between all observations of the two sets
+        @single: uses the minimum of the distances between all observations of the two sets
+    """
 
-def run_nnd_clust(df, pb, random_coordinate_list, min_clust_size=3, distance_threshold=120, n_clusters=None,
-                  affinity='euclidean', linkage='ward'):
     # remove elements of list that show up less than k times
     def minify_list(lst, k):
         counted = Counter(lst)
@@ -34,13 +32,10 @@ def run_nnd_clust(df, pb, random_coordinate_list, min_clust_size=3, distance_thr
 
     # find centroids in df w/ clusters
     def find_centroids(cl_df, clust):
-        centroids = []
-        centroid_ids = []
+        centroids, centroid_ids = [], []
         for c in set(clust):
             cl = cl_df.loc[cl_df['cluster_id'] == c]
-            n = 0
-            x = 0
-            y = 0
+            n, x, y = 0, 0, 0
             for idx, entry in cl.iterrows():
                 x += entry['X']
                 y += entry['Y']
@@ -64,14 +59,13 @@ def run_nnd_clust(df, pb, random_coordinate_list, min_clust_size=3, distance_thr
             n_clust = None
             d_threshold = int(d_threshold)
         # actually run sklearn clustering function
-        hc = AgglomerativeClustering(n_clusters=n_clust, distance_threshold=d_threshold, affinity=affinity,
-                                     linkage=linkage)
+        hc = AgglomerativeClustering(n_clusters=n_clust, distance_threshold=d_threshold, affinity=affinity, linkage=linkage)
         clust = hc.fit_predict(real_coordinates)
         # append cluster ids to df
         data['cluster_id'] = clust
         # setup random coords
         pb.update_progress(70)
-        rand_coordinates = np.array(random_coordinate_list)
+        rand_coordinates = np.array(rand_coords)
         rand_cluster = hc.fit_predict(rand_coordinates)
         # fill random df
         rand_df = pd.DataFrame(rand_coordinates, columns=["X", "Y"])
@@ -84,30 +78,26 @@ def run_nnd_clust(df, pb, random_coordinate_list, min_clust_size=3, distance_thr
         def distance_to_closest_particle(coord_list):
             nnd_list = []
             for z in range(len(coord_list)):
-                # update progress bar
                 small_dist = 10000000000000000000
-                # temp_list = [og coord (x, y), closest coord (x, y), distance]
-                temp_list = [0, 0, 0]
-                particle_i = coord_list[z]
-                particle_if = (round(particle_i[1], 3), round(particle_i[0], 3))
-                temp_list[0] = particle_if
+                # og coord (x, y), closest coord (x, y), distance
+                nnd_obj = [(0, 0), (0, 0), 0]
+                p_if = (round(coord_list[z][1], 3), round(coord_list[z][0], 3))
+                p_if_y, p_if_x = p_if
+                nnd_obj[0] = p_if
                 for j in range(0, len(coord_list)):
                     if z is not j:
-                        particle_j = coord_list[j]
-                        particle_jf = (round(particle_j[1], 3), round(particle_j[0], 3))
-                        dist = ((particle_jf[0] - particle_if[0]) ** 2) + ((particle_jf[1] - particle_if[1]) ** 2)
-                        dist = math.sqrt(dist)
+                        p_jf = (round(coord_list[j][1], 3), round(coord_list[j][0], 3))
+                        p_jf_y, p_jf_x = p_jf
+                        dist = math.sqrt(((p_jf_y - p_if_y) ** 2) + ((p_jf_x - p_if_x) ** 2))
                         if dist < small_dist:
                             small_dist = round(dist, 3)
-                            temp_list[1] = particle_jf
-                            temp_list[2] = small_dist
-                nnd_list.append(temp_list)
+                            nnd_obj[1], nnd_obj[2] = p_jf, small_dist
+                nnd_list.append(nnd_obj)
             # create new clean df
             clean_df = pd.DataFrame()
             if (len(nnd_list)) > 0:
                 # clean and convert to df
-                d = {'NND': nnd_list}
-                data = pd.DataFrame(data=d)
+                data = pd.DataFrame(data={'NND': nnd_list})
                 # clean up df
                 clean_df[['og_centroid', 'closest_centroid', 'dist']] = pd.DataFrame(
                     [x for x in data['NND'].tolist()])
@@ -155,12 +145,10 @@ def draw_nnd_clust(nnd_df, clust_df, img, bin_counts, palette="rocket_r", input_
         particle = tuple(int(scalar * x) for x in [entry['X'], entry['Y']])
         img = cv2.circle(img, particle, 10, sea_to_rgb(cl_palette[clust_df['cluster_id'][idx]]), -1)
     # draw nnd
-    count = 0
-    bin_idx = 0
+    count, bin_idx = 0, 0
     for idx, entry in nnd_df.iterrows():
         count += 1
-        particle_1 = entry['og_centroid']
-        particle_2 = entry['closest_centroid']
+        particle, particle_2 = entry['og_centroid'], entry['closest_centroid']
         if input_unit == Unit.PIXEL:
             particle_1 = tuple(int(scalar * x) for x in particle_1)
             particle_2 = tuple(int(scalar * x) for x in particle_2)
