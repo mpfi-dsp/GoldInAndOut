@@ -21,7 +21,7 @@ from globals import PALETTE_OPS, MAX_DIRS_PRUNE
 from typings import Unit, Workflow
 from utils import Progress, create_color_pal, pixels_conversion_w_distance, enum_to_unit
 from workflows.clust import run_clust, draw_clust
-from workflows.gold_rippler import run_rippler
+from workflows.gold_rippler import run_rippler, draw_rippler
 from workflows.nnd import run_nnd, draw_length
 from workflows.nnd_clust import run_nnd_clust, draw_nnd_clust
 from workflows.random_coords import gen_random_coordinates
@@ -389,15 +389,15 @@ class WorkflowPage(QWidget):
                 drawn_img = draw_nnd_clust(nnd_df=self.rand_df, clust_df=self.full_rand_df, img=drawn_img,
                                            palette=r_palette, bin_counts=n, scalar=scalar, circle_c=(18, 156, 232),
                                            input_unit=input_unit)
-        elif wf["type"] == Workflow.NND_CLUST:
-            if self.gen_real_cb.isChecked():
-                drawn_img = draw_nnd_clust(nnd_df=self.real_df, clust_df=self.full_real_df, img=drawn_img,
-                                           palette=palette, bin_counts=n, scalar=scalar, circle_c=(18, 156, 232),
-                                           input_unit=input_unit)
-            if self.gen_rand_cb.isChecked():
-                drawn_img = draw_nnd_clust(nnd_df=self.rand_df, clust_df=self.full_rand_df, img=drawn_img,
-                                           palette=r_palette, bin_counts=n, scalar=scalar, circle_c=(18, 156, 232),
-                                           input_unit=input_unit)
+        # elif wf["type"] == Workflow.NND_CLUST:
+        #     if self.gen_real_cb.isChecked():
+        #         drawn_img = draw_rippler(nnd_df=self.real_df, clust_df=self.full_real_df, img=drawn_img,
+        #                                    palette=palette, bin_counts=n, scalar=scalar, circle_c=(18, 156, 232),
+        #                                    input_unit=input_unit)
+        #     if self.gen_rand_cb.isChecked():
+        #         drawn_img = draw_rippler(nnd_df=self.rand_df, clust_df=self.full_rand_df, img=drawn_img,
+        #                                    palette=r_palette, bin_counts=n, scalar=scalar, circle_c=(18, 156, 232),
+        #                                    input_unit=input_unit)
 
         # end graph display, set display img to annotated image
         self.display_img = QImage(drawn_img.data, drawn_img.shape[1], drawn_img.shape[0],
