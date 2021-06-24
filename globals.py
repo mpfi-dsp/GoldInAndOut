@@ -84,9 +84,9 @@ WORKFLOWS = [{
     "desc": "Separate spine masks as individual components, grow components until they contain X gold particles, calculate Spine Correlated Particles Per P-face Area (SC3PA) (% of gold particles within spine masks) / (% of total area of p-face taken up by spine masks)",
     "graph": {
             "title": "Nearest Neighbor Distance for Ward Hierarchical Clusters",
-            "x_label": "%_pface_covered",
+            "x_label": "SC3PA",
             "y_label": "Number of Entries",
-            "x_type": "%_pface_covered"
+            "x_type": "SC3PA"
         },
     "props": [
         {
@@ -102,7 +102,7 @@ WORKFLOWS = [{
 ]
 
 """ COLOR PALETTE OPTIONS """
-PALETTE_OPS =  ["rocket", "crest",  "mako", "flare", "viridis", "magma", "cubehelix", "rocket_r", "mako_r",  "crest_r",  "flare_r", "viridis_r", "magma_r", ]
+PALETTE_OPS = ["rocket", "crest",  "mako", "flare", "viridis", "magma", "cubehelix", "rocket_r", "mako_r",  "crest_r",  "flare_r", "viridis_r", "magma_r", ]
 
 """ METRIC UNIT OPTIONS """
 UNIT_OPS = ['px', 'nm', 'μm', 'metric']

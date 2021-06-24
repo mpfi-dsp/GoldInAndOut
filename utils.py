@@ -1,3 +1,4 @@
+import numpy as np
 from PyQt5.QtCore import QThread, pyqtSignal
 import pandas as pd
 from PIL import Image
@@ -91,6 +92,16 @@ def enum_to_unit(val):
         return 'metric'
     else:
         return 'undefined'
+
+
+def to_coord_list(df):
+    # turn into coordinate list
+    x_coordinates = np.array(df['X'])
+    y_coordinates = np.array(df['Y'])
+    coords = []
+    for i in range(len(x_coordinates)):
+        coords.append([float(y_coordinates[i]), float(x_coordinates[i])])
+    return coords
 
 # """ TURN ENUM INTO WORKFLOW NAME """
 # def enum_to_workflow(val):

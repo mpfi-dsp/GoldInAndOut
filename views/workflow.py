@@ -19,7 +19,7 @@ import cv2
 # utils
 from globals import PALETTE_OPS, MAX_DIRS_PRUNE
 from typings import Unit, Workflow
-from utils import Progress, create_color_pal, pixels_conversion_w_distance, enum_to_unit
+from utils import Progress, create_color_pal, pixels_conversion_w_distance, enum_to_unit, to_coord_list
 from workflows.clust import run_clust, draw_clust
 from workflows.gold_rippler import run_rippler, draw_rippler
 from workflows.nnd import run_nnd, draw_length
@@ -280,26 +280,26 @@ class WorkflowPage(QWidget):
         try:
             prog_wrapper = Progress()
             prog_wrapper.prog.connect(self.update_progress)
-
+            # real coords
+            self.real_coords = to_coord_list(df)
             # generate random coords
-            random_coords = gen_random_coordinates(
+            self.rand_coords = gen_random_coordinates(
                 data=df, img_path=self.img_drop.currentText(),
                 mask_path=self.mask_drop.currentText(),
                 count=int(self.n_coord_ip.text()) if self.n_coord_ip.text() else len(df.index))
 
             # TODO: ADD NEW WORKFLOW FUNCTION CALLS HERE
             if wf["type"] == Workflow.NND:
-                self.real_df, self.rand_df = run_nnd(df=df, pb=prog_wrapper, rand_coords=random_coords)
+                self.real_df, self.rand_df = run_nnd(df=df, pb=prog_wrapper, rand_coords=self.rand_coords)
             elif wf["type"] == Workflow.CLUST:
                 vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
-                self.real_df, self.rand_df = run_clust(df=df, rand_coords=random_coords, pb=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1])
+                self.real_df, self.rand_df = run_clust(df=df, rand_coords=self.rand_coords, pb=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1])
             elif wf["type"] == Workflow.NND_CLUST:
                 vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
-                self.full_real_df, self.full_rand_df, self.real_df, self.rand_df = run_nnd_clust(df=df, pb=prog_wrapper, rand_coords=random_coords, distance_threshold=vals[0], n_clusters=vals[1], min_clust_size=vals[2])
+                self.full_real_df, self.full_rand_df, self.real_df, self.rand_df = run_nnd_clust(df=df, pb=prog_wrapper, rand_coords=self.rand_coords, distance_threshold=vals[0], n_clusters=vals[1], min_clust_size=vals[2])
             elif wf["type"] == Workflow.RIPPLER:
                 vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
-                self.real_df, self.rand_df = run_rippler(df=df, pb=prog_wrapper, rand_coords=random_coords, img_path=self.img_drop.currentText(), mask_path=self.mask_drop.currentText(), max_steps=vals[0], step_size=vals[1])
-                print("rippler out", self.real_df.head(), self.rand_df.head())
+                self.real_df, self.rand_df = run_rippler(real_coords=self.real_coords, rand_coords=self.rand_coords, pb=prog_wrapper, img_path=self.img_drop.currentText(), mask_path=self.mask_drop.currentText(), max_steps=vals[0], step_size=vals[1])
             # end workflow funcs
             self.progress.setValue(100)
             # create ui scheme
@@ -357,12 +357,14 @@ class WorkflowPage(QWidget):
         width, height = size.width(), size.height()
         # set graph to image of plotted hist
         self.graph = QImage(canvas.buffer_rgba(), width, height, QImage.Format_ARGB32)
+
+        # load in image
+        drawn_img = cv2.imread(self.img_drop.currentText())
         # display img
         pixmap = QPixmap.fromImage(self.graph)
         smaller_pixmap = pixmap.scaled(300, 250, Qt.KeepAspectRatio, Qt.FastTransformation)
         self.graph_frame.setPixmap(smaller_pixmap)
-        # load in image
-        drawn_img = cv2.imread(self.img_drop.currentText())
+
         # TODO: ADD NEW GRAPHS HERE
         if wf["type"] == Workflow.NND:
             # if real coords selected, annotate them on img with lines indicating length
@@ -389,19 +391,14 @@ class WorkflowPage(QWidget):
                 drawn_img = draw_nnd_clust(nnd_df=self.rand_df, clust_df=self.full_rand_df, img=drawn_img,
                                            palette=r_palette, bin_counts=n, scalar=scalar, circle_c=(18, 156, 232),
                                            input_unit=input_unit)
-        # elif wf["type"] == Workflow.NND_CLUST:
-        #     if self.gen_real_cb.isChecked():
-        #         drawn_img = draw_rippler(nnd_df=self.real_df, clust_df=self.full_real_df, img=drawn_img,
-        #                                    palette=palette, bin_counts=n, scalar=scalar, circle_c=(18, 156, 232),
-        #                                    input_unit=input_unit)
-        #     if self.gen_rand_cb.isChecked():
-        #         drawn_img = draw_rippler(nnd_df=self.rand_df, clust_df=self.full_rand_df, img=drawn_img,
-        #                                    palette=r_palette, bin_counts=n, scalar=scalar, circle_c=(18, 156, 232),
-        #                                    input_unit=input_unit)
+        elif wf["type"] == Workflow.RIPPLER:
+            if self.gen_real_cb.isChecked():
+                drawn_img = draw_rippler(df=self.real_coords, img=drawn_img, palette=palette, scalar=scalar, circle_c=(18, 156, 232), input_unit=input_unit)
+            if self.gen_rand_cb.isChecked():
+                drawn_img = draw_rippler(df=self.rand_coords, img=drawn_img, palette=palette, scalar=scalar, circle_c=(18, 156, 232), input_unit=input_unit)
 
         # end graph display, set display img to annotated image
-        self.display_img = QImage(drawn_img.data, drawn_img.shape[1], drawn_img.shape[0],
-                                  QImage.Format_RGB888).rgbSwapped()
+        self.display_img = QImage(drawn_img.data, drawn_img.shape[1], drawn_img.shape[0], QImage.Format_RGB888).rgbSwapped()
         # resize to fit on gui
         pixmap = QPixmap.fromImage(self.display_img)
         smaller_pixmap = pixmap.scaled(200, 200, Qt.KeepAspectRatio, Qt.FastTransformation)

@@ -5,8 +5,20 @@ import cv2
 from typings import Unit
 from utils import create_color_pal
 
+COLORS = [(128, 0, 0),
+              (139, 0, 0),
+              (165, 42, 42),
+              (178, 34, 34),
+              (220, 20, 60),
+              (255, 0, 0),
+              (255, 99, 61),
+              (255, 127, 80),
+              (205, 92, 92),
+              (240, 128, 128),
+              (233, 150, 122)]
 
-def run_rippler(df, img_path, mask_path, pb, rand_coords, max_steps=10, step_size=60):
+
+def run_rippler(real_coords, img_path, mask_path, pb, rand_coords, max_steps=10, step_size=60):
     """
     GOLD RIPPLER (SC3PA)
     _______________________________
@@ -38,32 +50,13 @@ def run_rippler(df, img_path, mask_path, pb, rand_coords, max_steps=10, step_siz
     pface_area = pface_area_external - difference
 
     SC3PA, radius, gp_captured, pface_covered, total_gp = [], [], [], [], []
-    step = 0
 
-    color_list = [(128, 0, 0),
-                  (139, 0, 0),
-                  (165, 42, 42),
-                  (178, 34, 34),
-                  (220, 20, 60),
-                  (255, 0, 0),
-                  (255, 99, 61),
-                  (255, 127, 80),
-                  (205, 92, 92),
-                  (240, 128, 128),
-                  (233, 150, 122)]
     # perm_scale_mask = np.zeros((img_size[0], img_size[1], 3), np.uint8)
     original_copy = img_og.copy()
-    output_img = img_og.copy()
 
-    # turn into coordinate list
-    x_coordinates = np.array(df['X'])
-    y_coordinates = np.array(df['Y'])
-    coords = []
-    for i in range(len(x_coordinates)):
-        coords.append([float(y_coordinates[i]), float(x_coordinates[i])])
-
+    step = 0
     rippler_out = []
-    for coord_list in [coords, rand_coords]:
+    for coord_list in [real_coords, rand_coords]:
         rad = 100
         max = (int(max_steps) * int(step_size)) + rad
         while rad <= max:
@@ -71,22 +64,22 @@ def run_rippler(df, img_path, mask_path, pb, rand_coords, max_steps=10, step_siz
             scale_mask = np.zeros(pface_mask.shape, np.uint8)
             color_step = step % 11
             for entry in coord_list:
-                output_img = cv2.circle(scale_mask, tuple(int(x) for x in entry), rad, 255, -1)
-                output_img = cv2.circle(original_copy, tuple(int(x) for x in entry), rad, color_list[color_step], 5)
+                cv2.circle(scale_mask, tuple(int(x) for x in entry), rad, 255, -1)
+                cv2.circle(original_copy, tuple(int(x) for x in entry), rad, COLORS[color_step], 5)
             step += 1
             for c in coord_list:
                 x, y = int(c[1]), int(c[0])
                 if rad == max:
                     if scale_mask[y, x] != 0:
-                        output_img = cv2.circle(original_copy, (y, x), 8, (0, 0, 255), -1)
+                        cv2.circle(original_copy, (y, x), 8, (0, 0, 255), -1)
                         total_captured_particles += 1
                     else:
-                        output_img = cv2.circle(original_copy, (y, x), 8, (255, 0, 255), -1)
+                        cv2.circle(original_copy, (y, x), 8, (255, 0, 255), -1)
                 else:
                     if scale_mask[y, x] != 0:
                         total_captured_particles += 1
-                        output_img = cv2.circle(original_copy, (y, x), 8, (0, 0, 255), -1)
-            gp_in_spine = total_captured_particles / len(df)
+                        cv2.circle(original_copy, (y, x), 8, (0, 0, 255), -1)
+            gp_in_spine = total_captured_particles / len(coord_list)
             # find spine contour area and pface contour area
             mask_combined = cv2.bitwise_and(scale_mask, pface_mask.copy())
             mask_cnts, mask_hierarchy = cv2.findContours(mask_combined, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
@@ -119,41 +112,30 @@ def run_rippler(df, img_path, mask_path, pb, rand_coords, max_steps=10, step_siz
         new_df = pd.DataFrame(
             data={'radius': radius, '%_gp_captured': gp_captured, '%_pface_covered': pface_covered, 'SC3PA': SC3PA,
                   'total_gp': total_gp})
-        print(new_df.head())
+        # print(new_df.head())
         rippler_out.append(new_df)
 
-        cv2.imwrite("test_img.jpg", output_img)
-
+        # cv2.imwrite("test_img.jpg", output_img)
     return rippler_out
 
 
-def draw_rippler(nnd_df, clust_df, img, bin_counts, palette="rocket_r", input_unit=Unit.PIXEL, scalar=1,
-                 circle_c=(0, 0, 255)):
-    return None
-#     # color palette
-#     def sea_to_rgb(color):
-#         color = [val * 255 for val in color]
-#         return color
-#     # draw clusters
-#     cl_palette = create_color_pal(n_bins=len(set(clust_df['cluster_id'])), palette_type=palette)
-#     for idx, entry in clust_df.iterrows():
-#         particle = tuple(int(scalar * x) for x in [entry['X'], entry['Y']])
-#         img = cv2.circle(img, particle, 10, sea_to_rgb(cl_palette[clust_df['cluster_id'][idx]]), -1)
-#     # draw nnd
-#     count, bin_idx = 0, 0
-#     for idx, entry in nnd_df.iterrows():
-#         count += 1
-#         particle_1 = entry['og_centroid']
-#         particle_2 = entry['closest_centroid']
-#         if input_unit == Unit.PIXEL:
-#             particle_1 = tuple(int(scalar * x) for x in particle_1)
-#             particle_2 = tuple(int(scalar * x) for x in particle_2)
-#         else:
-#             particle_1 = tuple(int(x / scalar) for x in particle_1)
-#             particle_2 = tuple(int(x / scalar) for x in particle_2)
-#         if count >= bin_counts[bin_idx] and bin_idx < len(bin_counts) - 1:
-#             bin_idx += 1
-#             count = 0
-#         img = cv2.circle(img, particle_1, 10, circle_c, -1)
-#         img = cv2.line(img, particle_1, particle_2, sea_to_rgb(palette[bin_idx]), 5)
-#     return img
+def draw_rippler(coords, img, palette="rocket_r", max_steps=10, step_size=60, scalar=1, input_unit=Unit.PIXEL, circle_c=(0, 0, 255)):
+    def sea_to_rgb(color):
+        color = [val * 255 for val in color]
+        return color
+
+    output_img = img.copy()
+    rad, step = 100, 0
+    max = (int(max_steps) * int(step_size)) + rad
+    pal = create_color_pal(n_bins=11, palette_type=palette)
+    while rad <= max:
+        color_step = step % 11
+        for entry in coords:
+            output_img = cv2.circle(output_img, tuple(int(x) for x in entry), rad, 255, -1)
+            output_img = cv2.circle(output_img, tuple(int(x) for x in entry), rad, sea_to_rgb(pal[color_step]), 5)
+        step += 1
+        for c in coords:
+            x, y = int(c[1]), int(c[0])
+            output_img = cv2.circle(output_img, (y, x), 8, circle_c, -1)
+
+    return output_img
