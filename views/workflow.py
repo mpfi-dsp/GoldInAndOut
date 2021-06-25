@@ -289,16 +289,15 @@ class WorkflowPage(QWidget):
                 count=int(self.n_coord_ip.text()) if self.n_coord_ip.text() else len(df.index))
 
             # TODO: ADD NEW WORKFLOW FUNCTION CALLS HERE
+            vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
+
             if wf["type"] == Workflow.NND:
                 self.real_df, self.rand_df = run_nnd(df=df, pb=prog_wrapper, rand_coords=self.rand_coords)
             elif wf["type"] == Workflow.CLUST:
-                vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
                 self.real_df, self.rand_df = run_clust(df=df, rand_coords=self.rand_coords, pb=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1])
             elif wf["type"] == Workflow.NND_CLUST:
-                vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
                 self.full_real_df, self.full_rand_df, self.real_df, self.rand_df = run_nnd_clust(df=df, pb=prog_wrapper, rand_coords=self.rand_coords, distance_threshold=vals[0], n_clusters=vals[1], min_clust_size=vals[2])
             elif wf["type"] == Workflow.RIPPLER:
-                vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
                 self.real_df, self.rand_df = run_rippler(real_coords=self.real_coords, rand_coords=self.rand_coords, pb=prog_wrapper, img_path=self.img_drop.currentText(), mask_path=self.mask_drop.currentText(), max_steps=vals[0], step_size=vals[1])
             # end workflow funcs
             self.progress.setValue(100)
@@ -393,9 +392,9 @@ class WorkflowPage(QWidget):
                                            input_unit=input_unit)
         elif wf["type"] == Workflow.RIPPLER:
             if self.gen_real_cb.isChecked():
-                drawn_img = draw_rippler(df=self.real_coords, img=drawn_img, palette=palette, scalar=scalar, circle_c=(18, 156, 232), input_unit=input_unit)
+                drawn_img = draw_rippler(coords=self.real_coords, mask_path=self.mask_drop.currentText(), img=drawn_img, palette=palette, scalar=scalar, circle_c=(18, 156, 232), input_unit=input_unit)
             if self.gen_rand_cb.isChecked():
-                drawn_img = draw_rippler(df=self.rand_coords, img=drawn_img, palette=palette, scalar=scalar, circle_c=(18, 156, 232), input_unit=input_unit)
+                drawn_img = draw_rippler(coords=self.rand_coords,  mask_path=self.mask_drop.currentText(), img=drawn_img, palette=palette, scalar=scalar, circle_c=(18, 156, 232), input_unit=input_unit)
 
         # end graph display, set display img to annotated image
         self.display_img = QImage(drawn_img.data, drawn_img.shape[1], drawn_img.shape[0], QImage.Format_RGB888).rgbSwapped()

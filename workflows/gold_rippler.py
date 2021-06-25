@@ -63,12 +63,11 @@ def run_rippler(real_coords, img_path, mask_path, pb, rand_coords, max_steps=10,
             total_captured_particles = 0
             scale_mask = np.zeros(pface_mask.shape, np.uint8)
             color_step = step % 11
-            for entry in coord_list:
-                cv2.circle(scale_mask, tuple(int(x) for x in entry), rad, 255, -1)
-                cv2.circle(original_copy, tuple(int(x) for x in entry), rad, COLORS[color_step], 5)
             step += 1
             for c in coord_list:
                 x, y = int(c[1]), int(c[0])
+                cv2.circle(scale_mask, (y, x), rad, 255, -1)
+                cv2.circle(original_copy, (y, x), rad, COLORS[color_step], 5)
                 if rad == max:
                     if scale_mask[y, x] != 0:
                         cv2.circle(original_copy, (y, x), 8, (0, 0, 255), -1)
@@ -104,7 +103,7 @@ def run_rippler(real_coords, img_path, mask_path, pb, rand_coords, max_steps=10,
             radius.append(rad)
             gp_captured.append(gp_in_spine)
             pface_covered.append(percent_area)
-            total_gp.append(len(df))
+            total_gp.append(len(coord_list))
             rad += int(step_size)
             pb.update_progress(rad)
 
@@ -114,28 +113,45 @@ def run_rippler(real_coords, img_path, mask_path, pb, rand_coords, max_steps=10,
                   'total_gp': total_gp})
         # print(new_df.head())
         rippler_out.append(new_df)
-
         # cv2.imwrite("test_img.jpg", output_img)
     return rippler_out
 
 
-def draw_rippler(coords, img, palette="rocket_r", max_steps=10, step_size=60, scalar=1, input_unit=Unit.PIXEL, circle_c=(0, 0, 255)):
+def draw_rippler(coords, img, mask_path, palette="rocket_r", max_steps=10, step_size=60, scalar=1, input_unit=Unit.PIXEL, circle_c=(0, 0, 255)):
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
-
+    # print("draw rippler")
     output_img = img.copy()
     rad, step = 100, 0
     max = (int(max_steps) * int(step_size)) + rad
     pal = create_color_pal(n_bins=11, palette_type=palette)
+    img_pface = cv2.imread(mask_path)
+    # print("load imgs and find pface area")
+    lower_bound = np.array([239, 174, 0])
+    upper_bound = np.array([254, 254, 254])
+    pface_mask = cv2.inRange(img_pface, lower_bound, upper_bound)
     while rad <= max:
         color_step = step % 11
-        for entry in coords:
-            output_img = cv2.circle(output_img, tuple(int(x) for x in entry), rad, 255, -1)
-            output_img = cv2.circle(output_img, tuple(int(x) for x in entry), rad, sea_to_rgb(pal[color_step]), 5)
-        step += 1
+        scale_mask = np.zeros(pface_mask.shape, np.uint8)
         for c in coords:
             x, y = int(c[1]), int(c[0])
-            output_img = cv2.circle(output_img, (y, x), 8, circle_c, -1)
-
+            cv2.circle(scale_mask, (y, x), rad, 255, -1)
+            cv2.circle(output_img, (y, x), rad, sea_to_rgb(pal[color_step]), 5)
+            if rad == max:
+                if scale_mask[y, x] != 0:
+                    cv2.circle(output_img, (y, x), 8, (0, 0, 255), -1)
+                else:
+                    cv2.circle(output_img, (y, x), 8, (255, 0, 255), -1)
+            else:
+                if scale_mask[y, x] != 0:
+                    cv2.circle(output_img, (y, x), 8, (0, 0, 255), -1)
+        # for c in coords:
+        #     x, y = int(c[1]), int(c[0])
+        #     output_img = cv2.circle(output_img, (y, x), 8, circle_c, -1)
+        #     output_img = cv2.circle(output_img, (y, x), rad, 255, -1)
+        #     output_img = cv2.circle(output_img, (y, x), rad, sea_to_rgb(pal[color_step]), 5)
+        rad += int(step_size)
+        step += 1
+    # print("done drawing")
     return output_img
