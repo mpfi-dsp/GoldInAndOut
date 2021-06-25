@@ -3,6 +3,7 @@ import datetime
 import os
 import shutil
 
+import numpy as np
 import pandas as pd
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QPixmap, QCursor
@@ -310,7 +311,7 @@ class WorkflowPage(QWidget):
         except Exception as e:
             print(e)
 
-    def create_visuals(self, wf, n_bins, input_unit, output_unit, scalar):
+    def create_visuals(self, wf, n_bins, input_unit, output_unit, scalar, n=np.zeros(11)):
         """ CREATE DATA VISUALIZATIONS """
         graph_df = pd.DataFrame([])
         cm = plt.cm.get_cmap('crest')
@@ -326,29 +327,49 @@ class WorkflowPage(QWidget):
                 temp_df = self.rand_df
             n_bins = str(len(set(temp_df['cluster_id'])))
 
-        # create hist
-        if self.gen_real_cb.isChecked():
-            self.real_df.sort_values(wf["graph"]["x_type"], inplace=True)
-            graph_df = self.real_df[wf["graph"]["x_type"]]
-            cm = sns.color_palette(self.pal_type.currentText(), as_cmap=True)
-            ax.set_title(f'{wf["graph"]["title"]} (Real)')
-        elif self.gen_rand_cb.isChecked():
-            self.rand_df.sort_values(wf["graph"]["x_type"], inplace=True)
-            scaled_rand = pixels_conversion_w_distance(self.rand_df, scalar)
-            ax.set_title(f'{wf["graph"]["title"]} (Rand)')
-            cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
-            graph_df = scaled_rand[wf["graph"]["x_type"]]
-        # draw graph
-        n, bins, patches = ax.hist(graph_df, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), color='green')
+        if wf["graph"]["type"] == "hist":
+            # create histogram
+            if self.gen_real_cb.isChecked():
+                self.real_df.sort_values(wf["graph"]["x_type"], inplace=True)
+                graph_df = self.real_df[wf["graph"]["x_type"]]
+                cm = sns.color_palette(self.pal_type.currentText(), as_cmap=True)
+                ax.set_title(f'{wf["graph"]["title"]} (Real)')
+            elif self.gen_rand_cb.isChecked():
+                self.rand_df.sort_values(wf["graph"]["x_type"], inplace=True)
+                scaled_rand = pixels_conversion_w_distance(self.rand_df, scalar)
+                ax.set_title(f'{wf["graph"]["title"]} (Rand)')
+                cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
+                graph_df = scaled_rand[wf["graph"]["x_type"]]
+
+            # draw graph
+            n, bins, patches = ax.hist(graph_df, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), color='green')
+            # normalize values
+            col = (n - n.min()) / (n.max() - n.min())
+            for c, p in zip(col, patches):
+                p.set_facecolor(cm(c))
+        elif wf["graph"]["type"] == "line":
+            # create line graph
+            if self.gen_real_cb.isChecked():
+                self.real_df.sort_values(wf["graph"]["x_type"], inplace=True)
+                cm = sns.color_palette(self.pal_type.currentText(), as_cmap=True)
+                ax.set_title(f'{wf["graph"]["title"]} (Real)')
+                graph_df = self.real_df
+            elif self.gen_rand_cb.isChecked():
+                self.rand_df.sort_values(wf["graph"]["x_type"], inplace=True)
+                ax.set_title(f'{wf["graph"]["title"]} (Rand)')
+                cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
+                graph_df = self.rand_df
+
+            ax.plot(graph_df[wf["graph"]["x_type"]], graph_df[wf["graph"]["y_type"]], color='blue')
+
+        # label graph
         ax.set_xlabel(f'{wf["graph"]["x_label"]} ({enum_to_unit(output_unit)})')
         ax.set_ylabel(wf["graph"]["y_label"])
+
         # generate palette
         palette = create_color_pal(n_bins=int(len(n)), palette_type=self.pal_type.currentText())
         r_palette = create_color_pal(n_bins=int(len(n)), palette_type=self.r_pal_type.currentText())
-        # normalize values
-        col = (n - n.min()) / (n.max() - n.min())
-        for c, p in zip(col, patches):
-            p.set_facecolor(cm(c))
+
         # draw on canvas
         canvas.draw()
         # determine shape of canvas
@@ -391,10 +412,11 @@ class WorkflowPage(QWidget):
                                            palette=r_palette, bin_counts=n, scalar=scalar, circle_c=(18, 156, 232),
                                            input_unit=input_unit)
         elif wf["type"] == Workflow.RIPPLER:
+            vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
             if self.gen_real_cb.isChecked():
-                drawn_img = draw_rippler(coords=self.real_coords, mask_path=self.mask_drop.currentText(), img=drawn_img, palette=palette, scalar=scalar, circle_c=(18, 156, 232), input_unit=input_unit)
+                drawn_img = draw_rippler(coords=self.real_coords, mask_path=self.mask_drop.currentText(), img=drawn_img, palette=palette, scalar=scalar, circle_c=(18, 156, 232), input_unit=input_unit, max_steps=vals[0], step_size=vals[1])
             if self.gen_rand_cb.isChecked():
-                drawn_img = draw_rippler(coords=self.rand_coords,  mask_path=self.mask_drop.currentText(), img=drawn_img, palette=palette, scalar=scalar, circle_c=(18, 156, 232), input_unit=input_unit)
+                drawn_img = draw_rippler(coords=self.rand_coords,  mask_path=self.mask_drop.currentText(), img=drawn_img, palette=r_palette, scalar=scalar, circle_c=(18, 156, 232), input_unit=input_unit, max_steps=vals[0], step_size=vals[1])
 
         # end graph display, set display img to annotated image
         self.display_img = QImage(drawn_img.data, drawn_img.shape[1], drawn_img.shape[0], QImage.Format_RGB888).rgbSwapped()

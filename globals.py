@@ -9,10 +9,13 @@ Array of JSON objects containing the following data:
     @type: ENUM type of Workflow
     @header: string displayed as "header"
     @desc: string displayed as "description" below header
-    @graph: histogram metadata:
-        @title: title of histogram
-        @x_label: x_label of histogram
-        @y_label: y_label of histogram
+    @graph: graph metadata:
+        @type: type of graph
+        @title: title of graph
+        @x_label: x_label of graph
+        @y_label: y_label of graph
+        @x_type: the value measured on x axis
+        @y_type: the value measured on y axis
     @props: array of optional parameters in the following format:
         @title: title of prop
         @placeholder: placeholder for prop label
@@ -24,6 +27,7 @@ WORKFLOWS = [{
     "header": "Nearest Neighbor Distance",
     "desc": "Find the nearest neighbor distance between gold particles. Optionally generate random coordinates.",
     "graph": {
+        "type": "hist",
         "title": "Distances Between Nearest Neighbors",
         "x_label": "Nearest Neighbor Distance",
         "y_label": "Number of Entries",
@@ -37,6 +41,7 @@ WORKFLOWS = [{
     "header": "Ward Hierarchical Clustering",
     "desc": "Cluster gold particles into groups. Optionally generate random coordinates.",
     "graph": {
+            "type": "hist",
             "title": "Ward Hierarchical Clusters",
             "x_label": "Cluster ID",
             "y_label": "Cluster Size",
@@ -44,7 +49,7 @@ WORKFLOWS = [{
         },
     "props": [
             {
-            "title": "distance_threshold",
+             "title": "distance_threshold",
               "placeholder": "120"
             },
             {"title": "n_clusters",
@@ -58,14 +63,15 @@ WORKFLOWS = [{
     "header": "Nearest Neighbor Distance Between Clusters",
     "desc": "Find the nearest neighbor distance between clusters. Optionally generate random coordinates.",
     "graph": {
+            "type": "hist",
             "title": "Nearest Neighbor Distance for Ward Hierarchical Clusters",
             "x_label": "Nearest Neighbor Distance",
             "y_label": "Number of Entries",
-            "x_type": "dist"
+            "x_type": "dist",
         },
     "props": [
         {
-        "title": "distance_threshold",
+          "title": "distance_threshold",
           "placeholder": "120"
         },
         {"title": "n_clusters",
@@ -83,10 +89,12 @@ WORKFLOWS = [{
     "header": "Gold Rippler: Spine-Particle Correlation",
     "desc": "Separate spine masks as individual components, grow components until they contain X gold particles, calculate Spine Correlated Particles Per P-face Area (SC3PA) (% of gold particles within spine masks) / (% of total area of p-face taken up by spine masks)",
     "graph": {
-            "title": "Nearest Neighbor Distance for Ward Hierarchical Clusters",
-            "x_label": "SC3PA",
-            "y_label": "Number of Entries",
-            "x_type": "SC3PA"
+            "type": "line",
+            "title": "Spine Correlated Particles Per P-face Area By Radius",
+            "x_label": "radius",
+            "y_label": "SC3PA",
+            "x_type": "radius",
+            "y_type": "SC3PA"
         },
     "props": [
         {

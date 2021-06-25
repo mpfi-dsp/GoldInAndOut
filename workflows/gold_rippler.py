@@ -53,6 +53,7 @@ def run_rippler(real_coords, img_path, mask_path, pb, rand_coords, max_steps=10,
 
     # perm_scale_mask = np.zeros((img_size[0], img_size[1], 3), np.uint8)
     original_copy = img_og.copy()
+    pb.update_progress(30)
 
     step = 0
     rippler_out = []
