@@ -58,9 +58,9 @@ class MainWindow(QWidget):
         self.load_data()
 
         # TODO: remove when no longer using for testing
-        img_drop = self.home_page.img_le.text() if len(self.home_page.img_le.text()) > 0 else ["./input/example_image.tif"]
-        mask_drop = self.home_page.mask_le.text() if len(self.home_page.mask_le.text()) > 0 else ["./input/example_mask.tif"]
-        csv_drop = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else ["./input/example_csv.csv"]
+        img_drop = [self.home_page.img_le.text()] if len(self.home_page.img_le.text()) > 0 else ["./input/example_image.tif"]
+        mask_drop = [self.home_page.mask_le.text()] if len(self.home_page.mask_le.text()) > 0 else ["./input/example_mask.tif"]
+        csv_drop = [self.home_page.csv_le.text()] if len(self.home_page.csv_le.text()) > 0 else ["./input/example_csv.csv"]
         # input/output units
         # TODO: iu = unit_to_enum(self.home_page.ip_scalar_type.currentText() if self.home_page.ip_scalar_type.currentText() is not None else 'px')
         ou = unit_to_enum(self.home_page.op_scalar_type.currentText() if self.home_page.op_scalar_type.currentText() is not None else 'px')
@@ -104,7 +104,7 @@ class MainWindow(QWidget):
 
     def empty_stack(self):
         """ CLEAR PAGE/NAV STACKS """
-        for i in range(self.page_stack.count()):
+        for i in range(self.page_stack.count()-1, 0, -1):
             if i > 0:
                 self.nav_list.takeItem(i)
                 self.page_stack.removeWidget(self.page_stack.widget(i))
