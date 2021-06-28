@@ -5,7 +5,7 @@ import shutil
 
 import numpy as np
 import pandas as pd
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread
 from PyQt5.QtGui import QImage, QPixmap, QCursor
 from PyQt5.QtWidgets import (QLabel, QRadioButton, QCheckBox, QHBoxLayout, QPushButton, QWidget, QSizePolicy,
                              QFormLayout, QLineEdit,
@@ -26,6 +26,37 @@ from workflows.gold_rippler import run_rippler, draw_rippler
 from workflows.nnd import run_nnd, draw_length
 from workflows.nnd_clust import run_nnd_clust, draw_nnd_clust
 from workflows.random_coords import gen_random_coordinates
+
+
+class AnalysisWorker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(object)
+
+    def run(self, wf, df, vals, prog_wrapper, real_coords, rand_coords, img_path, mask_path):
+        self.output_data = []
+
+        if wf['type'] == Workflow.NND:
+            self.real_df, self.rand_df = run_nnd(df=df, pb=prog_wrapper, rand_coords=rand_coords)
+            self.output_data = [self.real_df, self.rand_df]
+        elif wf['type'] == Workflow.CLUST:
+            self.real_df, self.rand_df = run_clust(df=df, rand_coords=rand_coords, pb=prog_wrapper,
+                                                   distance_threshold=vals[0], n_clusters=vals[1])
+            self.output_data = [self.real_df, self.rand_df]
+        elif wf['type'] == Workflow.NND_CLUST:
+            self.full_real_df, self.full_rand_df, self.real_df, self.rand_df = run_nnd_clust(df=df, pb=prog_wrapper,
+                                                                                             rand_coords=rand_coords,
+                                                                                             distance_threshold=vals[0],
+                                                                                             n_clusters=vals[1],
+                                                                                             min_clust_size=vals[2])
+            self.output_data = [self.full_real_df, self.full_rand_df, self.real_df, self.rand_df]
+        elif wf['type'] == Workflow.RIPPLER:
+            self.real_df, self.rand_df = run_rippler(real_coords=real_coords, rand_coords=rand_coords,
+                                                     pb=prog_wrapper, img_path=img_path,
+                                                     mask_path=mask_path, max_steps=vals[0],
+                                                     step_size=vals[1])
+            self.output_data = [self.real_df, self.rand_df]
+        self.progress.emit(self.output_data)
+        self.finished.emit()
 
 
 class WorkflowPage(QWidget):
@@ -57,6 +88,13 @@ class WorkflowPage(QWidget):
         self.full_real_df = pd.DataFrame()
         self.rand_df = pd.DataFrame()
         self.full_rand_df = pd.DataFrame()
+
+        self.wf = wf
+        self.input_unit = input_unit
+        self.output_unit = output_unit
+        self.scalar = scalar
+        self.delete_old = delete_old
+
         # init layout
         layout = QFormLayout()
         # header
@@ -222,7 +260,7 @@ class WorkflowPage(QWidget):
         # assign layout
         self.setLayout(layout)
         # run on init
-        self.run(wf, df, scalar, input_unit, output_unit, delete_old)
+        self.run(wf, df)
 
     def update_progress(self, value):
         """ UPDATE PROGRESS BAR """
@@ -276,7 +314,7 @@ class WorkflowPage(QWidget):
         for prop in self.rand_props:
             prop.setVisible(not prop.isVisible())
 
-    def run(self, wf, df, scalar, input_unit, output_unit, delete_old):
+    def run(self, wf, df):
         """ RUN WORKFLOW """
         try:
             prog_wrapper = Progress()
@@ -292,24 +330,46 @@ class WorkflowPage(QWidget):
             # TODO: ADD NEW WORKFLOW FUNCTION CALLS HERE
             vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
 
-            if wf["type"] == Workflow.NND:
-                self.real_df, self.rand_df = run_nnd(df=df, pb=prog_wrapper, rand_coords=self.rand_coords)
-            elif wf["type"] == Workflow.CLUST:
-                self.real_df, self.rand_df = run_clust(df=df, rand_coords=self.rand_coords, pb=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1])
-            elif wf["type"] == Workflow.NND_CLUST:
-                self.full_real_df, self.full_rand_df, self.real_df, self.rand_df = run_nnd_clust(df=df, pb=prog_wrapper, rand_coords=self.rand_coords, distance_threshold=vals[0], n_clusters=vals[1], min_clust_size=vals[2])
-            elif wf["type"] == Workflow.RIPPLER:
-                self.real_df, self.rand_df = run_rippler(real_coords=self.real_coords, rand_coords=self.rand_coords, pb=prog_wrapper, img_path=self.img_drop.currentText(), mask_path=self.mask_drop.currentText(), max_steps=vals[0], step_size=vals[1])
-            # end workflow funcs
+            self.thread = QThread()
+            self.worker = AnalysisWorker()
+            self.worker.moveToThread(self.thread)
+            self.thread.started.connect(partial(self.worker.run, wf, df, vals, prog_wrapper, self.real_coords, self.rand_coords, self.img_drop.currentText(), self.mask_drop.currentText()))
+            self.worker.finished.connect(self.thread.quit)
+            self.worker.finished.connect(self.worker.deleteLater)
+            self.thread.finished.connect(self.thread.deleteLater)
+            self.worker.progress.connect(self.on_receive_data)
+            self.thread.start()
+            # self.thread.finished.connect(self.on_receive_data)
+            #
+            # # end workflow funcs
+            # self.progress.setValue(100)
+            # # create ui scheme
+            # self.create_visuals(wf=wf, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), input_unit=input_unit, output_unit=output_unit, scalar=scalar)
+            # # download files automatically
+            # self.download(output_unit=output_unit, wf=wf, delete_old=delete_old)
+            # self.download_btn.setStyleSheet(
+            #     "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
+        except Exception as e:
+            print(e)
+
+    def on_receive_data(self, output_data):
+        try:
+            if self.wf["type"] == Workflow.NND or self.wf["type"] == Workflow.CLUST or self.wf["type"] == Workflow.RIPPLER:
+                self.real_df, self.rand_df = output_data
+            elif self.wf["type"] == Workflow.NND_CLUST:
+                self.full_real_df, self.full_rand_df, self.real_df, self.rand_df = output_data
+            # end
             self.progress.setValue(100)
             # create ui scheme
-            self.create_visuals(wf=wf, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), input_unit=input_unit, output_unit=output_unit, scalar=scalar)
+            self.create_visuals(wf=self.wf, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), input_unit=self.input_unit, output_unit=self.output_unit, scalar=self.scalar)
             # download files automatically
-            self.download(output_unit=output_unit, wf=wf, delete_old=delete_old)
+            self.download(output_unit=self.output_unit, wf=self.wf, delete_old=self.delete_old)
             self.download_btn.setStyleSheet(
                 "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
         except Exception as e:
             print(e)
+
+
 
     def create_visuals(self, wf, n_bins, input_unit, output_unit, scalar, n=np.zeros(11)):
         """ CREATE DATA VISUALIZATIONS """

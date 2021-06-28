@@ -15,39 +15,6 @@ from PyQt5.QtGui import QIcon, QCursor
 from PyQt5.QtWidgets import (QWidget, QListWidget, QStackedWidget, QHBoxLayout, QListWidgetItem, QApplication)
 # general
 import sys
-from functools import partial
-
-class AnalysisWorker(QObject):
-    finished = pyqtSignal()
-    progress = pyqtSignal(int)
-
-    def run(self, img_drop, mask_drop, csv_drop, s, ou, dod, update_main_progress, workflow_cbs, page_stack, nav_list, scaled_df):
-        # add page tabs
-        for i in range(len(WORKFLOWS)):
-            update_main_progress(i * 20)
-            if workflow_cbs[i].isChecked():
-                item = QListWidgetItem(
-                    NAV_ICON, str(WORKFLOWS[i]['name']), nav_list)
-                item.setSizeHint(QSize(60, 60))
-                item.setTextAlignment(Qt.AlignCenter)
-                # generate workflow page
-                print(WORKFLOWS[i])
-                page_stack.addWidget(
-                    WorkflowPage(df=scaled_df,
-                                 wf=WORKFLOWS[i],
-                                 img=img_drop,
-                                 mask=mask_drop,
-                                 csv=csv_drop,
-                                 scalar=s,
-                                 input_unit=Unit.PIXEL,
-                                 output_unit=ou,
-                                 delete_old=dod
-                                 )
-                )
-        # for i in range(5):
-        #     sleep(1)
-            self.progress.emit((i / len(WORKFLOWS)) * 100)
-        self.finished.emit()
 
 
 class GoldInAndOut(QWidget):
@@ -86,6 +53,7 @@ class GoldInAndOut(QWidget):
         self.page_stack.addWidget(self.home_page)
         # select first page by default
         self.nav_list.item(0).setSelected(True)
+        self.home_page.show_logs.clicked.connect(self.open_logger)
 
     def on_run_complete(self):
         self.home_page.start_btn.setEnabled(True)
@@ -93,13 +61,15 @@ class GoldInAndOut(QWidget):
         self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #E89C12")
         self.update_main_progress(100)
 
-    def init_workflows(self):
-        """ INITIALIZE CHILD WORKFLOW WINDOWS """
-        # open logger if applicable
+    def open_logger(self):
         if self.home_page.show_logs.isChecked():
             self.dlg = Logger()
             self.dlg.show()
+        else:
+            self.dlg.destroy()
 
+    def init_workflows(self):
+        """ INITIALIZE CHILD WORKFLOW WINDOWS """
         self.empty_stack()
         self.load_data()
 
@@ -114,20 +84,28 @@ class GoldInAndOut(QWidget):
         s = float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1)
         dod = self.home_page.dod_cb.isChecked()
 
-        self.thread = QThread()
-        self.worker = AnalysisWorker()
-        self.worker.moveToThread(self.thread)
-        self.thread.started.connect(partial(self.worker.run, img_drop, mask_drop, csv_drop, s, ou, dod, self.update_main_progress, self.home_page.workflow_cbs, self.page_stack, self.nav_list, self.SCALED_DF))
-        self.worker.finished.connect(self.thread.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
-        self.thread.finished.connect(self.thread.deleteLater)
-        self.worker.progress.connect(self.update_main_progress)
-        self.thread.start()
-        # disable start button while performing analysis
-        self.home_page.start_btn.setEnabled(False)
-        self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; background: #ddd; color: white; border-radius: 7px; ")
-        self.thread.finished.connect(self.on_run_complete)
+        for i in range(len(WORKFLOWS)):
+            if self.home_page.workflow_cbs[i].isChecked():
+                item = QListWidgetItem(
+                    NAV_ICON, str(WORKFLOWS[i]['name']), self.nav_list)
+                item.setSizeHint(QSize(60, 60))
+                item.setTextAlignment(Qt.AlignCenter)
+                # generate workflow page
+                print(WORKFLOWS[i]['name'])
+                self.page_stack.addWidget(
+                    WorkflowPage(df=self.SCALED_DF,
+                                 wf=WORKFLOWS[i],
+                                 img=img_drop,
+                                 mask=mask_drop,
+                                 csv=csv_drop,
+                                 scalar=s,
+                                 input_unit=Unit.PIXEL,
+                                 output_unit=ou,
+                                 delete_old=dod
+                                 ))
+                self.update_main_progress(int((i / len(WORKFLOWS) * 100)))
 
+        self.update_main_progress(100)
 
     def load_data(self):
         """ LOAD AND SCALE DATA """

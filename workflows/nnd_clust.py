@@ -1,3 +1,5 @@
+import logging
+
 import pandas as pd
 from sklearn.cluster import AgglomerativeClustering
 import numpy as np
@@ -110,7 +112,7 @@ def run_nnd_clust(df, pb, rand_coords, min_clust_size=3, distance_threshold=120,
         return cleaned_real_df, cleaned_rand_df
 
     """ NND BETWEEN CLUSTERS """
-    print("running nearest neighbor distance between clusters")
+    logging.info("running nearest neighbor distance between clusters")
     # turn into coordinate list
     x_coordinates = np.array(df['X'])
     y_coordinates = np.array(df['Y'])
