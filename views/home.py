@@ -97,6 +97,9 @@ class HomePage(QWidget):
         # delete old dirs checkbox
         self.dod_cb = QCheckBox(f'prune old output (delete folders older than {MAX_DIRS_PRUNE} runs)')
         layout.addRow(self.dod_cb)
+        # show logs checkbox
+        self.show_logs = QCheckBox('display logger (open in new window)')
+        layout.addRow(self.show_logs)
         # TODO: Add back ability to set input unit
         # self.ip_scalr_lb = QLabel("Input Unit")
         # self.ip_scalr_lb.setStyleSheet("font-size: 17px; font-weight: 400;")

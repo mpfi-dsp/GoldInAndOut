@@ -1,20 +1,56 @@
 # views
+from time import sleep
+
 from globals import WORKFLOWS, NAV_ICON
 from views.home import HomePage
 from typings import Unit
 from utils import pixels_conversion, unit_to_enum
+from views.logger import Logger
 from views.workflow import WorkflowPage
 # stylesheet
 from styles.stylesheet import styles
 # pyQT5
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal, QThread
 from PyQt5.QtGui import QIcon, QCursor
 from PyQt5.QtWidgets import (QWidget, QListWidget, QStackedWidget, QHBoxLayout, QListWidgetItem, QApplication)
 # general
 import sys
+from functools import partial
+
+class AnalysisWorker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(int)
+
+    def run(self, img_drop, mask_drop, csv_drop, s, ou, dod, update_main_progress, workflow_cbs, page_stack, nav_list, scaled_df):
+        # add page tabs
+        for i in range(len(WORKFLOWS)):
+            update_main_progress(i * 20)
+            if workflow_cbs[i].isChecked():
+                item = QListWidgetItem(
+                    NAV_ICON, str(WORKFLOWS[i]['name']), nav_list)
+                item.setSizeHint(QSize(60, 60))
+                item.setTextAlignment(Qt.AlignCenter)
+                # generate workflow page
+                print(WORKFLOWS[i])
+                page_stack.addWidget(
+                    WorkflowPage(df=scaled_df,
+                                 wf=WORKFLOWS[i],
+                                 img=img_drop,
+                                 mask=mask_drop,
+                                 csv=csv_drop,
+                                 scalar=s,
+                                 input_unit=Unit.PIXEL,
+                                 output_unit=ou,
+                                 delete_old=dod
+                                 )
+                )
+        # for i in range(5):
+        #     sleep(1)
+            self.progress.emit((i / len(WORKFLOWS)) * 100)
+        self.finished.emit()
 
 
-class MainWindow(QWidget):
+class GoldInAndOut(QWidget):
     """ PARENT WINDOW INITIALIZATION """
     def __init__(self):
         super().__init__()
@@ -51,9 +87,19 @@ class MainWindow(QWidget):
         # select first page by default
         self.nav_list.item(0).setSelected(True)
 
+    def on_run_complete(self):
+        self.home_page.start_btn.setEnabled(True)
+        self.home_page.start_btn.setText("Run Again")
+        self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #E89C12")
+        self.update_main_progress(100)
+
     def init_workflows(self):
         """ INITIALIZE CHILD WORKFLOW WINDOWS """
-        self.home_page.start_btn.setText("Run Again")
+        # open logger if applicable
+        if self.home_page.show_logs.isChecked():
+            self.dlg = Logger()
+            self.dlg.show()
+
         self.empty_stack()
         self.load_data()
 
@@ -67,29 +113,21 @@ class MainWindow(QWidget):
         # scalar
         s = float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1)
         dod = self.home_page.dod_cb.isChecked()
-        # add page tabs
-        for i in range(len(WORKFLOWS)):
-            self.update_main_progress(i * 20)
-            if self.home_page.workflow_cbs[i].isChecked():
-                item = QListWidgetItem(
-                    NAV_ICON, str(WORKFLOWS[i]['name']), self.nav_list)
-                item.setSizeHint(QSize(60, 60))
-                item.setTextAlignment(Qt.AlignCenter)
-                # generate workflow page
-                # print(WORKFLOWS[i])
-                self.page_stack.addWidget(
-                    WorkflowPage(df=self.SCALED_DF,
-                                 wf=WORKFLOWS[i],
-                                 img=img_drop,
-                                 mask=mask_drop,
-                                 csv=csv_drop,
-                                 scalar=s,
-                                 input_unit=Unit.PIXEL,
-                                 output_unit=ou,
-                                 delete_old=dod
-                                 )
-                )
-        self.update_main_progress(100)
+
+        self.thread = QThread()
+        self.worker = AnalysisWorker()
+        self.worker.moveToThread(self.thread)
+        self.thread.started.connect(partial(self.worker.run, img_drop, mask_drop, csv_drop, s, ou, dod, self.update_main_progress, self.home_page.workflow_cbs, self.page_stack, self.nav_list, self.SCALED_DF))
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.worker.progress.connect(self.update_main_progress)
+        self.thread.start()
+        # disable start button while performing analysis
+        self.home_page.start_btn.setEnabled(False)
+        self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; background: #ddd; color: white; border-radius: 7px; ")
+        self.thread.finished.connect(self.on_run_complete)
+
 
     def load_data(self):
         """ LOAD AND SCALE DATA """
@@ -114,6 +152,6 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setStyleSheet(styles)
     app.setStyle("fusion")
-    w = MainWindow()
-    w.show()
+    gui = GoldInAndOut()
+    gui.show()
     sys.exit(app.exec_())
