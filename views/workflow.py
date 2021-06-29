@@ -5,11 +5,11 @@ import shutil
 
 import numpy as np
 import pandas as pd
-from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread
+from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QSize
 from PyQt5.QtGui import QImage, QPixmap, QCursor
 from PyQt5.QtWidgets import (QLabel, QRadioButton, QCheckBox, QHBoxLayout, QPushButton, QWidget, QSizePolicy,
                              QFormLayout, QLineEdit,
-                             QComboBox, QProgressBar, QToolButton, QVBoxLayout)
+                             QComboBox, QProgressBar, QToolButton, QVBoxLayout, QListWidgetItem)
 # general
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
@@ -18,7 +18,7 @@ from functools import partial
 import seaborn as sns
 import cv2
 # utils
-from globals import PALETTE_OPS, MAX_DIRS_PRUNE
+from globals import PALETTE_OPS, MAX_DIRS_PRUNE, NAV_ICON
 from typings import Unit, Workflow
 from utils import Progress, create_color_pal, pixels_conversion_w_distance, enum_to_unit, to_coord_list
 from workflows.clust import run_clust, draw_clust
@@ -81,7 +81,7 @@ class WorkflowPage(QWidget):
     @delete_old: delete output data older than 5 runs
     """
     def __init__(self, df, wf=None, img=None, mask=None, csv=None, input_unit=Unit.PIXEL,
-                 output_unit=Unit.PIXEL, scalar=1, delete_old=False):
+                 output_unit=Unit.PIXEL, scalar=1, delete_old=False, nav_list=None, pg=None):
         super().__init__()
         # init dfs
         self.real_df = pd.DataFrame()
@@ -94,6 +94,8 @@ class WorkflowPage(QWidget):
         self.output_unit = output_unit
         self.scalar = scalar
         self.delete_old = delete_old
+        self.nav_list = nav_list
+        self.pg = pg
 
         # init layout
         layout = QFormLayout()
@@ -247,7 +249,7 @@ class WorkflowPage(QWidget):
         self.run_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #E89C12; color: white; border-radius: 7px; ")
         self.run_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.run_btn.clicked.connect(partial(self.run, wf, df, scalar, input_unit, output_unit))
+        self.run_btn.clicked.connect(partial(self.run, wf, df))
         self.download_btn = QPushButton('Download Again', self)
         self.download_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #ccc; color: white; border-radius: 7px; ")
@@ -339,16 +341,6 @@ class WorkflowPage(QWidget):
             self.thread.finished.connect(self.thread.deleteLater)
             self.worker.progress.connect(self.on_receive_data)
             self.thread.start()
-            # self.thread.finished.connect(self.on_receive_data)
-            #
-            # # end workflow funcs
-            # self.progress.setValue(100)
-            # # create ui scheme
-            # self.create_visuals(wf=wf, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), input_unit=input_unit, output_unit=output_unit, scalar=scalar)
-            # # download files automatically
-            # self.download(output_unit=output_unit, wf=wf, delete_old=delete_old)
-            # self.download_btn.setStyleSheet(
-            #     "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
         except Exception as e:
             print(e)
 
@@ -366,10 +358,14 @@ class WorkflowPage(QWidget):
             self.download(output_unit=self.output_unit, wf=self.wf, delete_old=self.delete_old)
             self.download_btn.setStyleSheet(
                 "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
+            # add icon to navbar
+            item = QListWidgetItem(
+                NAV_ICON, str(self.wf['name']), self.nav_list)
+            item.setSizeHint(QSize(60, 60))
+            item.setTextAlignment(Qt.AlignCenter)
+            self.pg()
         except Exception as e:
             print(e)
-
-
 
     def create_visuals(self, wf, n_bins, input_unit, output_unit, scalar, n=np.zeros(11)):
         """ CREATE DATA VISUALIZATIONS """

@@ -15,7 +15,7 @@ from PyQt5.QtGui import QIcon, QCursor
 from PyQt5.QtWidgets import (QWidget, QListWidget, QStackedWidget, QHBoxLayout, QListWidgetItem, QApplication)
 # general
 import sys
-
+from functools import partial
 
 class GoldInAndOut(QWidget):
     """ PARENT WINDOW INITIALIZATION """
@@ -86,10 +86,6 @@ class GoldInAndOut(QWidget):
 
         for i in range(len(WORKFLOWS)):
             if self.home_page.workflow_cbs[i].isChecked():
-                item = QListWidgetItem(
-                    NAV_ICON, str(WORKFLOWS[i]['name']), self.nav_list)
-                item.setSizeHint(QSize(60, 60))
-                item.setTextAlignment(Qt.AlignCenter)
                 # generate workflow page
                 print(WORKFLOWS[i]['name'])
                 self.page_stack.addWidget(
@@ -101,11 +97,10 @@ class GoldInAndOut(QWidget):
                                  scalar=s,
                                  input_unit=Unit.PIXEL,
                                  output_unit=ou,
-                                 delete_old=dod
+                                 delete_old=dod,
+                                 nav_list=self.nav_list,
+                                 pg=partial(self.update_main_progress, (int(((i + 1) / len(WORKFLOWS) * 100))))
                                  ))
-                self.update_main_progress(int((i / len(WORKFLOWS) * 100)))
-
-        self.update_main_progress(100)
 
     def load_data(self):
         """ LOAD AND SCALE DATA """
