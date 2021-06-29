@@ -84,6 +84,9 @@ class GoldInAndOut(QWidget):
         s = float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1)
         dod = self.home_page.dod_cb.isChecked()
 
+        wf_td = 0
+        wf_td = [wf_td + 1 for wf_cb in self.home_page.workflow_cbs if wf_cb.isChecked()]
+
         for i in range(len(WORKFLOWS)):
             if self.home_page.workflow_cbs[i].isChecked():
                 # generate workflow page
@@ -99,7 +102,7 @@ class GoldInAndOut(QWidget):
                                  output_unit=ou,
                                  delete_old=dod,
                                  nav_list=self.nav_list,
-                                 pg=partial(self.update_main_progress, (int(((i + 1) / len(WORKFLOWS) * 100))))
+                                 pg=partial(self.update_main_progress, (int(((i + 1) / wf_td[0] * 100))))
                                  ))
 
     def load_data(self):

@@ -83,12 +83,13 @@ class WorkflowPage(QWidget):
     def __init__(self, df, wf=None, img=None, mask=None, csv=None, input_unit=Unit.PIXEL,
                  output_unit=Unit.PIXEL, scalar=1, delete_old=False, nav_list=None, pg=None):
         super().__init__()
-        # init dfs
+        # init class vars
+        self.init = False
         self.real_df = pd.DataFrame()
         self.full_real_df = pd.DataFrame()
         self.rand_df = pd.DataFrame()
         self.full_rand_df = pd.DataFrame()
-
+        # allow referencing within functions without passing explicitly
         self.wf = wf
         self.input_unit = input_unit
         self.output_unit = output_unit
@@ -358,12 +359,15 @@ class WorkflowPage(QWidget):
             self.download(output_unit=self.output_unit, wf=self.wf, delete_old=self.delete_old)
             self.download_btn.setStyleSheet(
                 "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
-            # add icon to navbar
-            item = QListWidgetItem(
-                NAV_ICON, str(self.wf['name']), self.nav_list)
-            item.setSizeHint(QSize(60, 60))
-            item.setTextAlignment(Qt.AlignCenter)
-            self.pg()
+
+            if self.init is False:
+                # add icon to navbar
+                item = QListWidgetItem(
+                    NAV_ICON, str(self.wf['name']), self.nav_list)
+                item.setSizeHint(QSize(60, 60))
+                item.setTextAlignment(Qt.AlignCenter)
+                self.pg()
+                self.init = True
         except Exception as e:
             print(e)
 
@@ -385,24 +389,30 @@ class WorkflowPage(QWidget):
 
         if wf["graph"]["type"] == "hist":
             # create histogram
-            if self.gen_real_cb.isChecked():
+            if self.gen_real_cb.isChecked() and not self.gen_rand_cb.isChecked():
                 self.real_df.sort_values(wf["graph"]["x_type"], inplace=True)
                 graph_df = self.real_df[wf["graph"]["x_type"]]
                 cm = sns.color_palette(self.pal_type.currentText(), as_cmap=True)
                 ax.set_title(f'{wf["graph"]["title"]} (Real)')
-            elif self.gen_rand_cb.isChecked():
+            elif self.gen_rand_cb.isChecked() and not self.gen_real_cb.isChecked():
                 self.rand_df.sort_values(wf["graph"]["x_type"], inplace=True)
                 scaled_rand = pixels_conversion_w_distance(self.rand_df, scalar)
                 ax.set_title(f'{wf["graph"]["title"]} (Rand)')
                 cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
                 graph_df = scaled_rand[wf["graph"]["x_type"]]
-
-            # draw graph
-            n, bins, patches = ax.hist(graph_df, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), color='green')
-            # normalize values
-            col = (n - n.min()) / (n.max() - n.min())
-            for c, p in zip(col, patches):
-                p.set_facecolor(cm(c))
+            if self.gen_real_cb.isChecked() and not self.gen_rand_cb.isChecked() or self.gen_rand_cb.isChecked() and not self.gen_real_cb.isChecked():
+                # draw graph
+                n, bins, patches = ax.hist(graph_df, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), color='green')
+                # normalize values
+                col = (n - n.min()) / (n.max() - n.min())
+                for c, p in zip(col, patches):
+                    p.set_facecolor(cm(c))
+            elif self.gen_real_cb.isChecked() and self.gen_rand_cb.isChecked():
+                scaled_rand = pixels_conversion_w_distance(self.rand_df, scalar)
+                ax.hist(scaled_rand[wf["graph"]["x_type"]], bins=(int(n_bins) if n_bins.isdecimal() else n_bins), alpha=0.75, color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()), label=['Rand'])
+                n, bins, patches = ax.hist(self.real_df[wf["graph"]["x_type"]], bins=(int(n_bins) if n_bins.isdecimal() else n_bins), alpha=0.75, color=create_color_pal(n_bins=1, palette_type=self.pal_type.currentText()), label=['Real'])
+                ax.set_title(f'{wf["graph"]["title"]} (Real & Rand)')
+                ax.legend(loc='upper right') #TODO: not working
         elif wf["graph"]["type"] == "line":
             # create line graph
             if self.gen_real_cb.isChecked():
@@ -421,6 +431,7 @@ class WorkflowPage(QWidget):
         # label graph
         ax.set_xlabel(f'{wf["graph"]["x_label"]} ({enum_to_unit(output_unit)})')
         ax.set_ylabel(wf["graph"]["y_label"])
+        ax.set_ylim(ymin=0)
 
         # generate palette
         palette = create_color_pal(n_bins=int(len(n)), palette_type=self.pal_type.currentText())
@@ -437,10 +448,10 @@ class WorkflowPage(QWidget):
         # load in image
         drawn_img = cv2.imread(self.img_drop.currentText())
         # display img
+
         pixmap = QPixmap.fromImage(self.graph)
         smaller_pixmap = pixmap.scaled(300, 250, Qt.KeepAspectRatio, Qt.FastTransformation)
         self.graph_frame.setPixmap(smaller_pixmap)
-
         # TODO: ADD NEW GRAPHS HERE
         if wf["type"] == Workflow.NND:
             # if real coords selected, annotate them on img with lines indicating length
