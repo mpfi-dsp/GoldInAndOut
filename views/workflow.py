@@ -84,7 +84,7 @@ class WorkflowPage(QWidget):
                  output_unit=Unit.PIXEL, scalar=1, delete_old=False, nav_list=None, pg=None):
         super().__init__()
         # init class vars
-        self.init = False
+        self.is_init = False
         self.real_df = pd.DataFrame()
         self.full_real_df = pd.DataFrame()
         self.rand_df = pd.DataFrame()
@@ -360,14 +360,14 @@ class WorkflowPage(QWidget):
             self.download_btn.setStyleSheet(
                 "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
 
-            if self.init is False:
+            if self.is_init is False:
+                self.pg()
                 # add icon to navbar
                 item = QListWidgetItem(
                     NAV_ICON, str(self.wf['name']), self.nav_list)
                 item.setSizeHint(QSize(60, 60))
                 item.setTextAlignment(Qt.AlignCenter)
-                self.pg()
-                self.init = True
+                self.is_init = True
         except Exception as e:
             print(e)
 
@@ -409,10 +409,10 @@ class WorkflowPage(QWidget):
                     p.set_facecolor(cm(c))
             elif self.gen_real_cb.isChecked() and self.gen_rand_cb.isChecked():
                 scaled_rand = pixels_conversion_w_distance(self.rand_df, scalar)
-                ax.hist(scaled_rand[wf["graph"]["x_type"]], bins=(int(n_bins) if n_bins.isdecimal() else n_bins), alpha=0.75, color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()), label=['Rand'])
-                n, bins, patches = ax.hist(self.real_df[wf["graph"]["x_type"]], bins=(int(n_bins) if n_bins.isdecimal() else n_bins), alpha=0.75, color=create_color_pal(n_bins=1, palette_type=self.pal_type.currentText()), label=['Real'])
+                ax.hist(scaled_rand[wf["graph"]["x_type"]], bins=(int(n_bins) if n_bins.isdecimal() else n_bins), alpha=0.75, color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()), label='Rand')
+                n, bins, patches = ax.hist(self.real_df[wf["graph"]["x_type"]], bins=(int(n_bins) if n_bins.isdecimal() else n_bins), alpha=0.75, color=create_color_pal(n_bins=1, palette_type=self.pal_type.currentText()), label='Real')
                 ax.set_title(f'{wf["graph"]["title"]} (Real & Rand)')
-                ax.legend(loc='upper right') #TODO: not working
+                ax.legend(loc='upper right')
         elif wf["graph"]["type"] == "line":
             # create line graph
             if self.gen_real_cb.isChecked():
@@ -425,10 +425,30 @@ class WorkflowPage(QWidget):
                 ax.set_title(f'{wf["graph"]["title"]} (Rand)')
                 cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
                 graph_df = self.rand_df
-
             ax.plot(graph_df[wf["graph"]["x_type"]], graph_df[wf["graph"]["y_type"]], color='blue')
+        elif wf["graph"]["type"] == "bar":
+            # create bar graph
+            if self.gen_real_cb.isChecked():
+                self.real_df.sort_values(wf["graph"]["x_type"], inplace=True)
+                c = create_color_pal(n_bins=1, palette_type=self.pal_type.currentText())
+                ax.set_title(f'{wf["graph"]["title"]} (Real)')
+                graph_df = self.real_df
+            elif self.gen_rand_cb.isChecked():
+                self.rand_df.sort_values(wf["graph"]["x_type"], inplace=True)
+                ax.set_title(f'{wf["graph"]["title"]} (Rand)')
+                c = create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText())
+                graph_df = self.rand_df
+            if self.gen_real_cb.isChecked() and not self.gen_rand_cb.isChecked() or self.gen_rand_cb.isChecked() and not self.gen_real_cb.isChecked():
+                ax.bar(np.array(graph_df[wf["graph"]["x_type"]]), np.array(graph_df[wf["graph"]["y_type"]]), width=20, color=c)
+            elif self.gen_real_cb.isChecked() and self.gen_rand_cb.isChecked():
+                self.rand_df.sort_values(wf["graph"]["x_type"], inplace=True)
+                self.real_df.sort_values(wf["graph"]["x_type"], inplace=True)
+                ax.bar([el - 5 for el in np.array(self.rand_df[wf["graph"]["x_type"]])], np.array(self.rand_df[wf["graph"]["y_type"]]), width=20, alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()),label='Rand')
+                ax.bar([el + 5 for el in np.array(self.real_df[wf["graph"]["x_type"]])], np.array(self.real_df[wf["graph"]["y_type"]]), width=20, alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.pal_type.currentText()),label='Real')
+                ax.set_title(f'{wf["graph"]["title"]} (Real & Rand)')
+                ax.legend(loc='upper right')
 
-        # label graph
+                # label graph
         ax.set_xlabel(f'{wf["graph"]["x_label"]} ({enum_to_unit(output_unit)})')
         ax.set_ylabel(wf["graph"]["y_label"])
         ax.set_ylim(ymin=0)

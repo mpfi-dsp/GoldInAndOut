@@ -59,7 +59,7 @@ class GoldInAndOut(QWidget):
         self.home_page.start_btn.setEnabled(True)
         self.home_page.start_btn.setText("Run Again")
         self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #E89C12")
-        self.update_main_progress(100)
+        # self.update_main_progress(100)
 
     def open_logger(self):
         if self.home_page.show_logs.isChecked():
@@ -70,6 +70,8 @@ class GoldInAndOut(QWidget):
 
     def init_workflows(self):
         """ INITIALIZE CHILD WORKFLOW WINDOWS """
+        self.home_page.start_btn.setEnabled(False)
+        self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #ddd")
         self.empty_stack()
         self.load_data()
 
@@ -85,10 +87,14 @@ class GoldInAndOut(QWidget):
         dod = self.home_page.dod_cb.isChecked()
 
         wf_td = 0
-        wf_td = [wf_td + 1 for wf_cb in self.home_page.workflow_cbs if wf_cb.isChecked()]
+        for wf_cb in self.home_page.workflow_cbs:
+            if wf_cb.isChecked():
+                wf_td += 1
 
+        z = 0
         for i in range(len(WORKFLOWS)):
             if self.home_page.workflow_cbs[i].isChecked():
+                z += 1
                 # generate workflow page
                 print(WORKFLOWS[i]['name'])
                 self.page_stack.addWidget(
@@ -102,7 +108,7 @@ class GoldInAndOut(QWidget):
                                  output_unit=ou,
                                  delete_old=dod,
                                  nav_list=self.nav_list,
-                                 pg=partial(self.update_main_progress, (int(((i + 1) / wf_td[0] * 100))))
+                                 pg=partial(self.update_main_progress, (int((z / wf_td * 100))))
                                  ))
 
     def load_data(self):
@@ -114,6 +120,8 @@ class GoldInAndOut(QWidget):
 
     def update_main_progress(self, value):
         """ UPDATE PROGRESS BAR """
+        if value == 100:
+            self.on_run_complete()
         self.home_page.progress.setValue(value)
 
     def empty_stack(self):
