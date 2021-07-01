@@ -5,11 +5,11 @@ import shutil
 
 import numpy as np
 import pandas as pd
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QSize
 from PyQt5.QtGui import QImage, QPixmap, QCursor
 from PyQt5.QtWidgets import (QLabel, QRadioButton, QCheckBox, QHBoxLayout, QPushButton, QWidget, QSizePolicy,
                              QFormLayout, QLineEdit,
-                             QComboBox, QProgressBar, QToolButton, QVBoxLayout)
+                             QComboBox, QProgressBar, QToolButton, QVBoxLayout, QListWidgetItem)
 # general
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
@@ -18,7 +18,7 @@ from functools import partial
 import seaborn as sns
 import cv2
 # utils
-from globals import PALETTE_OPS, MAX_DIRS_PRUNE
+from globals import PALETTE_OPS, MAX_DIRS_PRUNE, NAV_ICON
 from typings import Unit, Workflow
 from utils import Progress, create_color_pal, pixels_conversion_w_distance, enum_to_unit, to_coord_list
 from workflows.clust import run_clust, draw_clust
@@ -26,6 +26,37 @@ from workflows.gold_rippler import run_rippler, draw_rippler
 from workflows.nnd import run_nnd, draw_length
 from workflows.nnd_clust import run_nnd_clust, draw_nnd_clust
 from workflows.random_coords import gen_random_coordinates
+
+
+class AnalysisWorker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(object)
+
+    def run(self, wf, df, vals, prog_wrapper, real_coords, rand_coords, img_path, mask_path):
+        self.output_data = []
+
+        if wf['type'] == Workflow.NND:
+            self.real_df, self.rand_df = run_nnd(df=df, pb=prog_wrapper, rand_coords=rand_coords)
+            self.output_data = [self.real_df, self.rand_df]
+        elif wf['type'] == Workflow.CLUST:
+            self.real_df, self.rand_df = run_clust(df=df, rand_coords=rand_coords, pb=prog_wrapper,
+                                                   distance_threshold=vals[0], n_clusters=vals[1])
+            self.output_data = [self.real_df, self.rand_df]
+        elif wf['type'] == Workflow.NND_CLUST:
+            self.full_real_df, self.full_rand_df, self.real_df, self.rand_df = run_nnd_clust(df=df, pb=prog_wrapper,
+                                                                                             rand_coords=rand_coords,
+                                                                                             distance_threshold=vals[0],
+                                                                                             n_clusters=vals[1],
+                                                                                             min_clust_size=vals[2])
+            self.output_data = [self.full_real_df, self.full_rand_df, self.real_df, self.rand_df]
+        elif wf['type'] == Workflow.RIPPLER:
+            self.real_df, self.rand_df = run_rippler(real_coords=real_coords, rand_coords=rand_coords,
+                                                     pb=prog_wrapper, img_path=img_path,
+                                                     mask_path=mask_path, max_steps=vals[0],
+                                                     step_size=vals[1])
+            self.output_data = [self.real_df, self.rand_df]
+        self.progress.emit(self.output_data)
+        self.finished.emit()
 
 
 class WorkflowPage(QWidget):
@@ -50,13 +81,23 @@ class WorkflowPage(QWidget):
     @delete_old: delete output data older than 5 runs
     """
     def __init__(self, df, wf=None, img=None, mask=None, csv=None, input_unit=Unit.PIXEL,
-                 output_unit=Unit.PIXEL, scalar=1, delete_old=False):
+                 output_unit=Unit.PIXEL, scalar=1, delete_old=False, nav_list=None, pg=None):
         super().__init__()
-        # init dfs
+        # init class vars
+        self.is_init = False
         self.real_df = pd.DataFrame()
         self.full_real_df = pd.DataFrame()
         self.rand_df = pd.DataFrame()
         self.full_rand_df = pd.DataFrame()
+        # allow referencing within functions without passing explicitly
+        self.wf = wf
+        self.input_unit = input_unit
+        self.output_unit = output_unit
+        self.scalar = scalar
+        self.delete_old = delete_old
+        self.nav_list = nav_list
+        self.pg = pg
+
         # init layout
         layout = QFormLayout()
         # header
@@ -209,7 +250,7 @@ class WorkflowPage(QWidget):
         self.run_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #E89C12; color: white; border-radius: 7px; ")
         self.run_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.run_btn.clicked.connect(partial(self.run, wf, df, scalar, input_unit, output_unit))
+        self.run_btn.clicked.connect(partial(self.run, wf, df))
         self.download_btn = QPushButton('Download Again', self)
         self.download_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #ccc; color: white; border-radius: 7px; ")
@@ -222,7 +263,7 @@ class WorkflowPage(QWidget):
         # assign layout
         self.setLayout(layout)
         # run on init
-        self.run(wf, df, scalar, input_unit, output_unit, delete_old)
+        self.run(wf, df)
 
     def update_progress(self, value):
         """ UPDATE PROGRESS BAR """
@@ -276,7 +317,7 @@ class WorkflowPage(QWidget):
         for prop in self.rand_props:
             prop.setVisible(not prop.isVisible())
 
-    def run(self, wf, df, scalar, input_unit, output_unit, delete_old):
+    def run(self, wf, df):
         """ RUN WORKFLOW """
         try:
             prog_wrapper = Progress()
@@ -292,22 +333,41 @@ class WorkflowPage(QWidget):
             # TODO: ADD NEW WORKFLOW FUNCTION CALLS HERE
             vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
 
-            if wf["type"] == Workflow.NND:
-                self.real_df, self.rand_df = run_nnd(df=df, pb=prog_wrapper, rand_coords=self.rand_coords)
-            elif wf["type"] == Workflow.CLUST:
-                self.real_df, self.rand_df = run_clust(df=df, rand_coords=self.rand_coords, pb=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1])
-            elif wf["type"] == Workflow.NND_CLUST:
-                self.full_real_df, self.full_rand_df, self.real_df, self.rand_df = run_nnd_clust(df=df, pb=prog_wrapper, rand_coords=self.rand_coords, distance_threshold=vals[0], n_clusters=vals[1], min_clust_size=vals[2])
-            elif wf["type"] == Workflow.RIPPLER:
-                self.real_df, self.rand_df = run_rippler(real_coords=self.real_coords, rand_coords=self.rand_coords, pb=prog_wrapper, img_path=self.img_drop.currentText(), mask_path=self.mask_drop.currentText(), max_steps=vals[0], step_size=vals[1])
-            # end workflow funcs
+            self.thread = QThread()
+            self.worker = AnalysisWorker()
+            self.worker.moveToThread(self.thread)
+            self.thread.started.connect(partial(self.worker.run, wf, df, vals, prog_wrapper, self.real_coords, self.rand_coords, self.img_drop.currentText(), self.mask_drop.currentText()))
+            self.worker.finished.connect(self.thread.quit)
+            self.worker.finished.connect(self.worker.deleteLater)
+            self.thread.finished.connect(self.thread.deleteLater)
+            self.worker.progress.connect(self.on_receive_data)
+            self.thread.start()
+        except Exception as e:
+            print(e)
+
+    def on_receive_data(self, output_data):
+        try:
+            if self.wf["type"] == Workflow.NND or self.wf["type"] == Workflow.CLUST or self.wf["type"] == Workflow.RIPPLER:
+                self.real_df, self.rand_df = output_data
+            elif self.wf["type"] == Workflow.NND_CLUST:
+                self.full_real_df, self.full_rand_df, self.real_df, self.rand_df = output_data
+            # end
             self.progress.setValue(100)
             # create ui scheme
-            self.create_visuals(wf=wf, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), input_unit=input_unit, output_unit=output_unit, scalar=scalar)
+            self.create_visuals(wf=self.wf, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), input_unit=self.input_unit, output_unit=self.output_unit, scalar=self.scalar)
             # download files automatically
-            self.download(output_unit=output_unit, wf=wf, delete_old=delete_old)
+            self.download(output_unit=self.output_unit, wf=self.wf, delete_old=self.delete_old)
             self.download_btn.setStyleSheet(
                 "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
+
+            if self.is_init is False:
+                self.pg()
+                # add icon to navbar
+                item = QListWidgetItem(
+                    NAV_ICON, str(self.wf['name']), self.nav_list)
+                item.setSizeHint(QSize(60, 60))
+                item.setTextAlignment(Qt.AlignCenter)
+                self.is_init = True
         except Exception as e:
             print(e)
 
@@ -329,24 +389,30 @@ class WorkflowPage(QWidget):
 
         if wf["graph"]["type"] == "hist":
             # create histogram
-            if self.gen_real_cb.isChecked():
+            if self.gen_real_cb.isChecked() and not self.gen_rand_cb.isChecked():
                 self.real_df.sort_values(wf["graph"]["x_type"], inplace=True)
                 graph_df = self.real_df[wf["graph"]["x_type"]]
                 cm = sns.color_palette(self.pal_type.currentText(), as_cmap=True)
                 ax.set_title(f'{wf["graph"]["title"]} (Real)')
-            elif self.gen_rand_cb.isChecked():
+            elif self.gen_rand_cb.isChecked() and not self.gen_real_cb.isChecked():
                 self.rand_df.sort_values(wf["graph"]["x_type"], inplace=True)
                 scaled_rand = pixels_conversion_w_distance(self.rand_df, scalar)
                 ax.set_title(f'{wf["graph"]["title"]} (Rand)')
                 cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
                 graph_df = scaled_rand[wf["graph"]["x_type"]]
-
-            # draw graph
-            n, bins, patches = ax.hist(graph_df, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), color='green')
-            # normalize values
-            col = (n - n.min()) / (n.max() - n.min())
-            for c, p in zip(col, patches):
-                p.set_facecolor(cm(c))
+            if self.gen_real_cb.isChecked() and not self.gen_rand_cb.isChecked() or self.gen_rand_cb.isChecked() and not self.gen_real_cb.isChecked():
+                # draw graph
+                n, bins, patches = ax.hist(graph_df, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), color='green')
+                # normalize values
+                col = (n - n.min()) / (n.max() - n.min())
+                for c, p in zip(col, patches):
+                    p.set_facecolor(cm(c))
+            elif self.gen_real_cb.isChecked() and self.gen_rand_cb.isChecked():
+                scaled_rand = pixels_conversion_w_distance(self.rand_df, scalar)
+                ax.hist(scaled_rand[wf["graph"]["x_type"]], bins=(int(n_bins) if n_bins.isdecimal() else n_bins), alpha=0.75, color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()), label='Rand')
+                n, bins, patches = ax.hist(self.real_df[wf["graph"]["x_type"]], bins=(int(n_bins) if n_bins.isdecimal() else n_bins), alpha=0.75, color=create_color_pal(n_bins=1, palette_type=self.pal_type.currentText()), label='Real')
+                ax.set_title(f'{wf["graph"]["title"]} (Real & Rand)')
+                ax.legend(loc='upper right')
         elif wf["graph"]["type"] == "line":
             # create line graph
             if self.gen_real_cb.isChecked():
@@ -359,12 +425,33 @@ class WorkflowPage(QWidget):
                 ax.set_title(f'{wf["graph"]["title"]} (Rand)')
                 cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
                 graph_df = self.rand_df
-
             ax.plot(graph_df[wf["graph"]["x_type"]], graph_df[wf["graph"]["y_type"]], color='blue')
+        elif wf["graph"]["type"] == "bar":
+            # create bar graph
+            if self.gen_real_cb.isChecked():
+                self.real_df.sort_values(wf["graph"]["x_type"], inplace=True)
+                c = create_color_pal(n_bins=1, palette_type=self.pal_type.currentText())
+                ax.set_title(f'{wf["graph"]["title"]} (Real)')
+                graph_df = self.real_df
+            elif self.gen_rand_cb.isChecked():
+                self.rand_df.sort_values(wf["graph"]["x_type"], inplace=True)
+                ax.set_title(f'{wf["graph"]["title"]} (Rand)')
+                c = create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText())
+                graph_df = self.rand_df
+            if self.gen_real_cb.isChecked() and not self.gen_rand_cb.isChecked() or self.gen_rand_cb.isChecked() and not self.gen_real_cb.isChecked():
+                ax.bar(np.array(graph_df[wf["graph"]["x_type"]]), np.array(graph_df[wf["graph"]["y_type"]]), width=20, color=c)
+            elif self.gen_real_cb.isChecked() and self.gen_rand_cb.isChecked():
+                self.rand_df.sort_values(wf["graph"]["x_type"], inplace=True)
+                self.real_df.sort_values(wf["graph"]["x_type"], inplace=True)
+                ax.bar([el - 5 for el in np.array(self.rand_df[wf["graph"]["x_type"]])], np.array(self.rand_df[wf["graph"]["y_type"]]), width=20, alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()),label='Rand')
+                ax.bar([el + 5 for el in np.array(self.real_df[wf["graph"]["x_type"]])], np.array(self.real_df[wf["graph"]["y_type"]]), width=20, alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.pal_type.currentText()),label='Real')
+                ax.set_title(f'{wf["graph"]["title"]} (Real & Rand)')
+                ax.legend(loc='upper right')
 
-        # label graph
+                # label graph
         ax.set_xlabel(f'{wf["graph"]["x_label"]} ({enum_to_unit(output_unit)})')
         ax.set_ylabel(wf["graph"]["y_label"])
+        ax.set_ylim(ymin=0)
 
         # generate palette
         palette = create_color_pal(n_bins=int(len(n)), palette_type=self.pal_type.currentText())
@@ -381,10 +468,10 @@ class WorkflowPage(QWidget):
         # load in image
         drawn_img = cv2.imread(self.img_drop.currentText())
         # display img
+
         pixmap = QPixmap.fromImage(self.graph)
         smaller_pixmap = pixmap.scaled(300, 250, Qt.KeepAspectRatio, Qt.FastTransformation)
         self.graph_frame.setPixmap(smaller_pixmap)
-
         # TODO: ADD NEW GRAPHS HERE
         if wf["type"] == Workflow.NND:
             # if real coords selected, annotate them on img with lines indicating length

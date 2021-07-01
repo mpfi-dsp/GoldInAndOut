@@ -1,3 +1,5 @@
+import logging
+
 import pandas as pd
 import numpy as np
 import cv2
@@ -26,7 +28,8 @@ def run_rippler(real_coords, img_path, mask_path, pb, rand_coords, max_steps=10,
     @pb: progress bar wrapper element, allows us to track how much time is left in process
     @rand_coords: list of randomly generated coordinates
     """
-    print("running gold rippler (SC3PA)")
+    logging.info("running gold rippler (SC3PA)")
+    # print("running gold rippler (SC3PA)")
     # find Spine Correlated Particles Per P-face Area (SC3PA)
     img_og = cv2.imread(img_path)
     img_pface = cv2.imread(mask_path)

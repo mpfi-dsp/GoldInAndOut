@@ -1,3 +1,5 @@
+import logging
+
 import cv2
 import numpy as np
 import random
@@ -37,4 +39,5 @@ def gen_random_coordinates(data, img_path, mask_path, count=0):
     lower_bound = np.array([239, 174, 0])
     upper_bound = np.array([254, 254, 254])
     pface_mask = cv2.inRange(img_pface, lower_bound, upper_bound)
+    logging.info("generated random particles")
     return generate_random_points(pface_mask.shape, count, pface_mask)

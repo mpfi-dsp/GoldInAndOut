@@ -1,3 +1,4 @@
+import logging
 import pandas as pd
 import numpy as np
 import math
@@ -35,7 +36,7 @@ def run_nnd(df, pb, rand_coords):
                 nnd_list.append(nnd_obj)
             return nnd_list
 
-        print("running nnd")
+        logging.info("running nnd")
         real_nnd_list = distance_to_closest_particle(coordinate_list)
         real_df = pd.DataFrame(data={'Nearest Neighbor Distance': real_nnd_list})
         # clean up df

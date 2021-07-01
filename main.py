@@ -1,20 +1,23 @@
 # views
+from time import sleep
+
 from globals import WORKFLOWS, NAV_ICON
 from views.home import HomePage
 from typings import Unit
 from utils import pixels_conversion, unit_to_enum
+from views.logger import Logger
 from views.workflow import WorkflowPage
 # stylesheet
 from styles.stylesheet import styles
 # pyQT5
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal, QThread
 from PyQt5.QtGui import QIcon, QCursor
 from PyQt5.QtWidgets import (QWidget, QListWidget, QStackedWidget, QHBoxLayout, QListWidgetItem, QApplication)
 # general
 import sys
+from functools import partial
 
-
-class MainWindow(QWidget):
+class GoldInAndOut(QWidget):
     """ PARENT WINDOW INITIALIZATION """
     def __init__(self):
         super().__init__()
@@ -50,10 +53,25 @@ class MainWindow(QWidget):
         self.page_stack.addWidget(self.home_page)
         # select first page by default
         self.nav_list.item(0).setSelected(True)
+        self.home_page.show_logs.clicked.connect(self.open_logger)
+
+    def on_run_complete(self):
+        self.home_page.start_btn.setEnabled(True)
+        self.home_page.start_btn.setText("Run Again")
+        self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #E89C12")
+        # self.update_main_progress(100)
+
+    def open_logger(self):
+        if self.home_page.show_logs.isChecked():
+            self.dlg = Logger()
+            self.dlg.show()
+        else:
+            self.dlg.destroy()
 
     def init_workflows(self):
         """ INITIALIZE CHILD WORKFLOW WINDOWS """
-        self.home_page.start_btn.setText("Run Again")
+        self.home_page.start_btn.setEnabled(False)
+        self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #ddd")
         self.empty_stack()
         self.load_data()
 
@@ -67,16 +85,18 @@ class MainWindow(QWidget):
         # scalar
         s = float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1)
         dod = self.home_page.dod_cb.isChecked()
-        # add page tabs
+
+        wf_td = 0
+        for wf_cb in self.home_page.workflow_cbs:
+            if wf_cb.isChecked():
+                wf_td += 1
+
+        z = 0
         for i in range(len(WORKFLOWS)):
-            self.update_main_progress(i * 20)
             if self.home_page.workflow_cbs[i].isChecked():
-                item = QListWidgetItem(
-                    NAV_ICON, str(WORKFLOWS[i]['name']), self.nav_list)
-                item.setSizeHint(QSize(60, 60))
-                item.setTextAlignment(Qt.AlignCenter)
+                z += 1
                 # generate workflow page
-                # print(WORKFLOWS[i])
+                print(WORKFLOWS[i]['name'])
                 self.page_stack.addWidget(
                     WorkflowPage(df=self.SCALED_DF,
                                  wf=WORKFLOWS[i],
@@ -86,10 +106,10 @@ class MainWindow(QWidget):
                                  scalar=s,
                                  input_unit=Unit.PIXEL,
                                  output_unit=ou,
-                                 delete_old=dod
-                                 )
-                )
-        self.update_main_progress(100)
+                                 delete_old=dod,
+                                 nav_list=self.nav_list,
+                                 pg=partial(self.update_main_progress, (int((z / wf_td * 100))))
+                                 ))
 
     def load_data(self):
         """ LOAD AND SCALE DATA """
@@ -100,6 +120,8 @@ class MainWindow(QWidget):
 
     def update_main_progress(self, value):
         """ UPDATE PROGRESS BAR """
+        if value == 100:
+            self.on_run_complete()
         self.home_page.progress.setValue(value)
 
     def empty_stack(self):
@@ -114,6 +136,6 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setStyleSheet(styles)
     app.setStyle("fusion")
-    w = MainWindow()
-    w.show()
+    gui = GoldInAndOut()
+    gui.show()
     sys.exit(app.exec_())
