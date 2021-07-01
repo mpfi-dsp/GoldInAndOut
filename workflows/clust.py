@@ -1,3 +1,5 @@
+import logging
+
 import pandas as pd
 from sklearn.cluster import AgglomerativeClustering
 import numpy as np
@@ -20,7 +22,7 @@ def run_clust(df, pb, rand_coords, distance_threshold=120, n_clusters=None, affi
         @single: uses the minimum of the distances between all observations of the two sets
     @random_coordinate_list: list of randomly generated coordinates
     """
-    print("clustering")
+    logging.info("clustering")
     x_coordinates = np.array(df['X'])
     y_coordinates = np.array(df['Y'])
     real_coordinates = []

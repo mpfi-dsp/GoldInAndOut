@@ -89,7 +89,7 @@ WORKFLOWS = [{
     "header": "Gold Rippler: Spine-Particle Correlation",
     "desc": "Separate spine masks as individual components, grow components until they contain X gold particles, calculate Spine Correlated Particles Per P-face Area (SC3PA) (% of gold particles within spine masks) / (% of total area of p-face taken up by spine masks)",
     "graph": {
-            "type": "line",
+            "type": "bar",
             "title": "Spine Correlated Particles Per P-face Area By Radius",
             "x_label": "radius",
             "y_label": "SC3PA",
