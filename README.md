@@ -67,3 +67,13 @@ elif workflow["type"] == YOUR_WORKFLOW_ENUM:
     vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else workflow['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
     self.real_df, self.rand_df = your_workflow_function_from_custom_file(df=scaled_df, random_coordinate_list=random_coords, prog=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1], linkage=vals[2])
 ```
+
+### Compile To EXE
+
+To compile to exe, enter the directory with the `main.py` file and run the following command:
+
+```
+pyinstaller.exe --onefile --windowed main.py
+```
+
+The exe file will be found in the `/dist` directory

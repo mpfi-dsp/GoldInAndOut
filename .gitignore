@@ -1,2 +1,6 @@
 input/
 *.tif
+build/
+dist/
+app.spec
+main.spec
