@@ -386,7 +386,8 @@ class WorkflowPage(QWidget):
         #         temp_df = self.real_df
         #     elif self.gen_rand_cb.isChecked():
         #         temp_df = self.rand_df
-        #     n_bins = str(len(set(temp_df['cluster_id'])))
+        #     # n_bins = str(len(set(temp_df['cluster_id'])))
+
 
         if wf["graph"]["type"] == "hist":
             # create histogram
