@@ -49,7 +49,7 @@ WORKFLOWS = [{
         },
     "props": [
             {
-             "title": "distance_threshold",
+             "title": "distance_threshold (px)",
               "placeholder": "120"
             },
             {"title": "n_clusters",
@@ -68,6 +68,7 @@ WORKFLOWS = [{
             "x_label": "Nearest Neighbor Distance",
             "y_label": "Number of Entries",
             "x_type": "dist",
+
         },
     "props": [
         {

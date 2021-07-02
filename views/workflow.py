@@ -285,7 +285,8 @@ class WorkflowPage(QWidget):
             print(e)
         # download files
         try:
-            out_dir = f'./output/{wf["name"].lower()}/{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
+            img_name = os.path.splitext(os.path.basename(self.img_drop.currentText()))[0]
+            out_dir = f'./output/{wf["name"].lower()}/{img_name}-{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
             os.makedirs(out_dir, exist_ok=True)
             self.real_df.to_csv(f'{out_dir}/real_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv',
                                 index=False, header=True)
@@ -380,12 +381,12 @@ class WorkflowPage(QWidget):
         ax = fig.add_subplot(111)
 
         # TODO: IF YOU WANT TO CUSTOMIZE BIN COUNT IN YOUR WORKFLOW, DO THAT HERE
-        if wf['type'] == Workflow.CLUST:
-            if self.gen_real_cb.isChecked():
-                temp_df = self.real_df
-            elif self.gen_rand_cb.isChecked():
-                temp_df = self.rand_df
-            n_bins = str(len(set(temp_df['cluster_id'])))
+        # if wf['type'] == Workflow.CLUST:
+        #     if self.gen_real_cb.isChecked():
+        #         temp_df = self.real_df
+        #     elif self.gen_rand_cb.isChecked():
+        #         temp_df = self.rand_df
+        #     n_bins = str(len(set(temp_df['cluster_id'])))
 
         if wf["graph"]["type"] == "hist":
             # create histogram
