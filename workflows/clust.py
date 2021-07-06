@@ -85,10 +85,7 @@ def draw_clust(clust_df, img, palette="rocket_r", scalar=1):
             if n > 0:
                 x /= n
                 y /= n
-                # centroids.append((round(y, 3), round(x, 3)))
-                # centroid_ids.append(c_id)
-                # TODO: draw number for each cluster at centroid i.e. draw((coords, text=id))
-                # draw.text((round(y, 3), round(x, 3)), str(c_id), fill=(255,255,255), font=ImageFont.truetype('Roboto-Bold.ttf', size=15))
+                cv2.putText(image, str(c_id), org=(int(x), int(y)), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255,255,255), fontScale=1)
 
     draw_clust_id_at_centroids(img, clust_df)
 
