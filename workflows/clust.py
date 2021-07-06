@@ -45,10 +45,11 @@ def run_clust(df, pb, rand_coords, distance_threshold=120, n_clusters=None, affi
     cluster = hc.fit_predict(real_coordinates)
     df['cluster_id'] = cluster
 
-    temp_df = pd.DataFrame([])
-    temp_df['unique_cluster_ids'] = pd.Series(OrderedSet(cluster))
-    temp_df['particle_count'] = pd.Series(np.bincount(np.array(cluster)))
-    print(temp_df.head())
+    # temp_df = pd.DataFrame([])
+    # temp_df['unique_cluster_ids'] = pd.Series(OrderedSet(cluster.sort()))
+    # temp_df['particle_count'] = pd.Series(np.bincount(np.array(cluster)))
+    # temp_df['num_clusters'] = pd.Series(np.bincount(temp_df['particle_count']))
+    # print(temp_df.head())
 
     # random coords
     pb.update_progress(70)

@@ -380,14 +380,6 @@ class WorkflowPage(QWidget):
         canvas = FigureCanvas(fig)
         ax = fig.add_subplot(111)
 
-        # TODO: IF YOU WANT TO CUSTOMIZE BIN COUNT IN YOUR WORKFLOW, DO THAT HERE
-        # if wf['type'] == Workflow.CLUST:
-        #     if self.gen_real_cb.isChecked():
-        #         temp_df = self.real_df
-        #     elif self.gen_rand_cb.isChecked():
-        #         temp_df = self.rand_df
-        #     # n_bins = str(len(set(temp_df['cluster_id'])))
-
 
         if wf["graph"]["type"] == "hist":
             # create histogram
@@ -411,8 +403,10 @@ class WorkflowPage(QWidget):
                     p.set_facecolor(cm(c))
             elif self.gen_real_cb.isChecked() and self.gen_rand_cb.isChecked():
                 scaled_rand = pixels_conversion_w_distance(self.rand_df, scalar)
-                ax.hist(scaled_rand[wf["graph"]["x_type"]], bins=(int(n_bins) if n_bins.isdecimal() else n_bins), alpha=0.75, color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()), label='Rand')
-                n, bins, patches = ax.hist(self.real_df[wf["graph"]["x_type"]], bins=(int(n_bins) if n_bins.isdecimal() else n_bins), alpha=0.75, color=create_color_pal(n_bins=1, palette_type=self.pal_type.currentText()), label='Real')
+                rand_graph = scaled_rand[wf["graph"]["x_type"]]
+                real_graph = self.real_df[wf["graph"]["x_type"]]
+                ax.hist(rand_graph, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), alpha=0.75, color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()), label='Rand')
+                n, bins, patches = ax.hist(real_graph, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), alpha=0.75, color=create_color_pal(n_bins=1, palette_type=self.pal_type.currentText()), label='Real')
                 ax.set_title(f'{wf["graph"]["title"]} (Real & Rand)')
                 ax.legend(loc='upper right')
         elif wf["graph"]["type"] == "line":
@@ -432,21 +426,46 @@ class WorkflowPage(QWidget):
             # create bar graph
             if self.gen_real_cb.isChecked():
                 self.real_df.sort_values(wf["graph"]["x_type"], inplace=True)
-                c = create_color_pal(n_bins=1, palette_type=self.pal_type.currentText())
+                c = 1
                 ax.set_title(f'{wf["graph"]["title"]} (Real)')
-                graph_df = self.real_df
+                graph_y = np.array(self.real_df[wf["graph"]["y_type"]]),
+                graph_x = np.array(self.real_df[wf["graph"]["x_type"]])
+                if wf['type'] == Workflow.CLUST:
+                    graph_y = np.bincount(np.bincount(self.real_df[wf["graph"]["x_type"]]))[1:]
+                    print(graph_y)
+                    graph_x = list(range(1, (len(set(graph_y)))+1))
+                    c = len(graph_x)
+                c = create_color_pal(n_bins=c, palette_type=self.pal_type.currentText())
             elif self.gen_rand_cb.isChecked():
                 self.rand_df.sort_values(wf["graph"]["x_type"], inplace=True)
                 ax.set_title(f'{wf["graph"]["title"]} (Rand)')
-                c = create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText())
-                graph_df = self.rand_df
+                c = 1
+                graph_y = np.array(self.rand_df[wf["graph"]["y_type"]]),
+                graph_x = np.array(self.rand_df[wf["graph"]["x_type"]])
+                if wf['type'] == Workflow.CLUST:
+                    graph_y = np.bincount(np.bincount(self.rand_df[wf["graph"]["x_type"]]))[1:]
+                    graph_x = list(range(1, (len(set(graph_y)))+1))
+                    c = len(graph_x)
+                c = create_color_pal(n_bins=c, palette_type=self.r_pal_type.currentText())
             if self.gen_real_cb.isChecked() and not self.gen_rand_cb.isChecked() or self.gen_rand_cb.isChecked() and not self.gen_real_cb.isChecked():
-                ax.bar(np.array(graph_df[wf["graph"]["x_type"]]), np.array(graph_df[wf["graph"]["y_type"]]), width=20, color=c)
+                if wf['type'] == Workflow.RIPPLER:
+                    ax.bar(graph_x, graph_y, width=20, color=c)
+                else:
+                    print(graph_x, graph_y, c)
+                    ax.bar(graph_x, graph_y, color=c)
             elif self.gen_real_cb.isChecked() and self.gen_rand_cb.isChecked():
                 self.rand_df.sort_values(wf["graph"]["x_type"], inplace=True)
                 self.real_df.sort_values(wf["graph"]["x_type"], inplace=True)
-                ax.bar([el - 5 for el in np.array(self.rand_df[wf["graph"]["x_type"]])], np.array(self.rand_df[wf["graph"]["y_type"]]), width=20, alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()),label='Rand')
-                ax.bar([el + 5 for el in np.array(self.real_df[wf["graph"]["x_type"]])], np.array(self.real_df[wf["graph"]["y_type"]]), width=20, alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.pal_type.currentText()),label='Real')
+                real_graph_y = np.bincount(np.bincount(self.real_df[wf["graph"]["x_type"]]))[1:]
+                real_graph_x = list(range(1, (len(set(real_graph_y)))+1))
+                rand_graph_y = np.bincount(np.bincount(self.rand_df[wf["graph"]["x_type"]]))[1:]
+                rand_graph_x = list(range(1, (len(set(rand_graph_y)))+1))
+                if wf['type'] == Workflow.RIPPLER:
+                    ax.bar([el - 5 for el in np.array(self.rand_df[wf["graph"]["x_type"]])], np.array(self.rand_df[wf["graph"]["y_type"]]), width=20, alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()), label='Rand')
+                    ax.bar([el + 5 for el in np.array(self.real_df[wf["graph"]["x_type"]])], np.array(self.real_df[wf["graph"]["y_type"]]), width=20, alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.pal_type.currentText()), label='Real')
+                else:
+                    ax.bar(rand_graph_x, rand_graph_y, color=create_color_pal(n_bins=len(rand_graph_x), palette_type=self.r_pal_type.currentText()), alpha=0.7,  label='Rand')
+                    ax.bar(real_graph_x, real_graph_y, color=create_color_pal(n_bins=len(real_graph_x), palette_type=self.pal_type.currentText()),  alpha=0.7, label='Real')
                 ax.set_title(f'{wf["graph"]["title"]} (Real & Rand)')
                 ax.legend(loc='upper right')
 

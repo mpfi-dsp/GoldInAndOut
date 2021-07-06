@@ -41,12 +41,17 @@ WORKFLOWS = [{
     "header": "Ward Hierarchical Clustering",
     "desc": "Cluster gold particles into groups. Optionally generate random coordinates.",
     "graph": {
-
-            "type": "hist",
+            "type": "bar",
             "title": "Ward Hierarchical Clusters",
-            "x_label": "Cluster ID",
-            "y_label": "Cluster Size",
-            "x_type": "cluster_id"
+            "x_label": "# Particles In Cluster",
+            "y_label": "# Of Clusters",
+            "x_type": "cluster_id",
+            "y_type": "cluster_id"
+            # "type": "hist",
+            # "title": "Ward Hierarchical Clusters",
+            # "x_label": "# Particles In Cluster",
+            # "y_label": "# Of Clusters",
+            # "x_type": "cluster_id"
         },
     "props": [
             {
