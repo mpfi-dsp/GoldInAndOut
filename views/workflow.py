@@ -121,48 +121,14 @@ class WorkflowPage(QWidget):
             layout.addRow(prop_l, prop_le)
             self.cstm_props.append(prop_le)
         # REAL COORDS SECTION
-        gen_head = QLabel("Real Coordinates")
-        gen_head.setStyleSheet(
+        file_head = QLabel("Selected Files")
+        file_head.setStyleSheet(
             "font-size: 17px; font-weight: 500; padding-top: 0px; padding-bottom: 0px; margin-top: 0px; margin-bottom: 0px;")
-        self.gen_head_cb = QToolButton()
-        self.gen_head_cb.setArrowType(Qt.DownArrow)
-        self.gen_head_cb.setCursor(QCursor(Qt.PointingHandCursor))
-        self.gen_head_cb.clicked.connect(self.toggle_gen_adv)
-        layout.addRow(gen_head, self.gen_head_cb)
-        # csv
-        csv_lb = QLabel("csv")
-        csv_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
-        self.csv_drop = QComboBox()
-        self.csv_drop.addItems(csv)
-        layout.addRow(csv_lb, self.csv_drop)
-        # num bins
-        bars_lb = QLabel(
-            '<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.hist.html"># hist bins</a>')
-        bars_lb.setOpenExternalLinks(True)
-        bars_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
-        self.bars_ip = QLineEdit()
-        self.bars_ip.setPlaceholderText("10 OR [1, 2, 3, 4] OR 'fd'")
-        layout.addRow(bars_lb, self.bars_ip)
-        # color palette
-        pal_lb = QLabel('<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">color palette</a>')
-        pal_lb.setOpenExternalLinks(True)
-        pal_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
-        self.pal_type = QComboBox()
-        self.pal_type.addItems(PALETTE_OPS)
-        layout.addRow(pal_lb, self.pal_type)
-        # hide hidden props by default
-        self.real_props = [csv_lb, self.csv_drop, pal_lb, self.pal_type, bars_lb, self.bars_ip]
-        for prop in self.real_props:
-            prop.setHidden(True)
-        # RANDOM COORDS SECTION
-        gen_rand_head = QLabel("Random Coordinates")
-        gen_rand_head.setStyleSheet(
-            "font-size: 17px; font-weight: 500; padding-top: 0px; padding-bottom: 0px; margin-top: 0px; margin-bottom: 0px;")
-        self.gen_rand_adv_cb = QToolButton()
-        self.gen_rand_adv_cb.setArrowType(Qt.DownArrow)
-        self.gen_rand_adv_cb.setCursor(QCursor(Qt.PointingHandCursor))
-        self.gen_rand_adv_cb.clicked.connect(self.toggle_rand_adv)
-        layout.addRow(gen_rand_head, self.gen_rand_adv_cb)
+        self.file_head_cb = QToolButton()
+        self.file_head_cb.setArrowType(Qt.DownArrow)
+        self.file_head_cb.setCursor(QCursor(Qt.PointingHandCursor))
+        self.file_head_cb.clicked.connect(self.toggle_file_adv)
+        layout.addRow(file_head, self.file_head_cb)
         # image path
         img_lb = QLabel("image")
         img_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
@@ -175,6 +141,32 @@ class WorkflowPage(QWidget):
         self.mask_drop = QComboBox()
         self.mask_drop.addItems(mask)
         layout.addRow(mask_lb, self.mask_drop)
+        # csv
+        csv_lb = QLabel("csv")
+        csv_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
+        self.csv_drop = QComboBox()
+        self.csv_drop.addItems(csv)
+        layout.addRow(csv_lb, self.csv_drop)
+        # hide hidden props by default
+        self.real_props = [img_lb, self.img_drop, mask_lb, self.mask_drop, csv_lb, self.csv_drop, ]
+        for prop in self.real_props:
+            prop.setHidden(True)
+        # RANDOM COORDS SECTION
+        theme_head = QLabel("Theme & Coords")
+        theme_head.setStyleSheet(
+            "font-size: 17px; font-weight: 500; padding-top: 0px; padding-bottom: 0px; margin-top: 0px; margin-bottom: 0px;")
+        self.theme_cb = QToolButton()
+        self.theme_cb.setArrowType(Qt.DownArrow)
+        self.theme_cb.setCursor(QCursor(Qt.PointingHandCursor))
+        self.theme_cb.clicked.connect(self.toggle_theme_adv)
+        layout.addRow(theme_head, self.theme_cb)
+        # color palette
+        pal_lb = QLabel('<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">color palette</a>')
+        pal_lb.setOpenExternalLinks(True)
+        pal_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
+        self.pal_type = QComboBox()
+        self.pal_type.addItems(PALETTE_OPS)
+        layout.addRow(pal_lb, self.pal_type)
         # palette random
         r_pal_lb = QLabel(
             '<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">rand color palette</a>')
@@ -184,6 +176,14 @@ class WorkflowPage(QWidget):
         self.r_pal_type.addItems(PALETTE_OPS)
         self.r_pal_type.setCurrentText('crest')
         layout.addRow(r_pal_lb, self.r_pal_type)
+        # num bins
+        bars_lb = QLabel(
+            '<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.hist.html"># hist bins</a>')
+        bars_lb.setOpenExternalLinks(True)
+        bars_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
+        self.bars_ip = QLineEdit()
+        self.bars_ip.setPlaceholderText("10 OR [1, 2, 3, 4] OR 'fd'")
+        layout.addRow(bars_lb, self.bars_ip)
         # num coords to gen
         n_coord_lb = QLabel("# of coords")
         n_coord_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
@@ -193,9 +193,8 @@ class WorkflowPage(QWidget):
         self.n_coord_ip.setPlaceholderText("default is # in real csv")
         layout.addRow(n_coord_lb, self.n_coord_ip)
         # set adv hidden by default
-        self.rand_props = [img_lb, self.img_drop, mask_lb, self.mask_drop, n_coord_lb, self.n_coord_ip,
-                           self.r_pal_type, r_pal_lb]
-        for prop in self.rand_props:
+        self.theme_props = [pal_lb, self.pal_type, bars_lb, self.bars_ip, self.r_pal_type, r_pal_lb, n_coord_lb, self.n_coord_ip]
+        for prop in self.theme_props:
             prop.setHidden(True)
         # output header
         self.out_header = QLabel("Output")
@@ -305,17 +304,17 @@ class WorkflowPage(QWidget):
         except Exception as e:
             print(e)
 
-    def toggle_gen_adv(self):
+    def toggle_file_adv(self):
         """ TOGGLE GENERAL ADV OPTIONS """
-        self.gen_head_cb.setArrowType(Qt.UpArrow if self.gen_head_cb.arrowType() == Qt.DownArrow else Qt.DownArrow)
+        self.file_head_cb.setArrowType(Qt.UpArrow if self.file_head_cb.arrowType() == Qt.DownArrow else Qt.DownArrow)
         for prop in self.real_props:
             prop.setVisible(not prop.isVisible())
 
-    def toggle_rand_adv(self):
+    def toggle_theme_adv(self):
         """ TOGGLE RAND ADV OPTIONS """
-        self.gen_rand_adv_cb.setArrowType(
-            Qt.UpArrow if self.gen_rand_adv_cb.arrowType() == Qt.DownArrow else Qt.DownArrow)
-        for prop in self.rand_props:
+        self.theme_cb.setArrowType(
+            Qt.UpArrow if self.theme_cb.arrowType() == Qt.DownArrow else Qt.DownArrow)
+        for prop in self.theme_props:
             prop.setVisible(not prop.isVisible())
 
     def run(self, wf, df):
@@ -432,7 +431,6 @@ class WorkflowPage(QWidget):
                 graph_x = np.array(self.real_df[wf["graph"]["x_type"]])
                 if wf['type'] == Workflow.CLUST:
                     graph_y = np.bincount(np.bincount(self.real_df[wf["graph"]["x_type"]]))[1:]
-                    print(graph_y)
                     graph_x = list(range(1, (len(set(graph_y)))+1))
                     c = len(graph_x)
                 c = create_color_pal(n_bins=c, palette_type=self.pal_type.currentText())
@@ -451,7 +449,6 @@ class WorkflowPage(QWidget):
                 if wf['type'] == Workflow.RIPPLER:
                     ax.bar(graph_x, graph_y, width=20, color=c)
                 else:
-                    print(graph_x, graph_y, c)
                     ax.bar(graph_x, graph_y, color=c)
             elif self.gen_real_cb.isChecked() and self.gen_rand_cb.isChecked():
                 self.rand_df.sort_values(wf["graph"]["x_type"], inplace=True)

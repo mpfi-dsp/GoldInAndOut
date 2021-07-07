@@ -20,7 +20,7 @@ COLORS = [(128, 0, 0),
               (233, 150, 122)]
 
 
-def run_rippler(real_coords, rand_coords, img_path, mask_path, pb, max_steps=10, step_size=60):
+def run_rippler(real_coords, rand_coords, spine_coords, img_path, mask_path, pb, max_steps=10, step_size=60):
     """
     GOLD RIPPLER (SC3PA)
     _______________________________
@@ -67,11 +67,16 @@ def run_rippler(real_coords, rand_coords, img_path, mask_path, pb, max_steps=10,
             total_captured_particles = 0
             scale_mask = np.zeros(pface_mask.shape, np.uint8)
             color_step = step % 11
+
+            for entry in spine_coords:
+                cv2.circle(scale_mask, entry, rad, 255, -1)
+                cv2.circle(original_copy, entry, rad, COLORS[color_step], 5)
+
             step += 1
             for c in coord_list:
                 x, y = int(c[1]), int(c[0])
-                cv2.circle(scale_mask, (y, x), rad, 255, -1)
-                cv2.circle(original_copy, (y, x), rad, COLORS[color_step], 5)
+                # cv2.circle(scale_mask, (y, x), rad, 255, -1)
+                # cv2.circle(original_copy, (y, x), rad, COLORS[color_step], 5)
                 if rad == max:
                     if scale_mask[y, x] != 0:
                         cv2.circle(original_copy, (y, x), 8, (0, 0, 255), -1)
@@ -115,7 +120,9 @@ def run_rippler(real_coords, rand_coords, img_path, mask_path, pb, max_steps=10,
         new_df = pd.DataFrame(
             data={'radius': radius, '%_gp_captured': gp_captured, '%_pface_covered': pface_covered, 'SC3PA': SC3PA,
                   'total_gp': total_gp})
+        # print(new_df.head())
         rippler_out.append(new_df)
+        # cv2.imwrite("test_img.jpg", output_img)
     return rippler_out
 
 
