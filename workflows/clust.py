@@ -66,6 +66,8 @@ def draw_clust(clust_df, img, palette="rocket_r", scalar=1):
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
+
+    # print(clust_df)
     # make color pal
     palette = create_color_pal(n_bins=len(set(clust_df['cluster_id'])), palette_type=palette)
     # draw dots
@@ -75,7 +77,6 @@ def draw_clust(clust_df, img, palette="rocket_r", scalar=1):
 
     # find centroids in df w/ clusters
     def draw_clust_id_at_centroids(image, cl_df):
-        centroids, centroid_ids = [], []
         for c_id in set(cl_df['cluster_id']):
             cl = cl_df.loc[cl_df['cluster_id'] == c_id]
             n, x, y = 0, 0, 0
