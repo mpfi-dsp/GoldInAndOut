@@ -20,7 +20,7 @@ COLORS = [(128, 0, 0),
               (233, 150, 122)]
 
 
-def run_rippler(real_coords, img_path, mask_path, pb, rand_coords, max_steps=10, step_size=60):
+def run_rippler(real_coords, rand_coords, img_path, mask_path, pb, max_steps=10, step_size=60):
     """
     GOLD RIPPLER (SC3PA)
     _______________________________
@@ -115,9 +115,7 @@ def run_rippler(real_coords, img_path, mask_path, pb, rand_coords, max_steps=10,
         new_df = pd.DataFrame(
             data={'radius': radius, '%_gp_captured': gp_captured, '%_pface_covered': pface_covered, 'SC3PA': SC3PA,
                   'total_gp': total_gp})
-        # print(new_df.head())
         rippler_out.append(new_df)
-        # cv2.imwrite("test_img.jpg", output_img)
     return rippler_out
 
 

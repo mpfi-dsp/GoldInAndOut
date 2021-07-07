@@ -5,7 +5,7 @@ import math
 import cv2
 from typings import Unit
 
-def run_nnd(df, pb, rand_coords):
+def run_nnd(real_coords, rand_coords, pb):
     """
     NEAREST NEIGHBOR DISTANCE
     _______________________________
@@ -53,13 +53,13 @@ def run_nnd(df, pb, rand_coords):
         return clean_real_df, clean_rand_df
 
     # FIND NND
-    x_coordinates = np.array(df['X'])
-    y_coordinates = np.array(df['Y'])
-    real_coordinates = []
-    for i in range(len(x_coordinates)):
-        real_coordinates.append((float(y_coordinates[i]), float(x_coordinates[i])))
+    # x_coordinates = np.array(df['X'])
+    # y_coordinates = np.array(df['Y'])
+    # real_coordinates = []
+    # for i in range(len(x_coordinates)):
+    #     real_coordinates.append((float(y_coordinates[i]), float(x_coordinates[i])))
     # if generate_random prop enabled, create random coordinates and return results, else return real coordinates
-    return nnd(coordinate_list=real_coordinates, random_coordinate_list=rand_coords)
+    return nnd(coordinate_list=real_coords, random_coordinate_list=rand_coords)
 
 
 def draw_length(nnd_df, bin_counts, img, palette, input_unit=Unit.PIXEL, scalar=1, circle_c=(0, 0, 255)):

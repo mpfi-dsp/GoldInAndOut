@@ -9,7 +9,7 @@ from sortedcollections import OrderedSet
 
 from utils import create_color_pal
 
-def run_clust(df, pb, rand_coords, distance_threshold=120, n_clusters=None, affinity='euclidean', linkage='ward'):
+def run_clust(df, pb, real_coords, rand_coords, distance_threshold=120, n_clusters=None, affinity='euclidean', linkage='ward'):
     """
     WARD HIERARCHICAL CLUSTERING
     _______________________________
@@ -26,14 +26,14 @@ def run_clust(df, pb, rand_coords, distance_threshold=120, n_clusters=None, affi
     @random_coordinate_list: list of randomly generated coordinates
     """
     logging.info("clustering")
-    x_coordinates = np.array(df['X'])
-    y_coordinates = np.array(df['Y'])
-    real_coordinates = []
-    for i in range(len(x_coordinates)):
-        real_coordinates.append([float(y_coordinates[i]), float(x_coordinates[i])])
+    # x_coordinates = np.array(df['X'])
+    # y_coordinates = np.array(df['Y'])
+    # real_coordinates = []
+    # for i in range(len(x_coordinates)):
+    #     real_coordinates.append([float(y_coordinates[i]), float(x_coordinates[i])])
     # real coords
     pb.update_progress(30)
-    real_coordinates = np.array(real_coordinates)
+    # real_coordinates = np.array(real_coordinates)
     # print(distance_threshold, n_clusters)
     if n_clusters != "None":
         distance_threshold = None
@@ -42,7 +42,7 @@ def run_clust(df, pb, rand_coords, distance_threshold=120, n_clusters=None, affi
         n_clusters = None
         distance_threshold = int(distance_threshold)
     hc = AgglomerativeClustering(n_clusters=n_clusters, distance_threshold=distance_threshold, affinity=affinity, linkage=linkage)
-    cluster = hc.fit_predict(real_coordinates)
+    cluster = hc.fit_predict(real_coords)
     df['cluster_id'] = cluster
 
     # temp_df = pd.DataFrame([])

@@ -36,10 +36,10 @@ class AnalysisWorker(QObject):
         self.output_data = []
 
         if wf['type'] == Workflow.NND:
-            self.real_df, self.rand_df = run_nnd(df=df, pb=prog_wrapper, rand_coords=rand_coords)
+            self.real_df, self.rand_df = run_nnd(real_coords=real_coords, rand_coords=rand_coords, pb=prog_wrapper)
             self.output_data = [self.real_df, self.rand_df]
         elif wf['type'] == Workflow.CLUST:
-            self.real_df, self.rand_df = run_clust(df=df, rand_coords=rand_coords, pb=prog_wrapper,
+            self.real_df, self.rand_df = run_clust(df=df, real_coords=real_coords, rand_coords=rand_coords, pb=prog_wrapper,
                                                    distance_threshold=vals[0], n_clusters=vals[1])
             self.output_data = [self.real_df, self.rand_df]
         elif wf['type'] == Workflow.NND_CLUST:
