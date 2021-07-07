@@ -17,6 +17,7 @@ class QPlainTextEditLogger(logging.Handler):
     def emit(self, record):
         msg = self.format(record)
         self.logger.appendPlainText(msg)
+        print(f'DEBUG: {msg}')
 
 
 class Logger(QDialog):
