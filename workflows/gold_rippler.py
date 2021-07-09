@@ -5,7 +5,8 @@ import numpy as np
 import cv2
 
 from typings import Unit
-from utils import create_color_pal
+from utils import create_color_pal, pixels_conversion, to_coord_list
+from workflows.random_coords import gen_random_coordinates
 
 COLORS = [(128, 0, 0),
               (139, 0, 0),
@@ -58,6 +59,12 @@ def run_rippler(real_coords, rand_coords, spine_coords, img_path, mask_path, pb,
     original_copy = img_og.copy()
     pb.update_progress(30)
 
+    # if gen_spines == "True":
+    #     spine_coords = gen_random_coordinates(img_path, mask_path, count=len(real_coords))
+    # else:
+    #     # TODO: change when adding more input types
+    #     spine_coords = to_coord_list(pixels_conversion(csv_path=cv2path, input_unit=Unit.PIXEL, csv_scalar=1))
+
     step = 0
     rippler_out = []
     for coord_list in [real_coords, rand_coords]:
@@ -68,9 +75,10 @@ def run_rippler(real_coords, rand_coords, spine_coords, img_path, mask_path, pb,
             scale_mask = np.zeros(pface_mask.shape, np.uint8)
             color_step = step % 11
 
-            for entry in spine_coords:
-                cv2.circle(scale_mask, entry, rad, 255, -1)
-                cv2.circle(original_copy, entry, rad, COLORS[color_step], 5)
+            for s in spine_coords:
+                x, y = int(s[0]), int(s[1])
+                cv2.circle(scale_mask, (y, x), rad, 255, -1)
+                cv2.circle(original_copy, (y, x), rad, COLORS[color_step], 5)
 
             step += 1
             for c in coord_list:
@@ -123,10 +131,11 @@ def run_rippler(real_coords, rand_coords, spine_coords, img_path, mask_path, pb,
         # print(new_df.head())
         rippler_out.append(new_df)
         # cv2.imwrite("test_img.jpg", output_img)
+    # print(rippler_out)
     return rippler_out
 
 
-def draw_rippler(coords, img, mask_path, palette="rocket_r", max_steps=10, step_size=60, scalar=1, input_unit=Unit.PIXEL, circle_c=(0, 0, 255)):
+def draw_rippler(coords, spine_coords, img, mask_path, palette="rocket_r", max_steps=10, step_size=60, scalar=1, input_unit=Unit.PIXEL, circle_c=(0, 0, 255)):
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
@@ -143,10 +152,14 @@ def draw_rippler(coords, img, mask_path, palette="rocket_r", max_steps=10, step_
     while rad <= max:
         color_step = step % 11
         scale_mask = np.zeros(pface_mask.shape, np.uint8)
-        for c in coords:
-            x, y = int(c[1]), int(c[0])
+        for s in spine_coords:
+            x, y = int(s[0]), int(s[1])
             cv2.circle(scale_mask, (y, x), rad, 255, -1)
             cv2.circle(output_img, (y, x), rad, sea_to_rgb(pal[color_step]), 5)
+        for c in coords:
+            x, y = int(c[1]), int(c[0])
+            # cv2.circle(scale_mask, (y, x), rad, 255, -1)
+            # cv2.circle(output_img, (y, x), rad, sea_to_rgb(pal[color_step]), 5)
             if rad == max:
                 if scale_mask[y, x] != 0:
                     cv2.circle(output_img, (y, x), 8, (0, 0, 255), -1)

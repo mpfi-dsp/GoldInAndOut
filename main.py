@@ -79,6 +79,7 @@ class GoldInAndOut(QWidget):
         img_drop = [self.home_page.img_le.text()] if len(self.home_page.img_le.text()) > 0 else ["./input/example_image.tif"]
         mask_drop = [self.home_page.mask_le.text()] if len(self.home_page.mask_le.text()) > 0 else ["./input/example_mask.tif"]
         csv_drop = [self.home_page.csv_le.text()] if len(self.home_page.csv_le.text()) > 0 else ["./input/example_csv.csv"]
+        csv2_drop = [self.home_page.csv2_le.text()] if len(self.home_page.csv2_le.text()) > 0 else ["./input/example_csv.csv"]
         # input/output units
         # TODO: iu = unit_to_enum(self.home_page.ip_scalar_type.currentText() if self.home_page.ip_scalar_type.currentText() is not None else 'px')
         ou = unit_to_enum(self.home_page.op_scalar_type.currentText() if self.home_page.op_scalar_type.currentText() is not None else 'px')
@@ -103,6 +104,7 @@ class GoldInAndOut(QWidget):
                                  img=img_drop,
                                  mask=mask_drop,
                                  csv=csv_drop,
+                                 csv2=csv2_drop,
                                  scalar=s,
                                  input_unit=Unit.PIXEL,
                                  output_unit=ou,

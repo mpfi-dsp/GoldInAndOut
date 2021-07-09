@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import random
 
-def gen_random_coordinates(data, img_path, mask_path, count=0):
+def gen_random_coordinates(img_path, mask_path, count=0):
     """
     RANDOM COORDS GENERATOR
     _______________________________
@@ -25,11 +25,6 @@ def gen_random_coordinates(data, img_path, mask_path, count=0):
                 num += 1
         # print(f"The total number of particles inside the p-face are {count}.")
         return coords
-    x_coordinates = np.array(data['X'])
-    y_coordinates = np.array(data['Y'])
-    read_coords = []
-    for i in range(len(x_coordinates)):
-        read_coords.append((float(y_coordinates[i]), float(x_coordinates[i])))
     # import img
     img_original = cv2.imread(img_path)
     crop = img_original.shape

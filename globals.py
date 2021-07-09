@@ -111,7 +111,11 @@ WORKFLOWS = [{
         {
             "title": "step_size",
             "placeholder": "60"
-         }
+         },
+        # {
+        #     "title": "generate_spine_coords",
+        #     "placeholder": "False"
+        # }
         ]
 }
 ]
