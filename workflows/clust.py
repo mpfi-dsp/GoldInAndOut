@@ -1,11 +1,8 @@
 import logging
-
 import pandas as pd
-from PIL import ImageFont, ImageDraw
 from sklearn.cluster import AgglomerativeClustering
 import numpy as np
 import cv2
-from sortedcollections import OrderedSet
 
 from utils import create_color_pal
 
@@ -23,18 +20,11 @@ def run_clust(df, pb, real_coords, rand_coords, distance_threshold=120, n_cluste
         @average: uses the average of the distances of each observation of the two sets
         @maximum: linkage uses the maximum distances between all observations of the two sets
         @single: uses the minimum of the distances between all observations of the two sets
-    @random_coordinate_list: list of randomly generated coordinates
+    @real_coords: the real coordinates
+    @rand_coords: list of randomly generated coordinates
     """
     logging.info("clustering")
-    # x_coordinates = np.array(df['X'])
-    # y_coordinates = np.array(df['Y'])
-    # real_coordinates = []
-    # for i in range(len(x_coordinates)):
-    #     real_coordinates.append([float(y_coordinates[i]), float(x_coordinates[i])])
-    # real coords
     pb.update_progress(30)
-    # real_coordinates = np.array(real_coordinates)
-    # print(distance_threshold, n_clusters)
     if n_clusters != "None":
         distance_threshold = None
         n_clusters = int(n_clusters)
@@ -45,12 +35,6 @@ def run_clust(df, pb, real_coords, rand_coords, distance_threshold=120, n_cluste
     cluster = hc.fit_predict(real_coords)
     df['cluster_id'] = cluster
 
-    # temp_df = pd.DataFrame([])
-    # temp_df['unique_cluster_ids'] = pd.Series(OrderedSet(cluster.sort()))
-    # temp_df['particle_count'] = pd.Series(np.bincount(np.array(cluster)))
-    # temp_df['num_clusters'] = pd.Series(np.bincount(temp_df['particle_count']))
-    # print(temp_df.head())
-
     # random coords
     pb.update_progress(70)
     rand_coordinates = np.array(rand_coords)
@@ -58,22 +42,21 @@ def run_clust(df, pb, real_coords, rand_coords, distance_threshold=120, n_cluste
     rand_df = pd.DataFrame(rand_coordinates, columns=["X", "Y"])
     rand_df['cluster_id'] = rand_cluster
 
-    # print(rand_df.head())
     return df, rand_df
 
 
-def draw_clust(clust_df, img, palette="rocket_r", scalar=1):
+def draw_clust(clust_df, img, palette="rocket_r"):
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
 
-    # print(clust_df)
     # make color pal
     palette = create_color_pal(n_bins=len(set(clust_df['cluster_id'])), palette_type=palette)
     # draw dots
     for idx, entry in clust_df.iterrows():
-        particle = tuple(int(scalar * x) for x in [entry['X'], entry['Y']])
-        img = cv2.circle(img, particle, 10, sea_to_rgb(palette[clust_df['cluster_id'][idx]]), -1)
+        particle = tuple(int(x) for x in [entry['X'], entry['Y']])
+        # TODO: remove int from this next line if able to stop from converting to float
+        img = cv2.circle(img, particle, 10, sea_to_rgb(palette[int(clust_df['cluster_id'][idx])]), -1)
 
     # find centroids in df w/ clusters
     def draw_clust_id_at_centroids(image, cl_df):

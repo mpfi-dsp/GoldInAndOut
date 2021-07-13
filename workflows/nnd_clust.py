@@ -9,12 +9,13 @@ from collections import Counter
 import math
 import cv2
 
-def run_nnd_clust(df, pb, rand_coords, min_clust_size=3, distance_threshold=120, n_clusters=None, affinity='euclidean', linkage='ward'):
+def run_nnd_clust(df, pb, real_coords, rand_coords, min_clust_size=3, distance_threshold=120, n_clusters=None, affinity='euclidean', linkage='ward'):
     """
     NEAREST NEIGHBOR DISTANCE OF WARD HIERARCHICAL CLUSTERING
     _______________________________
     @df: dataframe with coordinates scaled to whatever format desired
     @pb: progress bar wrapper element, allows us to track how much time is left in process
+    @real_coords: list of real coordinates
     @rand_coords: list of randomly generated coordinates
     @min_clust_size: minimum number of coords required to be considered a "cluster"
     @distance_threshold: using a distance threshold to automatically cluster particles
@@ -62,7 +63,7 @@ def run_nnd_clust(df, pb, rand_coords, min_clust_size=3, distance_threshold=120,
             d_threshold = int(d_threshold)
         # actually run sklearn clustering function
         hc = AgglomerativeClustering(n_clusters=n_clust, distance_threshold=d_threshold, affinity=affinity, linkage=linkage)
-        clust = hc.fit_predict(real_coordinates)
+        clust = hc.fit_predict(real_coords)
         # append cluster ids to df
         data['cluster_id'] = clust
         # setup random coords
@@ -111,17 +112,8 @@ def run_nnd_clust(df, pb, rand_coords, min_clust_size=3, distance_threshold=120,
         # print("found nnd")
         return cleaned_real_df, cleaned_rand_df
 
-    """ NND BETWEEN CLUSTERS """
     logging.info("running nearest neighbor distance between clusters")
-    # turn into coordinate list
-    x_coordinates = np.array(df['X'])
-    y_coordinates = np.array(df['Y'])
-    real_coordinates = []
-    for i in range(len(x_coordinates)):
-        real_coordinates.append([float(y_coordinates[i]), float(x_coordinates[i])])
-    # make numpy array
     pb.update_progress(30)
-    real_coordinates = np.array(real_coordinates)
     # cluster
     full_real_df, full_rand_df, cluster, rand_cluster = cluster(df, n_clusters, distance_threshold, min_clust_size)
     # generate centroids of clusters
@@ -136,7 +128,7 @@ def run_nnd_clust(df, pb, rand_coords, min_clust_size=3, distance_threshold=120,
     return full_real_df, full_rand_df, real_df, rand_df
 
 
-def draw_nnd_clust(nnd_df, clust_df, img, bin_counts, palette="rocket_r", input_unit=Unit.PIXEL, scalar=1, circle_c=(0, 0, 255)):
+def draw_nnd_clust(nnd_df, clust_df, img, bin_counts, palette="rocket_r", circle_c=(0, 0, 255)):
     # color palette
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
@@ -144,20 +136,14 @@ def draw_nnd_clust(nnd_df, clust_df, img, bin_counts, palette="rocket_r", input_
     # draw clusters
     cl_palette = create_color_pal(n_bins=len(set(clust_df['cluster_id'])), palette_type=palette)
     for idx, entry in clust_df.iterrows():
-        particle = tuple(int(scalar * x) for x in [entry['X'], entry['Y']])
-        img = cv2.circle(img, particle, 10, sea_to_rgb(cl_palette[clust_df['cluster_id'][idx]]), -1)
+        particle = tuple(int(x) for x in [entry['X'], entry['Y']])
+        img = cv2.circle(img, particle, 10, sea_to_rgb(cl_palette[int(clust_df['cluster_id'][idx])]), -1)
     # draw nnd
     count, bin_idx = 0, 0
     for idx, entry in nnd_df.iterrows():
         count += 1
-        particle_1 = entry['og_centroid']
-        particle_2 = entry['closest_centroid']
-        if input_unit == Unit.PIXEL:
-            particle_1 = tuple(int(scalar * x) for x in particle_1)
-            particle_2 = tuple(int(scalar * x) for x in particle_2)
-        else:
-            particle_1 = tuple(int(x / scalar) for x in particle_1)
-            particle_2 = tuple(int(x / scalar) for x in particle_2)
+        particle_1 = tuple(int(x) for x in entry['og_centroid'])
+        particle_2 = tuple(int(x) for x in entry['closest_centroid'])
         if count >= bin_counts[bin_idx] and bin_idx < len(bin_counts) - 1:
             bin_idx += 1
             count = 0

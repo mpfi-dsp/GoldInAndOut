@@ -1,17 +1,15 @@
 import logging
 import pandas as pd
-import numpy as np
 import math
 import cv2
-from typings import Unit
 
 def run_nnd(real_coords, rand_coords, pb):
     """
     NEAREST NEIGHBOR DISTANCE
     _______________________________
-    @df: dataframe with coordinates scaled to whatever format desired
-    @pb: progress bar wrapper element, allows us to track how much time is left in process
+    @real_coords: real coordinates scaled to whatever format desired
     @rand_coords: list of randomly generated coordinates
+    @pb: progress bar wrapper element, allows us to track how much time is left in process
     """
     def nnd(coordinate_list, random_coordinate_list):
         # find dist to closest particle
@@ -52,17 +50,11 @@ def run_nnd(real_coords, rand_coords, pb):
             [x for x in rand_df['Nearest Neighbor Distance'].tolist()])
         return clean_real_df, clean_rand_df
 
-    # FIND NND
-    # x_coordinates = np.array(df['X'])
-    # y_coordinates = np.array(df['Y'])
-    # real_coordinates = []
-    # for i in range(len(x_coordinates)):
-    #     real_coordinates.append((float(y_coordinates[i]), float(x_coordinates[i])))
     # if generate_random prop enabled, create random coordinates and return results, else return real coordinates
     return nnd(coordinate_list=real_coords, random_coordinate_list=rand_coords)
 
 
-def draw_length(nnd_df, bin_counts, img, palette, input_unit=Unit.PIXEL, scalar=1, circle_c=(0, 0, 255)):
+def draw_length(nnd_df, bin_counts, img, palette, circle_c=(0, 0, 255)):
     """ DRAW LINES TO ANNOTATE N NEAREST DIST ON IMAGE """
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
@@ -71,14 +63,8 @@ def draw_length(nnd_df, bin_counts, img, palette, input_unit=Unit.PIXEL, scalar=
     count, bin_idx = 0, 0
     for idx, entry in nnd_df.iterrows():
         count += 1
-        particle_1 = entry['og_coord']
-        particle_2 = entry['closest_coord']
-        if input_unit == Unit.PIXEL:
-            particle_1 = tuple(int(scalar * x) for x in particle_1)
-            particle_2 = tuple(int(scalar * x) for x in particle_2)
-        else:
-            particle_1 = tuple(int(x / scalar) for x in particle_1)
-            particle_2 = tuple(int(x / scalar) for x in particle_2)
+        particle_1 = tuple(int(x) for x in entry['og_coord'])
+        particle_2 = tuple(int(x) for x in entry['closest_coord'])
         if count >= bin_counts[bin_idx] and bin_idx < len(bin_counts) - 1:
             bin_idx += 1
             count = 0

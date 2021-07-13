@@ -1,6 +1,8 @@
 # views
 from time import sleep
 
+import pandas as pd
+
 from globals import WORKFLOWS, NAV_ICON
 from views.home import HomePage
 from typings import Unit
@@ -79,12 +81,14 @@ class GoldInAndOut(QWidget):
         img_drop = [self.home_page.img_le.text()] if len(self.home_page.img_le.text()) > 0 else ["./input/example_image.tif"]
         mask_drop = [self.home_page.mask_le.text()] if len(self.home_page.mask_le.text()) > 0 else ["./input/example_mask.tif"]
         csv_drop = [self.home_page.csv_le.text()] if len(self.home_page.csv_le.text()) > 0 else ["./input/example_csv.csv"]
-        csv2_drop = [self.home_page.csv2_le.text()] if len(self.home_page.csv2_le.text()) > 0 else ["./input/example_csv.csv"]
+        csv2_drop = [self.home_page.csv2_le.text()] # if len(self.home_page.csv2_le.text()) > 0 else ["./input/example_csv.csv"]
         # input/output units
-        # TODO: iu = unit_to_enum(self.home_page.ip_scalar_type.currentText() if self.home_page.ip_scalar_type.currentText() is not None else 'px')
+        # TODO:
+        iu = unit_to_enum(self.home_page.ip_scalar_type.currentText() if self.home_page.ip_scalar_type.currentText() is not None else 'px')
         ou = unit_to_enum(self.home_page.op_scalar_type.currentText() if self.home_page.op_scalar_type.currentText() is not None else 'px')
         # scalar
-        s = float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1)
+        s_i = float(self.home_page.csvs_ip_i.text() if len(self.home_page.csvs_ip_i.text()) > 0 else 1)
+        s_o = float(self.home_page.csvs_ip_o.text() if len(self.home_page.csvs_ip_o.text()) > 0 else 1)
         dod = self.home_page.dod_cb.isChecked()
 
         wf_td = 0
@@ -105,8 +109,7 @@ class GoldInAndOut(QWidget):
                                  mask=mask_drop,
                                  csv=csv_drop,
                                  csv2=csv2_drop,
-                                 scalar=s,
-                                 input_unit=Unit.PIXEL,
+                                 output_scalar=s_o,
                                  output_unit=ou,
                                  delete_old=dod,
                                  nav_list=self.nav_list,
@@ -116,9 +119,10 @@ class GoldInAndOut(QWidget):
     def load_data(self):
         """ LOAD AND SCALE DATA """
         path = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else "./input/example_csv.csv"
-        # TODO: unit = unit_to_enum(self.home_page.ip_scalar_type.currentText()) if self.home_page.ip_scalar_type.currentText() else Unit.PIXEL
-        scalar = float(self.home_page.csvs_ip.text() if len(self.home_page.csvs_ip.text()) > 0 else 1)
-        self.SCALED_DF = pixels_conversion(csv_path=path, input_unit=Unit.PIXEL, csv_scalar=scalar)
+        unit = unit_to_enum(self.home_page.ip_scalar_type.currentText()) if self.home_page.ip_scalar_type.currentText() else Unit.PIXEL
+        scalar = float(self.home_page.csvs_ip_i.text() if len(self.home_page.csvs_ip_i.text()) > 0 else 1)
+        data = pd.read_csv(path, sep=",")
+        self.SCALED_DF = pixels_conversion(data=data, unit=unit, scalar=scalar)
 
     def update_main_progress(self, value):
         """ UPDATE PROGRESS BAR """

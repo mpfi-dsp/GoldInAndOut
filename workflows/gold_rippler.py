@@ -25,9 +25,13 @@ def run_rippler(real_coords, rand_coords, spine_coords, img_path, mask_path, pb,
     """
     GOLD RIPPLER (SC3PA)
     _______________________________
-    @df: dataframe with centroids coordinates scaled to whatever format desired
+    @real_coords: centroids coordinates scaled to whatever format desired
+    @rand_coords: random centroids coordinates scaled to whatever format desired
+    @spine_coords: 2nd csv coordinates being measured against scaled to whatever format desired
+    @img_path: path to img
+    @mask_path: path to pface mask
     @pb: progress bar wrapper element, allows us to track how much time is left in process
-    @rand_coords: list of randomly generated coordinates
+    @max_steps: maximum number of
     """
     logging.info("running gold rippler (SC3PA)")
     # print("running gold rippler (SC3PA)")
@@ -59,12 +63,6 @@ def run_rippler(real_coords, rand_coords, spine_coords, img_path, mask_path, pb,
     original_copy = img_og.copy()
     pb.update_progress(30)
 
-    # if gen_spines == "True":
-    #     spine_coords = gen_random_coordinates(img_path, mask_path, count=len(real_coords))
-    # else:
-    #     # TODO: change when adding more input types
-    #     spine_coords = to_coord_list(pixels_conversion(csv_path=cv2path, input_unit=Unit.PIXEL, csv_scalar=1))
-
     step = 0
     rippler_out = []
     for coord_list in [real_coords, rand_coords]:
@@ -83,8 +81,6 @@ def run_rippler(real_coords, rand_coords, spine_coords, img_path, mask_path, pb,
             step += 1
             for c in coord_list:
                 x, y = int(c[1]), int(c[0])
-                # cv2.circle(scale_mask, (y, x), rad, 255, -1)
-                # cv2.circle(original_copy, (y, x), rad, COLORS[color_step], 5)
                 if rad == max:
                     if scale_mask[y, x] != 0:
                         cv2.circle(original_copy, (y, x), 8, (0, 0, 255), -1)
@@ -135,7 +131,7 @@ def run_rippler(real_coords, rand_coords, spine_coords, img_path, mask_path, pb,
     return rippler_out
 
 
-def draw_rippler(coords, spine_coords, img, mask_path, palette="rocket_r", max_steps=10, step_size=60, scalar=1, input_unit=Unit.PIXEL, circle_c=(0, 0, 255)):
+def draw_rippler(coords, spine_coords, img, mask_path, palette="rocket_r", max_steps=10, step_size=60, circle_c=(0, 0, 255)):
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color

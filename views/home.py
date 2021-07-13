@@ -100,24 +100,32 @@ class HomePage(QWidget):
         # show logs checkbox
         self.show_logs = QCheckBox('display logger (open in new window)')
         layout.addRow(self.show_logs)
-        # TODO: Add back ability to set input unit
-        # self.ip_scalr_lb = QLabel("Input Unit")
-        # self.ip_scalr_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
-        # self.ip_scalar_type = QComboBox()
-        # self.ip_scalar_type.addItems(UNIT_OPS)
+        # input
+        ip_scalr_lb = QLabel("Input Unit")
+        ip_scalr_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
+        self.ip_scalar_type = QComboBox()
+        self.ip_scalar_type.addItems(UNIT_OPS)
         op_scalr_lb = QLabel("output unit")
         op_scalr_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.op_scalar_type = QComboBox()
         self.op_scalar_type.addItems(UNIT_OPS)
-        csvs_lb = QLabel("scalar (px to output unit ratio)")
-        csvs_lb.setStyleSheet("font-size: 17px; font-weight: 400; margin-left: 15px; ")
-        self.csvs_ip = QLineEdit()
-        self.csvs_ip.setStyleSheet("font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 150px; ")
-        self.csvs_ip.setPlaceholderText("1")
+        # scalar IP to PX
+        csvs_lb_i = QLabel("scalar (input unit to px ratio)")
+        csvs_lb_i.setStyleSheet("font-size: 17px; font-weight: 400; margin-left: 15px; ")
+        self.csvs_ip_i = QLineEdit()
+        self.csvs_ip_i.setStyleSheet(
+            "font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 150px; ")
+        self.csvs_ip_i.setPlaceholderText("1")
+        # scalar PX to Output
+        csvs_lb_o = QLabel("scalar (px to output unit ratio)")
+        csvs_lb_o.setStyleSheet("font-size: 17px; font-weight: 400; margin-left: 15px; ")
+        self.csvs_ip_o = QLineEdit()
+        self.csvs_ip_o.setStyleSheet("font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 150px; ")
+        self.csvs_ip_o.setPlaceholderText("1")
         # global props
         glob_props = QHBoxLayout()
-        # for glob in [self.ip_scalr_lb, self.ip_scalar_type, self.op_scalr_lb, self.op_scalar_type, self.csvs_lb, self.csvs_ip]:
-        for glob in [op_scalr_lb, self.op_scalar_type, csvs_lb, self.csvs_ip]:
+        for glob in [ip_scalr_lb, self.ip_scalar_type, op_scalr_lb, self.op_scalar_type, csvs_lb_i, self.csvs_ip_i, csvs_lb_o, self.csvs_ip_o]:
+        # for glob in [op_scalr_lb, self.op_scalar_type, csvs_lb, self.csvs_ip]:
             glob_props.addWidget(glob)
         layout.addRow(glob_props)
         layout.addItem(spacer)
