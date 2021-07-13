@@ -48,7 +48,7 @@ class GoldInAndOut(QWidget):
         self.nav_list.setCursor(QCursor(Qt.PointingHandCursor))
         # add main page to nav
         item = QListWidgetItem(
-            NAV_ICON, str("Main"), self.nav_list)
+            NAV_ICON, str("MAIN"), self.nav_list)
         item.setSizeHint(QSize(60, 60))
         item.setTextAlignment(Qt.AlignCenter)
         # add each page to parent window stack

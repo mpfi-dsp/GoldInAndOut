@@ -83,9 +83,9 @@ class WorkflowPage(QWidget):
     @img: array of selected image paths
     @mask: array of selected mask paths
     @csv: array of selected csv paths
-    @input_unit: metric input unit
+    @csv2: array of selected csv2 paths
     @output_unit: metric output unit
-    @scalar: multiplier ratio between input metric unit (usually pixels) and desired output metric unit
+    @output_scalar: multiplier ratio between pixels and desired output metric unit
     @delete_old: delete output data older than 5 runs
     """
     def __init__(self, df, wf=None, img=None, mask=None, csv=None, csv2=None, output_scalar=1,
@@ -160,7 +160,7 @@ class WorkflowPage(QWidget):
         self.real_props = [img_lb, self.img_drop, mask_lb, self.mask_drop, csv_lb, self.csv_drop, ]
 
         if csv2 is not None:
-            csv2_lb = QLabel("csv2")
+            csv2_lb = QLabel("csv2 (lighthouse pop)")
             csv2_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
             self.csv2_drop = QComboBox()
             self.csv2_drop.addItems(csv)
@@ -416,8 +416,6 @@ class WorkflowPage(QWidget):
                 self.final_real = pixels_conversion(data=self.real_df, unit=output_unit, scalar=output_scalar)
                 self.final_rand = pixels_conversion(data=self.rand_df, unit=output_unit, scalar=output_scalar)
 
-                print(self.real_df.head())
-
                 # convert back to proper size
                 if wf["graph"]["type"] == "hist":
                     # create histogram
@@ -433,7 +431,6 @@ class WorkflowPage(QWidget):
                         # draw graph
                         n, bins, patches = ax.hist(graph_df, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), color='green')
                         # normalize values
-                        print('before col')
                         col = (n - n.min()) / (n.max() - n.min())
                         for c, p in zip(col, patches):
                             p.set_facecolor(cm(c))
@@ -482,8 +479,9 @@ class WorkflowPage(QWidget):
                         n = graph_x
                     if self.gen_real_cb.isChecked() and not self.gen_rand_cb.isChecked() or self.gen_rand_cb.isChecked() and not self.gen_real_cb.isChecked():
                         if wf['type'] == Workflow.RIPPLER:
-                            # print(graph_y[0].values)
-                            ax.bar(graph_x, graph_y[0].values, width=20, color=c)
+                            print(graph_y, graph_y[0], )
+                            print(graph_y[0].values)
+                            ax.bar(graph_x, graph_y, width=20, color=c)
                         else:
                             # print(graph_y)
                             ax.bar(graph_x, graph_y, color=c)
