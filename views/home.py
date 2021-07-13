@@ -8,7 +8,7 @@ from pathlib import Path
 from functools import partial
 from colorthief import ColorThief
 # utils
-from globals import UNIT_OPS, WORKFLOWS, MAX_DIRS_PRUNE
+from globals import UNIT_OPS, WORKFLOWS, MAX_DIRS_PRUNE, UNIT_PX_SCALARS
 from typings import FileType
 from utils import get_complimentary_color, pixels_conversion
 
@@ -101,33 +101,40 @@ class HomePage(QWidget):
         self.show_logs = QCheckBox('display logger (open in new window)')
         layout.addRow(self.show_logs)
         # input
-        ip_scalr_lb = QLabel("Input Unit")
+        ip_scalr_lb = QLabel("input")
         ip_scalr_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.ip_scalar_type = QComboBox()
         self.ip_scalar_type.addItems(UNIT_OPS)
-        op_scalr_lb = QLabel("output unit")
+        self.ip_scalar_type.currentTextChanged.connect(self.on_input_changed)
+        op_scalr_lb = QLabel("output")
         op_scalr_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.op_scalar_type = QComboBox()
         self.op_scalar_type.addItems(UNIT_OPS)
+        self.op_scalar_type.currentTextChanged.connect(self.on_output_changed)
         # scalar IP to PX
-        csvs_lb_i = QLabel("scalar (input unit to px ratio)")
-        csvs_lb_i.setStyleSheet("font-size: 17px; font-weight: 400; margin-left: 15px; ")
+        self.csvs_lb_i = QLabel("input to px ratio")
+        self.csvs_lb_i.setStyleSheet("font-size: 17px; font-weight: 400; margin-left: 15px; ")
         self.csvs_ip_i = QLineEdit()
         self.csvs_ip_i.setStyleSheet(
             "font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 150px; ")
         self.csvs_ip_i.setPlaceholderText("1")
+
         # scalar PX to Output
-        csvs_lb_o = QLabel("scalar (px to output unit ratio)")
-        csvs_lb_o.setStyleSheet("font-size: 17px; font-weight: 400; margin-left: 15px; ")
+        self.csvs_lb_o = QLabel("px to output ratio")
+        self.csvs_lb_o.setStyleSheet("font-size: 17px; font-weight: 400; margin-left: 15px; ")
         self.csvs_ip_o = QLineEdit()
         self.csvs_ip_o.setStyleSheet("font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 150px; ")
         self.csvs_ip_o.setPlaceholderText("1")
         # global props
         glob_props = QHBoxLayout()
-        for glob in [ip_scalr_lb, self.ip_scalar_type, op_scalr_lb, self.op_scalar_type, csvs_lb_i, self.csvs_ip_i, csvs_lb_o, self.csvs_ip_o]:
+        for glob in [ip_scalr_lb, self.ip_scalar_type, op_scalr_lb, self.op_scalar_type, self.csvs_lb_i, self.csvs_ip_i, self.csvs_lb_o, self.csvs_ip_o]:
         # for glob in [op_scalr_lb, self.op_scalar_type, csvs_lb, self.csvs_ip]:
             glob_props.addWidget(glob)
         layout.addRow(glob_props)
+        self.csvs_lb_i.setHidden(True)
+        self.csvs_ip_i.setHidden(True)
+        self.csvs_lb_o.setHidden(True)
+        self.csvs_ip_o.setHidden(True)
         layout.addItem(spacer)
         # homepage progress bar
         self.progress = QProgressBar(self)
@@ -143,6 +150,25 @@ class HomePage(QWidget):
         layout.addRow(self.start_btn)
         # assign layout
         self.setLayout(layout)
+
+    def on_input_changed(self, value):
+        if value == "px":
+            self.csvs_lb_i.setHidden(True)
+            self.csvs_ip_i.setHidden(True)
+        else:
+            self.csvs_lb_i.setHidden(False)
+            self.csvs_ip_i.setHidden(False)
+        self.csvs_ip_i.setText(str(UNIT_PX_SCALARS[value]))
+
+    def on_output_changed(self, value):
+        if value == "px":
+            self.csvs_lb_o.setHidden(True)
+            self.csvs_ip_o.setHidden(True)
+        else:
+            self.csvs_lb_o.setHidden(False)
+            self.csvs_ip_o.setHidden(False)
+        self.csvs_ip_o.setText(str(UNIT_PX_SCALARS[value]))
+
 
     def open_file_picker(self, btn_type):
         """ OPEN FILE PICKER """

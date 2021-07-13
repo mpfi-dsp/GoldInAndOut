@@ -479,9 +479,9 @@ class WorkflowPage(QWidget):
                         n = graph_x
                     if self.gen_real_cb.isChecked() and not self.gen_rand_cb.isChecked() or self.gen_rand_cb.isChecked() and not self.gen_real_cb.isChecked():
                         if wf['type'] == Workflow.RIPPLER:
-                            print(graph_y, graph_y[0], )
+                            print(graph_x, graph_y)
                             print(graph_y[0].values)
-                            ax.bar(graph_x, graph_y, width=20, color=c)
+                            ax.bar(graph_x, graph_y[0].values, width=20, color=c)
                         else:
                             # print(graph_y)
                             ax.bar(graph_x, graph_y, color=c)

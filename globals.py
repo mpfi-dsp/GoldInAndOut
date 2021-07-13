@@ -127,6 +127,15 @@ PALETTE_OPS = ["rocket", "crest",  "mako", "flare", "viridis", "magma", "cubehel
 UNIT_OPS = ['px', 'nm', 'μm', 'metric']
 
 
+""" UNIT SCALARS """
+UNIT_PX_SCALARS = {
+    'px': 1,
+    'nm': 888,
+    'μm': 264.38,
+    'metric': 1
+}
+
+
 """ NAVBAR ICON """
 NAV_ICON = QIcon('foo.png')
 

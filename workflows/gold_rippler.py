@@ -112,6 +112,7 @@ def run_rippler(real_coords, rand_coords, spine_coords, img_path, mask_path, pb,
             percent_area = scale_area / pface_area
             # calculate SC3PA
             scaled_SC3PA = gp_in_spine / percent_area
+            print(scaled_SC3PA)
             SC3PA.append(scaled_SC3PA)
             radius.append(rad)
             gp_captured.append(gp_in_spine)
@@ -122,7 +123,7 @@ def run_rippler(real_coords, rand_coords, spine_coords, img_path, mask_path, pb,
 
         # generate new df and return
         new_df = pd.DataFrame(
-            data={'radius': radius, '%_gp_captured': gp_captured, '%_pface_covered': pface_covered, 'SC3PA': SC3PA,
+            data={'radius': radius, '%_gp_captured': gp_captured, '%_pface_covered': pface_covered, 'SC3PA': np.array(SC3PA),
                   'total_gp': total_gp})
         # print(new_df.head())
         rippler_out.append(new_df)
