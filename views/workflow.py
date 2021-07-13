@@ -505,11 +505,9 @@ class WorkflowPage(QWidget):
                 ax.set_xlabel(f'{wf["graph"]["x_label"]} ({enum_to_unit(output_unit)})')
                 ax.set_ylabel(wf["graph"]["y_label"])
                 ax.set_ylim(ymin=0)
-
                 # generate palette
                 palette = create_color_pal(n_bins=int(len(n)), palette_type=self.pal_type.currentText())
                 r_palette = create_color_pal(n_bins=int(len(n)), palette_type=self.r_pal_type.currentText())
-
                 # draw on canvas
                 canvas.draw()
                 # determine shape of canvas
@@ -517,11 +515,9 @@ class WorkflowPage(QWidget):
                 width, height = size.width(), size.height()
                 # set graph to image of plotted hist
                 self.graph = QImage(canvas.buffer_rgba(), width, height, QImage.Format_ARGB32)
-
                 # load in image
                 drawn_img = cv2.imread(self.img_drop.currentText())
                 # display img
-
                 pixmap = QPixmap.fromImage(self.graph)
                 smaller_pixmap = pixmap.scaled(300, 250, Qt.KeepAspectRatio, Qt.FastTransformation)
                 self.graph_frame.setPixmap(smaller_pixmap)
