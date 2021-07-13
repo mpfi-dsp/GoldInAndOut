@@ -125,6 +125,7 @@ def run_nnd_clust(df, pb, real_coords, rand_coords, min_clust_size=3, distance_t
     real_df['cluster_id'] = real_clust_ids
     rand_df['cluster_id'] = rand_clust_ids
     # return dataframes with all elements, dataframe with only centroids and nnd
+    print(real_df.head(), rand_df.head())
     return full_real_df, full_rand_df, real_df, rand_df
 
 
@@ -138,6 +139,7 @@ def draw_nnd_clust(nnd_df, clust_df, img, bin_counts, palette="rocket_r", circle
     for idx, entry in clust_df.iterrows():
         particle = tuple(int(x) for x in [entry['X'], entry['Y']])
         img = cv2.circle(img, particle, 10, sea_to_rgb(cl_palette[int(clust_df['cluster_id'][idx])]), -1)
+        # cv2.putText(img, str(clust_df['cluster_id'][idx]), org=particle, fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255, 255, 255), fontScale=1)
     # draw nnd
     count, bin_idx = 0, 0
     for idx, entry in nnd_df.iterrows():
@@ -149,4 +151,35 @@ def draw_nnd_clust(nnd_df, clust_df, img, bin_counts, palette="rocket_r", circle
             count = 0
         img = cv2.circle(img, particle_1, 10, circle_c, -1)
         img = cv2.line(img, particle_1, particle_2, sea_to_rgb(palette[bin_idx]), 5)
+        cv2.putText(img, str(clust_df['cluster_id'][idx]), org=particle_1, fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255, 255, 255), fontScale=1)
     return img
+
+
+#
+# def draw_nnd_clust(nnd_df, clust_df, img, bin_counts, palette="rocket_r", circle_c=(0, 0, 255)):
+#     # color palette
+#     def sea_to_rgb(color):
+#         color = [val * 255 for val in color]
+#         return color
+#     # draw clusters
+#     cl_palette = create_color_pal(n_bins=len(set(clust_df['cluster_id'])), palette_type=palette)
+#     drawn_ids = []
+#     for idx, entry in clust_df.iterrows():
+#         particle = tuple(int(x) for x in [entry['X'], entry['Y']])
+#         img = cv2.circle(img, particle, 10, sea_to_rgb(cl_palette[int(clust_df['cluster_id'][idx])]), -1)
+#         c_id = str(clust_df['cluster_id'][idx])
+#         if c_id not in drawn_ids:
+#             cv2.putText(img, c_id, org=particle, fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255, 255, 255), fontScale=1)
+#             drawn_ids.append(c_id)
+#     # draw nnd
+#     count, bin_idx = 0, 0
+#     for idx, entry in nnd_df.iterrows():
+#         count += 1
+#         particle_1 = tuple(int(x) for x in entry['og_centroid'])
+#         particle_2 = tuple(int(x) for x in entry['closest_centroid'])
+#         if count >= bin_counts[bin_idx] and bin_idx < len(bin_counts) - 1:
+#             bin_idx += 1
+#             count = 0
+#         img = cv2.circle(img, particle_1, 10, circle_c, -1)
+#         img = cv2.line(img, particle_1, particle_2, sea_to_rgb(palette[bin_idx]), 5)
+#     return img

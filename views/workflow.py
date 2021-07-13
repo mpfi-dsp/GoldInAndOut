@@ -412,8 +412,9 @@ class WorkflowPage(QWidget):
                 ax = fig.add_subplot(111)
 
                 self.real_df.sort_values(wf["graph"]["x_type"], inplace=True)
-                self.rand_df.sort_values(wf["graph"]["x_type"], inplace=True)
                 self.final_real = pixels_conversion(data=self.real_df, unit=output_unit, scalar=output_scalar)
+                if len(self.rand_df[wf["graph"]["x_type"]]) > 0:
+                    self.rand_df.sort_values(wf["graph"]["x_type"], inplace=True)
                 self.final_rand = pixels_conversion(data=self.rand_df, unit=output_unit, scalar=output_scalar)
 
                 # convert back to proper size
