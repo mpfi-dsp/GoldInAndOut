@@ -103,8 +103,8 @@ class WorkflowPage(QWidget):
         self.output_scalar = output_scalar
         self.delete_old = delete_old
         self.nav_list = nav_list
-        self.pg = pg
         self.csv2 = csv2
+        self.pg = pg
 
         # init layout
         layout = QFormLayout()
