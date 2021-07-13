@@ -112,7 +112,7 @@ def run_rippler(real_coords, rand_coords, spine_coords, img_path, mask_path, pb,
             percent_area = scale_area / pface_area
             # calculate SC3PA
             scaled_SC3PA = gp_in_spine / percent_area
-            print(rad, scaled_SC3PA)
+            # print(rad, scaled_SC3PA)
             SC3PA.append(scaled_SC3PA)
             radius.append(rad)
             gp_captured.append(gp_in_spine)
