@@ -70,4 +70,5 @@ def draw_length(nnd_df, bin_counts, img, palette, circle_c=(0, 0, 255)):
             count = 0
         img = cv2.circle(img, particle_1, 10, circle_c, -1)
         img = cv2.line(img, particle_1, particle_2, sea_to_rgb(palette[bin_idx]), 5)
+        cv2.putText(img, str(idx), org=particle_1, fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255, 255, 255),fontScale=0.5)
     return img
