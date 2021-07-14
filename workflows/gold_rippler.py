@@ -1,12 +1,8 @@
 import logging
-
 import pandas as pd
 import numpy as np
 import cv2
-
-from typings import Unit
-from utils import create_color_pal, pixels_conversion, to_coord_list
-from workflows.random_coords import gen_random_coordinates
+from utils import create_color_pal
 
 COLORS = [(128, 0, 0),
               (139, 0, 0),
@@ -159,12 +155,12 @@ def draw_rippler(coords, spine_coords, img, mask_path, palette="rocket_r", max_s
             # cv2.circle(output_img, (y, x), rad, sea_to_rgb(pal[color_step]), 5)
             if rad == max:
                 if scale_mask[y, x] != 0:
-                    cv2.circle(output_img, (y, x), 8, (0, 0, 255), -1)
+                    cv2.circle(output_img, (y, x), 8, circle_c, -1)
                 else:
                     cv2.circle(output_img, (y, x), 8, (255, 0, 255), -1)
             else:
                 if scale_mask[y, x] != 0:
-                    cv2.circle(output_img, (y, x), 8, (0, 0, 255), -1)
+                    cv2.circle(output_img, (y, x), 8, circle_c, -1)
         # for c in coords:
         #     x, y = int(c[1]), int(c[0])
         #     output_img = cv2.circle(output_img, (y, x), 8, circle_c, -1)

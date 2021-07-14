@@ -413,7 +413,7 @@ class WorkflowPage(QWidget):
 
                 self.real_df.sort_values(wf["graph"]["x_type"], inplace=True)
                 self.final_real = pixels_conversion(data=self.real_df, unit=output_unit, scalar=output_scalar)
-                if len(self.rand_df[wf["graph"]["x_type"]]) > 0:
+                if wf["graph"]["x_type"] in self.rand_df.columns and len(self.rand_df[wf["graph"]["x_type"]]) > 0:
                     self.rand_df.sort_values(wf["graph"]["x_type"], inplace=True)
                 self.final_rand = pixels_conversion(data=self.rand_df, unit=output_unit, scalar=output_scalar)
 
@@ -465,8 +465,8 @@ class WorkflowPage(QWidget):
                             graph_y = np.bincount(np.bincount(self.final_real[wf["graph"]["x_type"]]))[1:]
                             graph_x = list(range(1, (len(set(graph_y)))+1))
                             c = len(graph_x)
-                            n = graph_x
                         c = create_color_pal(n_bins=c, palette_type=self.pal_type.currentText())
+                        n = graph_x
                     elif self.gen_rand_cb.isChecked():
                         ax.set_title(f'{wf["graph"]["title"]} (Rand)')
                         c = 1
