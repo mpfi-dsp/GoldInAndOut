@@ -17,7 +17,7 @@ COLORS = [(128, 0, 0),
               (233, 150, 122)]
 
 
-def run_rippler(real_coords, rand_coords, spine_coords, img_path, mask_path, pb, max_steps=10, step_size=60):
+def run_rippler(real_coords, rand_coords, alt_coords, img_path, mask_path, pb, max_steps=10, step_size=60):
     """
     GOLD RIPPLER (SC3PA)
     _______________________________
@@ -53,7 +53,6 @@ def run_rippler(real_coords, rand_coords, spine_coords, img_path, mask_path, pb,
     difference = (pface_area_tree - pface_area_external)
     pface_area = pface_area_external - difference
 
-
     # perm_scale_mask = np.zeros((img_size[0], img_size[1], 3), np.uint8)
     original_copy = img_og.copy()
     pb.update_progress(30)
@@ -69,7 +68,7 @@ def run_rippler(real_coords, rand_coords, spine_coords, img_path, mask_path, pb,
             scale_mask = np.zeros(pface_mask.shape, np.uint8)
             color_step = step % 11
 
-            for s in spine_coords:
+            for s in alt_coords:
                 x, y = int(s[0]), int(s[1])
                 cv2.circle(scale_mask, (y, x), rad, 255, -1)
                 cv2.circle(original_copy, (y, x), rad, COLORS[color_step], 5)
@@ -128,7 +127,7 @@ def run_rippler(real_coords, rand_coords, spine_coords, img_path, mask_path, pb,
     return rippler_out
 
 
-def draw_rippler(coords, spine_coords, img, mask_path, palette="rocket_r", max_steps=10, step_size=60, circle_c=(0, 0, 255)):
+def draw_rippler(coords, alt_coords, img, mask_path, palette="rocket_r", max_steps=10, step_size=60, circle_c=(0, 0, 255)):
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
@@ -145,7 +144,7 @@ def draw_rippler(coords, spine_coords, img, mask_path, palette="rocket_r", max_s
     while rad <= max:
         color_step = step % 11
         scale_mask = np.zeros(pface_mask.shape, np.uint8)
-        for s in spine_coords:
+        for s in alt_coords:
             x, y = int(s[0]), int(s[1])
             cv2.circle(scale_mask, (y, x), rad, 255, -1)
             cv2.circle(output_img, (y, x), rad, sea_to_rgb(pal[color_step]), 5)

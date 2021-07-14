@@ -94,7 +94,7 @@ WORKFLOWS = [{
     "name": "RIPPLER",
     "type": Workflow.RIPPLER,
     "header": "Gold Rippler: Spine-Particle Correlation",
-    "desc": "Separate spine masks as individual components, grow components until they contain X gold particles, calculate Spine Correlated Particles Per P-face Area (SC3PA) (% of gold particles within spine masks) / (% of total area of p-face taken up by spine masks)",
+    "desc": "Separate spine masks as individual components, grow components until they contain X gold particles, calculate Spine Correlated Particles Per P-face Area (SC3PA) (% of gold particles within spine masks) / (% of total area of p-face taken up by spine masks).  Requires lighthouse population.",
     "graph": {
             "type": "bar",
             "title": "Spine Correlated Particles Per P-face Area By Radius",
@@ -112,11 +112,21 @@ WORKFLOWS = [{
             "title": "step_size (px)",
             "placeholder": "60"
          },
-        # {
-        #     "title": "generate_spine_coords",
-        #     "placeholder": "False"
-        # }
         ]
+},
+{
+    "name": "STARFISH",
+    "type": Workflow.STARFISH,
+    "header": "Starfish Nearest Neighbor Distance",
+    "desc": "Find the nearest neighbor distance of two different populations. Requires lighthouse population.",
+    "graph": {
+        "type": "hist",
+        "title": "Nearest Neighbor Distances of Different Pops",
+        "x_label": "Nearest Neighbor Distance",
+        "y_label": "Number of Entries",
+        "x_type": "dist"
+    },
+    "props": []
 }
 ]
 

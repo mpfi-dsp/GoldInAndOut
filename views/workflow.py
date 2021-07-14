@@ -29,12 +29,14 @@ from workflows.nnd_clust import run_nnd_clust, draw_nnd_clust
 from workflows.random_coords import gen_random_coordinates
 import traceback
 
+from workflows.starfish import run_starfish, draw_starfish
+
 
 class AnalysisWorker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(object)
 
-    def run(self, wf, df, vals, prog_wrapper, real_coords, rand_coords, img_path, mask_path=None, spine_coords=None):
+    def run(self, wf, df, vals, prog_wrapper, real_coords, rand_coords, img_path, mask_path=None, alt_coords=None):
         try:
             self.output_data = []
 
@@ -54,11 +56,14 @@ class AnalysisWorker(QObject):
                                                                                                  min_clust_size=vals[2])
                 self.output_data = [self.full_real_df, self.full_rand_df, self.real_df, self.rand_df]
             elif wf['type'] == Workflow.RIPPLER:
-                self.real_df, self.rand_df = run_rippler(real_coords=real_coords, spine_coords=spine_coords, rand_coords=rand_coords,
+                self.real_df, self.rand_df = run_rippler(real_coords=real_coords, alt_coords=alt_coords, rand_coords=rand_coords,
                                                          pb=prog_wrapper, img_path=img_path,
                                                          mask_path=mask_path, max_steps=vals[0],
                                                          step_size=vals[1],
                                                        )
+                self.output_data = [self.real_df, self.rand_df]
+            elif wf['type'] == Workflow.STARFISH:
+                self.real_df, self.rand_df = run_starfish(real_coords=real_coords, rand_coords=rand_coords, alt_coords=alt_coords, pb=prog_wrapper)
                 self.output_data = [self.real_df, self.rand_df]
             self.progress.emit(self.output_data)
             self.finished.emit()
@@ -88,7 +93,7 @@ class WorkflowPage(QWidget):
     @output_scalar: multiplier ratio between pixels and desired output metric unit
     @delete_old: delete output data older than 5 runs
     """
-    def __init__(self, df, wf=None, img=None, mask=None, csv=None, csv2=None, output_scalar=1,
+    def __init__(self, df, alt_coords=None, wf=None, img=None, mask=None, csv=None, csv2=None, output_scalar=1,
                  output_unit=Unit.PIXEL, delete_old=False, nav_list=None, pg=None):
         super().__init__()
         # init class vars
@@ -103,7 +108,7 @@ class WorkflowPage(QWidget):
         self.output_scalar = output_scalar
         self.delete_old = delete_old
         self.nav_list = nav_list
-        self.csv2 = csv2
+        self.alt_coords = alt_coords
         self.pg = pg
 
         # init layout
@@ -354,16 +359,21 @@ class WorkflowPage(QWidget):
                 count=int(self.n_coord_ip.text()) if self.n_coord_ip.text() else len(df.index))
 
             # TODO: change when adding more input types
-            data = pd.read_csv(self.csv2_drop.currentText(), sep=",")
-            self.spine_coords = None if wf['type'] != Workflow.RIPPLER else to_coord_list(pixels_conversion(data=data, unit=Unit.PIXEL, scalar=1)) if self.csv2 is not None else gen_random_coordinates(self.csv2_drop.currentText(), self.mask_drop.currentText(), count=len(self.real_coords))
-
+            # if wf['type'] == Workflow.RIPPLER or wf['type'] == Workflow.STARFISH:
+            #     if self.csv2 is not None:
+            #         data = pd.read_csv(self.csv2_drop.currentText(), sep=",")
+            #         self.alt_coords = to_coord_list(pixels_conversion(data=data, unit=Unit.PIXEL, scalar=1))
+            #     else:
+            #         self.alt_coords = gen_random_coordinates(self.img_drop.currentText(), self.mask_drop.currentText(), count=len(self.real_coords))
+            # else:
+            #     self.alt_coords = None
             # TODO: ADD NEW WORKFLOW FUNCTION CALLS HERE
             vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
 
             self.thread = QThread()
             self.worker = AnalysisWorker()
             self.worker.moveToThread(self.thread)
-            self.thread.started.connect(partial(self.worker.run, wf, df, vals, prog_wrapper, self.real_coords, self.rand_coords, self.img_drop.currentText(), self.mask_drop.currentText(), self.spine_coords))
+            self.thread.started.connect(partial(self.worker.run, wf, df, vals, prog_wrapper, self.real_coords, self.rand_coords, self.img_drop.currentText(), self.mask_drop.currentText(), self.alt_coords))
             self.worker.finished.connect(self.thread.quit)
             self.worker.finished.connect(self.worker.deleteLater)
             self.thread.finished.connect(self.thread.deleteLater)
@@ -374,10 +384,10 @@ class WorkflowPage(QWidget):
 
     def on_receive_data(self, output_data):
         try:
-            if self.wf["type"] == Workflow.NND or self.wf["type"] == Workflow.CLUST or self.wf["type"] == Workflow.RIPPLER:
-                self.real_df, self.rand_df = output_data
-            elif self.wf["type"] == Workflow.NND_CLUST:
+            if self.wf["type"] == Workflow.NND_CLUST:
                 self.full_real_df, self.full_rand_df, self.real_df, self.rand_df = output_data
+            else:
+                self.real_df, self.rand_df = output_data
             # end
             self.progress.setValue(100)
 
@@ -390,12 +400,13 @@ class WorkflowPage(QWidget):
 
             if self.is_init is False:
                 self.pg()
-                # add icon to navbar
-                item = QListWidgetItem(
-                    NAV_ICON, str(self.wf['name']), self.nav_list)
-                item.setSizeHint(QSize(60, 60))
-                item.setTextAlignment(Qt.AlignCenter)
                 self.is_init = True
+            #     # add icon to navbar
+            #     item = QListWidgetItem(
+            #         NAV_ICON, str(self.wf['name']), self.nav_list)
+            #     item.setSizeHint(QSize(60, 60))
+            #     item.setTextAlignment(Qt.AlignCenter)
+            #     self.is_init = True
         except Exception as e:
             print(e, traceback.format_exc())
 
@@ -525,12 +536,10 @@ class WorkflowPage(QWidget):
                 if wf["type"] == Workflow.NND:
                     # if real coords selected, annotate them on img with lines indicating length
                     if self.gen_real_cb.isChecked():
-                        drawn_img = draw_length(nnd_df=self.real_df, bin_counts=n, img=drawn_img, palette=palette,
-                                                circle_c=(103, 114, 0))
+                        drawn_img = draw_length(nnd_df=self.real_df, bin_counts=n, img=drawn_img, palette=palette, circle_c=(103, 114, 0))
                     # if rand coords selected, annotate them on img with lines indicating length
                     if self.gen_rand_cb.isChecked():
-                        drawn_img = draw_length(nnd_df=self.rand_df, bin_counts=n, img=drawn_img, palette=r_palette,
-                                                 circle_c=(18, 156, 232))
+                        drawn_img = draw_length(nnd_df=self.rand_df, bin_counts=n, img=drawn_img, palette=r_palette, circle_c=(18, 156, 232))
                 elif wf["type"] == Workflow.CLUST:
                     if self.gen_real_cb.isChecked():
                         drawn_img = draw_clust(clust_df=self.real_df, img=drawn_img, palette=palette)
@@ -539,16 +548,23 @@ class WorkflowPage(QWidget):
                 elif wf["type"] == Workflow.NND_CLUST:
                     if self.gen_real_cb.isChecked():
                         drawn_img = draw_nnd_clust(nnd_df=self.real_df, clust_df=self.full_real_df, img=drawn_img,
-                                                   palette=palette, bin_counts=n, circle_c=(18, 156, 232),)
+                                                   palette=palette, bin_counts=n, circle_c=(103, 114, 0),)
                     if self.gen_rand_cb.isChecked():
                         drawn_img = draw_nnd_clust(nnd_df=self.rand_df, clust_df=self.full_rand_df, img=drawn_img,
                                                    palette=r_palette, bin_counts=n,  circle_c=(18, 156, 232),)
                 elif wf["type"] == Workflow.RIPPLER:
                     vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
                     if self.gen_real_cb.isChecked():
-                        drawn_img = draw_rippler(coords=self.real_coords, spine_coords=self.spine_coords, mask_path=self.mask_drop.currentText(), img=drawn_img, palette=palette, circle_c=(18, 156, 232), max_steps=vals[0], step_size=vals[1])
+                        drawn_img = draw_rippler(coords=self.real_coords, alt_coords=self.alt_coords, mask_path=self.mask_drop.currentText(), img=drawn_img, palette=palette, circle_c=(18, 156, 232), max_steps=vals[0], step_size=vals[1])
                     if self.gen_rand_cb.isChecked():
-                        drawn_img = draw_rippler(coords=self.rand_coords, spine_coords=self.spine_coords, mask_path=self.mask_drop.currentText(), img=drawn_img, palette=r_palette, circle_c=(18, 156, 232), max_steps=vals[0], step_size=vals[1])
+                        drawn_img = draw_rippler(coords=self.rand_coords, alt_coords=self.alt_coords, mask_path=self.mask_drop.currentText(), img=drawn_img, palette=r_palette, circle_c=(103, 114, 0), max_steps=vals[0], step_size=vals[1])
+                elif wf["type"] == Workflow.STARFISH:
+                    # if real coords selected, annotate them on img with lines indicating length
+                    if self.gen_real_cb.isChecked():
+                        drawn_img = draw_starfish(nnd_df=self.real_df, bin_counts=n, img=drawn_img, palette=palette, circle_c=(103, 114, 0))
+                    # if rand coords selected, annotate them on img with lines indicating length
+                    if self.gen_rand_cb.isChecked():
+                        drawn_img = draw_starfish(nnd_df=self.rand_df, bin_counts=n, img=drawn_img, palette=r_palette, circle_c=(18, 156, 232))
 
                 # end graph display, set display img to annotated image
                 self.display_img = QImage(drawn_img.data, drawn_img.shape[1], drawn_img.shape[0], QImage.Format_RGB888).rgbSwapped()
