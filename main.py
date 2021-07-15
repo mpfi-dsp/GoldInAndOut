@@ -72,7 +72,7 @@ class GoldInAndOut(QWidget):
                         NAV_ICON, str(WORKFLOWS[i]['name']), self.nav_list)
                 item.setSizeHint(QSize(60, 60))
                 item.setTextAlignment(Qt.AlignCenter)
-        # self.update_main_progress(100)
+        self.home_page.progress.setValue(100)
 
     def open_logger(self):
         if self.home_page.show_logs.isChecked():
@@ -131,13 +131,16 @@ class GoldInAndOut(QWidget):
 
     def load_data(self):
         """ LOAD AND SCALE DATA """
+
+        path = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else "./input/example_csv.csv"
+        unit = unit_to_enum(self.home_page.ip_scalar_type.currentText()) if self.home_page.ip_scalar_type.currentText() else Unit.PIXEL
+        scalar = float(self.home_page.csvs_ip_i.text() if len(self.home_page.csvs_ip_i.text()) > 0 else 1)
         try:
-            path = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else "./input/example_csv.csv"
-            unit = unit_to_enum(self.home_page.ip_scalar_type.currentText()) if self.home_page.ip_scalar_type.currentText() else Unit.PIXEL
-            scalar = float(self.home_page.csvs_ip_i.text() if len(self.home_page.csvs_ip_i.text()) > 0 else 1)
             data = pd.read_csv(path, sep=",")
             self.SCALED_DF = pixels_conversion(data=data, unit=unit, scalar=scalar)
-
+        except Exception as e:
+            print(e, traceback.format_exc())
+        try:
             if len(self.home_page.csv2_le.text()) > 0:
                 data = pd.read_csv(self.home_page.csv2_le.text(), sep=",")
                 self.ALT_COORDS = to_coord_list(pixels_conversion(data=data, unit=unit, scalar=scalar))

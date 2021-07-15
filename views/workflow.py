@@ -305,11 +305,12 @@ class WorkflowPage(QWidget):
                         sorted([os.path.abspath(f'{o_dir}/{f}') for f in os.listdir(o_dir)], key=os.path.getctime)[0]
                     print("pruning ", oldest_dir)
                     shutil.rmtree(oldest_dir)
-
+                print("pruned old output")
         except Exception as e:
             print(e, traceback.format_exc())
         # download files
         try:
+            print("prepare to download output")
             img_name = os.path.splitext(os.path.basename(self.img_drop.currentText()))[0]
             out_dir = f'./output/{wf["name"].lower()}/{img_name}-{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
             os.makedirs(out_dir, exist_ok=True)
@@ -329,6 +330,7 @@ class WorkflowPage(QWidget):
                 self.full_rand_df.to_csv(
                     f'{out_dir}/full_rand_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False,
                     header=True)
+            print("downloaded output")
         except Exception as e:
             print(e, traceback.format_exc())
 
@@ -506,6 +508,7 @@ class WorkflowPage(QWidget):
                 ax.set_xlabel(f'{wf["graph"]["x_label"]} ({enum_to_unit(output_unit)})')
                 ax.set_ylabel(wf["graph"]["y_label"])
                 ax.set_ylim(ymin=0)
+                print("generated graphs")
                 # generate palette
                 palette = create_color_pal(n_bins=int(len(n)), palette_type=self.pal_type.currentText())
                 r_palette = create_color_pal(n_bins=int(len(n)), palette_type=self.r_pal_type.currentText())
@@ -518,6 +521,7 @@ class WorkflowPage(QWidget):
                 self.graph = QImage(canvas.buffer_rgba(), width, height, QImage.Format_ARGB32)
                 # load in image
                 drawn_img = cv2.imread(self.img_drop.currentText())
+                print("loaded img")
                 # display img
                 pixmap = QPixmap.fromImage(self.graph)
                 smaller_pixmap = pixmap.scaled(300, 250, Qt.KeepAspectRatio, Qt.FastTransformation)
@@ -555,13 +559,20 @@ class WorkflowPage(QWidget):
                     # if rand coords selected, annotate them on img with lines indicating length
                     if self.gen_rand_cb.isChecked():
                         drawn_img = draw_starfish(nnd_df=self.rand_df, bin_counts=n, img=drawn_img, palette=r_palette, circle_c=(18, 156, 232))
-
                 # end graph display, set display img to annotated image
-                self.display_img = QImage(drawn_img.data, drawn_img.shape[1], drawn_img.shape[0], QImage.Format_RGB888).rgbSwapped()
+                # https://stackoverflow.com/questions/33741920/convert-opencv-3-iplimage-to-pyqt5-qimage-qpixmap-in-python
+                height, width, bytesPerComponent = drawn_img.shape
+                bytesPerLine = 3 * width
+                cv2.cvtColor(drawn_img, cv2.COLOR_BGR2RGB, drawn_img)
+                self.display_img = QImage(drawn_img.data, width, height, bytesPerLine, QImage.Format_RGB888)
+                print("drew display imgs")
                 # resize to fit on gui
                 pixmap = QPixmap.fromImage(self.display_img)
+                print("drew pixmap")
                 smaller_pixmap = pixmap.scaled(200, 200, Qt.KeepAspectRatio, Qt.FastTransformation)
+                print("scale pixmap")
                 self.image_frame.setPixmap(smaller_pixmap)
+                print("finished generating visuals")
         except Exception as e:
             print(e, traceback.format_exc())
 
