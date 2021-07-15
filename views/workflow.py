@@ -358,15 +358,6 @@ class WorkflowPage(QWidget):
                 mask_path=self.mask_drop.currentText(),
                 count=int(self.n_coord_ip.text()) if self.n_coord_ip.text() else len(df.index))
 
-            # TODO: change when adding more input types
-            # if wf['type'] == Workflow.RIPPLER or wf['type'] == Workflow.STARFISH:
-            #     if self.csv2 is not None:
-            #         data = pd.read_csv(self.csv2_drop.currentText(), sep=",")
-            #         self.alt_coords = to_coord_list(pixels_conversion(data=data, unit=Unit.PIXEL, scalar=1))
-            #     else:
-            #         self.alt_coords = gen_random_coordinates(self.img_drop.currentText(), self.mask_drop.currentText(), count=len(self.real_coords))
-            # else:
-            #     self.alt_coords = None
             # TODO: ADD NEW WORKFLOW FUNCTION CALLS HERE
             vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
 
@@ -474,7 +465,7 @@ class WorkflowPage(QWidget):
                         # print(self.real_df[wf["graph"]["y_type"]], np.array(self.real_df[wf["graph"]["y_type"]]))
                         if wf['type'] == Workflow.CLUST:
                             graph_y = np.bincount(np.bincount(self.final_real[wf["graph"]["x_type"]]))[1:]
-                            graph_x = list(range(1, (len(set(graph_y)))+1))
+                            graph_x = list(range(1, (len(graph_y) + 1)))
                             c = len(graph_x)
                         c = create_color_pal(n_bins=c, palette_type=self.pal_type.currentText())
                         n = graph_x
@@ -485,17 +476,16 @@ class WorkflowPage(QWidget):
                         graph_x = np.array(self.final_real[wf["graph"]["x_type"]])
                         if wf['type'] == Workflow.CLUST:
                             graph_y = np.bincount(np.bincount(self.final_rand[wf["graph"]["x_type"]]))[1:]
-                            graph_x = list(range(1, (len(set(graph_y)))+1))
+                            graph_x = list(range(1, (len(graph_y)+1)))
                             c = len(graph_x)
                         c = create_color_pal(n_bins=c, palette_type=self.r_pal_type.currentText())
                         n = graph_x
                     if self.gen_real_cb.isChecked() and not self.gen_rand_cb.isChecked() or self.gen_rand_cb.isChecked() and not self.gen_real_cb.isChecked():
                         if wf['type'] == Workflow.RIPPLER:
-                            # print(graph_x, graph_y)
                             # print(graph_y[0].values)
                             ax.bar(graph_x, graph_y[0].values, width=20, color=c)
                         else:
-                            # print(graph_y)
+                            # print('bar', graph_x, graph_y)
                             ax.bar(graph_x, graph_y, color=c)
                     elif self.gen_real_cb.isChecked() and self.gen_rand_cb.isChecked():
                         real_graph_y = np.bincount(np.bincount(self.final_real[wf["graph"]["x_type"]]))[1:]

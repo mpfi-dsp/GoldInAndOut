@@ -73,5 +73,5 @@ def draw_length(nnd_df, bin_counts, img, palette, circle_c=(0, 0, 255)):
 
     for idx, entry in nnd_df.iterrows():
         particle_1 = tuple(int(x) for x in entry['og_coord'])
-        cv2.putText(img, str(idx), org=particle_1, fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255, 255, 255),fontScale=0.5)
+        cv2.putText(img, str(int(idx)), org=particle_1, fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255, 255, 255),fontScale=0.5)
     return img

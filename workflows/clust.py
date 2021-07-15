@@ -70,7 +70,7 @@ def draw_clust(clust_df, img, palette="rocket_r"):
             if n > 0:
                 x /= n
                 y /= n
-                cv2.putText(image, str(c_id), org=(int(x), int(y)), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255,255,255), fontScale=1)
+                cv2.putText(image, str(int(c_id)), org=(int(x), int(y)), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255,255,255), fontScale=1)
 
     draw_clust_id_at_centroids(img, clust_df)
 

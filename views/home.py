@@ -1,4 +1,7 @@
 # pyQT5
+import os
+import traceback
+
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import (QLabel, QFileDialog, QSpacerItem, QCheckBox, QHBoxLayout, QPushButton, QWidget,
                              QSizePolicy, QFormLayout, QLineEdit, QColorDialog, QComboBox, QProgressBar, QVBoxLayout)
@@ -6,11 +9,10 @@ from PyQt5.QtCore import Qt
 # general
 from pathlib import Path
 from functools import partial
-from colorthief import ColorThief
 # utils
 from globals import UNIT_OPS, WORKFLOWS, MAX_DIRS_PRUNE, UNIT_PX_SCALARS
 from typings import FileType
-from utils import get_complimentary_color, pixels_conversion
+from utils import get_complimentary_color
 
 HEADER = "Gold Cluster Analysis For Freeze Fracture"
 DESC = "Simply upload the appropriate files, check the workflows you'd like to run, and click \"Start\"!"
@@ -172,33 +174,29 @@ class HomePage(QWidget):
 
     def open_file_picker(self, btn_type):
         """ OPEN FILE PICKER """
-        root_dir = str(Path.home())
-        file = QFileDialog.getOpenFileName(self, 'Open file', root_dir)
-        filename = file[0]
-        if (len(filename)) > 0:
-            if btn_type == FileType.IMAGE:
-                self.img_le.setText(filename)
-            elif btn_type == FileType.MASK:
-                self.mask_le.setText(filename)
-                # TODO: if we want mask color btn
-                # try:
-                #     # get dominant color in layer mask and assign to btn bg
-                #     palette = ColorThief(filename)
-                #     (r, g, b) = palette.get_color(quality=1)
-                #
-                #     def clamp(x):
-                #         return max(0, min(x, 255))
-                #     # get complimentary color of mask
-                #     hex = "#{0:02x}{1:02x}{2:02x}".format(clamp(r), clamp(g), clamp(b))
-                #     comp_color = get_complimentary_color(hex)
-                #     self.clr_btn.setStyleSheet(f'QWidget {{background-color: {hex}; font-size: 16px; font-weight: 600; padding: 8px; color: {comp_color}; border-radius: 7px; }}')
-                #     self.clr_btn.setText(hex)
-                # except Exception as e:
-                #     print(e)
-            elif btn_type == FileType.CSV:
-                self.csv_le.setText(filename)
-            elif btn_type == FileType.CSV2:
-                self.csv2_le.setText(filename)
+        try:
+            path = str(Path.home())
+            if len(self.img_le.text()) > 0:
+                path = os.path.dirname(self.img_le.text())
+            elif len(self.mask_le.text()) > 0:
+                path = os.path.dirname(self.mask_le.text())
+            elif len(self.csv_le.text()) > 0:
+                path = os.path.dirname(self.csv_le.text())
+            elif len(self.csv2_le.text()) > 0:
+                path = os.path.dirname(self.csv2_le.text())
+            file = QFileDialog.getOpenFileName(self, 'Open file', path)
+            filename = file[0]
+            if (len(filename)) > 0:
+                if btn_type == FileType.IMAGE:
+                    self.img_le.setText(filename)
+                elif btn_type == FileType.MASK:
+                    self.mask_le.setText(filename)
+                elif btn_type == FileType.CSV:
+                    self.csv_le.setText(filename)
+                elif btn_type == FileType.CSV2:
+                    self.csv2_le.setText(filename)
+        except Exception as e:
+            print(e, traceback.format_exc())
 
     def set_mask_clr(self):
         """ MASK COLOR SET """
