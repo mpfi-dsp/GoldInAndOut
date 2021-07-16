@@ -88,6 +88,7 @@ class GoldInAndOut(QWidget):
             self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #ddd")
             self.empty_stack()
             self.load_data()
+            self.home_page.progress.setValue(0)
 
             # TODO: remove when no longer using for testing
             img_drop = [self.home_page.img_le.text()] if len(self.home_page.img_le.text()) > 0 else ["./input/example_image.tif"]
@@ -153,7 +154,8 @@ class GoldInAndOut(QWidget):
 
     def update_main_progress(self, value):
         """ UPDATE PROGRESS BAR """
-        self.home_page.progress.setValue(value)
+        if self.home_page.progress.value() != 100:
+            self.home_page.progress.setValue(value)
         if value == 100:
             self.on_run_complete()
 
