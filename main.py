@@ -30,8 +30,8 @@ class GoldInAndOut(QWidget):
         super().__init__()
         self.setWindowTitle('GoldInAndOut')
         self.setWindowIcon(QIcon('./assets/logo.png'))
-        self.setMinimumSize(QSize(900, 950))
-        self.setMaximumSize(QSize(900, 950))
+        self.setMinimumSize(QSize(900, 1100))
+        self.setMaximumSize(QSize(900, 1100))
         # set max threads
         numexpr.set_num_threads(numexpr.detect_number_of_cores())
 
@@ -59,6 +59,7 @@ class GoldInAndOut(QWidget):
             NAV_ICON, str("MAIN"), self.nav_list)
         item.setSizeHint(QSize(60, 60))
         item.setTextAlignment(Qt.AlignCenter)
+
         # add each page to parent window stack
         self.page_stack.addWidget(self.home_page)
         # select first page by default
@@ -92,6 +93,12 @@ class GoldInAndOut(QWidget):
             self.empty_stack()
             self.load_data()
             self.home_page.progress.setValue(0)
+
+            item2 = QListWidgetItem(
+                NAV_ICON, str("Workflows"), self.nav_list)
+            item2.setSizeHint(QSize(60, 60))
+            item2.setTextAlignment(Qt.AlignCenter)
+            item2.setFlags(Qt.NoItemFlags)
 
             # TODO: remove when no longer using for testing
             img_drop = [self.home_page.img_le.text()] if len(self.home_page.img_le.text()) > 0 else ["./input/example_image.tif"]

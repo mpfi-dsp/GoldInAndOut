@@ -28,56 +28,69 @@ class HomePage(QWidget):
         # init layout
         layout = QFormLayout()
 
-        self.out_folder = './'
         # header
         header = QLabel(HEADER)
         header.setStyleSheet("font-size: 24px; font-weight: bold; padding-top: 8px; ")
         layout.addRow(header)
         desc = QLabel(DESC)
-        desc.setStyleSheet("font-size: 17px; font-weight: 400; padding-top: 3px; padding-bottom: 20px;")
+        desc.setStyleSheet("font-size: 17px; font-weight: 400; padding-top: 3px; padding-bottom: 10px;")
         desc.setWordWrap(True)
         layout.addRow(desc)
         # upload header
         self.upload_header = QLabel("Upload Files")
         layout.addRow(self.upload_header)
         # img btn
-        self.img_btn = QPushButton('Upload Image', self)
-        self.img_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.img_btn.clicked.connect(partial(self.open_file_picker, FileType.IMAGE))
+        img_btn = QPushButton('Upload Image', self)
+        img_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        img_btn.clicked.connect(partial(self.open_file_picker, FileType.IMAGE))
         # img input
         self.img_le = QLineEdit()
         self.img_le.setPlaceholderText("None Selected")
         # add img row
-        layout.addRow(self.img_btn, self.img_le)
+        layout.addRow(img_btn, self.img_le)
         # mask btn
-        self.mask_btn = QPushButton('Upload Mask', self)
-        self.mask_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.mask_btn.clicked.connect(partial(self.open_file_picker,  FileType.MASK))
+        mask_btn = QPushButton('Upload Mask', self)
+        mask_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        mask_btn.clicked.connect(partial(self.open_file_picker,  FileType.MASK))
         # mask input
         self.mask_le = QLineEdit()
         self.mask_le.setPlaceholderText("None Selected")
         # add mask row
-        layout.addRow(self.mask_btn, self.mask_le)
+        layout.addRow(mask_btn, self.mask_le)
         # csv btn
-        self.csv_btn = QPushButton('Upload CSV', self)
-        self.csv_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.csv_btn.clicked.connect(partial(self.open_file_picker, FileType.CSV))
+        csv_btn = QPushButton('Upload CSV', self)
+        csv_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        csv_btn.clicked.connect(partial(self.open_file_picker, FileType.CSV))
         # csv input
         self.csv_le = QLineEdit()
         self.csv_le.setPlaceholderText("None Selected")
         # add csv row
-        layout.addRow(self.csv_btn, self.csv_le)
+        layout.addRow(csv_btn, self.csv_le)
         # csv2 btn
-        self.csv2_btn = QPushButton('Upload CSV2', self)
-        self.csv2_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.csv2_btn.clicked.connect(partial(self.open_file_picker, FileType.CSV2))
-        # csv2 input
+        csv2_btn = QPushButton('Upload CSV2', self)
+        csv2_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        csv2_btn.clicked.connect(partial(self.open_file_picker, FileType.CSV2))
+        # output_dir input
         self.csv2_le = QLineEdit()
         self.csv2_le.setPlaceholderText("None Selected")
-        # add csv2 row
-        layout.addRow(self.csv2_btn, self.csv2_le)
-        spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        # add output
+        layout.addRow(csv2_btn, self.csv2_le)
+        spacer = QSpacerItem(20, 10, QSizePolicy.Minimum, QSizePolicy.Expanding)
         layout.addItem(spacer)
+
+        # output folder header
+        workflows_header = QLabel("Output Folder")
+        layout.addRow(workflows_header)
+        # output folder btn
+        out_btn = QPushButton('Select Output', self)
+        out_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        out_btn.clicked.connect(partial(self.open_folder_picker))
+        # output folder input
+        self.output_dir_le = QLineEdit()
+        self.output_dir_le.setPlaceholderText("./")
+        layout.addRow(out_btn, self.output_dir_le)
+        layout.addItem(spacer)
+
         # workflows header
         workflows_header = QLabel("Select Workflows")
         layout.addRow(workflows_header)
@@ -169,10 +182,8 @@ class HomePage(QWidget):
             self.csvs_ip_o.setHidden(False)
         self.csvs_ip_o.setText(str(UNIT_PX_SCALARS[value]))
 
-
     def open_folder_picker(self):
-        self.out_folder = QFileDialog.getExistingDirectory(self, 'Select Output Folder')
-
+        self.output_dir_le = QFileDialog.getExistingDirectory(self, 'Select Output Folder')
 
     def open_file_picker(self, btn_type):
         """ OPEN FILE PICKER """
