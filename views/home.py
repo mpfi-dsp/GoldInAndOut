@@ -27,6 +27,8 @@ class HomePage(QWidget):
         super().__init__()
         # init layout
         layout = QFormLayout()
+
+        self.out_folder = './'
         # header
         header = QLabel(HEADER)
         header.setStyleSheet("font-size: 24px; font-weight: bold; padding-top: 8px; ")
@@ -54,10 +56,6 @@ class HomePage(QWidget):
         # mask input
         self.mask_le = QLineEdit()
         self.mask_le.setPlaceholderText("None Selected")
-        # TODO: mask color btn
-        # self.clr_btn = QPushButton('Mask Color', self)
-        # self.clr_btn.setStyleSheet("background: black;")
-        # self.clr_btn.clicked.connect(self.set_mask_clr)
         # add mask row
         layout.addRow(self.mask_btn, self.mask_le)
         # csv btn
@@ -170,6 +168,10 @@ class HomePage(QWidget):
             self.csvs_lb_o.setHidden(False)
             self.csvs_ip_o.setHidden(False)
         self.csvs_ip_o.setText(str(UNIT_PX_SCALARS[value]))
+
+
+    def open_folder_picker(self):
+        self.out_folder = QFileDialog.getExistingDirectory(self, 'Select Output Folder')
 
 
     def open_file_picker(self, btn_type):

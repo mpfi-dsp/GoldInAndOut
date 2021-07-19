@@ -20,7 +20,7 @@ from PyQt5.QtWidgets import (QWidget, QListWidget, QStackedWidget, QHBoxLayout, 
 # general
 import sys
 from functools import partial
-
+import numexpr
 from workflows.random_coords import gen_random_coordinates
 
 
@@ -32,6 +32,9 @@ class GoldInAndOut(QWidget):
         self.setWindowIcon(QIcon('./assets/logo.png'))
         self.setMinimumSize(QSize(900, 950))
         self.setMaximumSize(QSize(900, 950))
+        # set max threads
+        numexpr.set_num_threads(numexpr.detect_number_of_cores())
+
         # layout with list on left and stacked widget on right
         layout = QHBoxLayout(self, spacing=0)
         layout.setContentsMargins(0, 0, 0, 0)
