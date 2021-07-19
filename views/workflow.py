@@ -94,7 +94,7 @@ class WorkflowPage(QWidget):
     @delete_old: delete output data older than 5 runs
     """
     def __init__(self, df, alt_coords=None, wf=None, img=None, mask=None, csv=None, csv2=None, output_scalar=1,
-                 output_unit=Unit.PIXEL, delete_old=False, nav_list=None, pg=None):
+                 output_unit=Unit.PIXEL, output_dir=None, delete_old=False, nav_list=None, pg=None):
         super().__init__()
         # init class vars
         self.is_init = False
@@ -104,12 +104,13 @@ class WorkflowPage(QWidget):
         self.full_rand_df = pd.DataFrame()
         # allow referencing within functions without passing explicitly
         self.wf = wf
+        self.pg = pg
         self.output_unit = output_unit
         self.output_scalar = output_scalar
+        self.output_dir = output_dir
         self.delete_old = delete_old
-        self.nav_list = nav_list
         self.alt_coords = alt_coords
-        self.pg = pg
+        self.nav_list = nav_list
 
         # init layout
         layout = QFormLayout()
@@ -296,9 +297,10 @@ class WorkflowPage(QWidget):
 
     def download(self, output_unit, wf, delete_old):
         """ DOWNLOAD FILES """
+        out_start = self.output_dir if self.output_dir is not None else './output'
         try:
             # delete old files to make space if applicable
-            o_dir = f'./output/{wf["name"].lower()}'
+            o_dir = f'{out_start}/{wf["name"].lower()}'
             if delete_old:
                 while len(os.listdir(o_dir)) >= MAX_DIRS_PRUNE:
                     oldest_dir = \
@@ -312,7 +314,7 @@ class WorkflowPage(QWidget):
         try:
             print("prepare to download output")
             img_name = os.path.splitext(os.path.basename(self.img_drop.currentText()))[0]
-            out_dir = f'./output/{wf["name"].lower()}/{img_name}-{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
+            out_dir = f'{out_start}/{wf["name"].lower()}/{img_name}-{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
             os.makedirs(out_dir, exist_ok=True)
             self.final_real.to_csv(f'{out_dir}/real_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv',
                                 index=False, header=True)

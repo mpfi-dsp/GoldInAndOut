@@ -10,7 +10,7 @@ from PyQt5.QtCore import Qt
 from pathlib import Path
 from functools import partial
 # utils
-from globals import UNIT_OPS, WORKFLOWS, MAX_DIRS_PRUNE, UNIT_PX_SCALARS
+from globals import UNIT_OPS, WORKFLOWS, MAX_DIRS_PRUNE, UNIT_PX_SCALARS, DEFAULT_OUTPUT_DIR
 from typings import FileType
 from utils import get_complimentary_color
 
@@ -87,7 +87,8 @@ class HomePage(QWidget):
         out_btn.clicked.connect(partial(self.open_folder_picker))
         # output folder input
         self.output_dir_le = QLineEdit()
-        self.output_dir_le.setPlaceholderText("./")
+        self.output_dir_le.setPlaceholderText(DEFAULT_OUTPUT_DIR)
+        self.output_dir_le.setText(DEFAULT_OUTPUT_DIR)
         layout.addRow(out_btn, self.output_dir_le)
         layout.addItem(spacer)
 

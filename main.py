@@ -2,7 +2,7 @@
 import logging
 import traceback
 import pandas as pd
-from globals import WORKFLOWS, NAV_ICON
+from globals import WORKFLOWS, NAV_ICON, DEFAULT_OUTPUT_DIR
 from views.home import HomePage
 from typings import Unit
 from utils import pixels_conversion, unit_to_enum, to_coord_list
@@ -107,7 +107,7 @@ class GoldInAndOut(QWidget):
             # scalar
             s_o = float(self.home_page.csvs_ip_o.text() if len(self.home_page.csvs_ip_o.text()) > 0 else 1)
             dod = self.home_page.dod_cb.isChecked()
-            o_dir = self.home_page.output_dir_le.text()
+            o_dir = self.home_page.output_dir_le.text() if len(self.home_page.output_dir_le.text()) > 0 else DEFAULT_OUTPUT_DIR
 
             wf_td = 0
             for wf_cb in self.home_page.workflow_cbs:
