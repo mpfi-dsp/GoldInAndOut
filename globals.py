@@ -47,16 +47,11 @@ WORKFLOWS = [{
             "y_label": "# Of Clusters",
             "x_type": "cluster_id",
             "y_type": "cluster_id"
-            # "type": "hist",
-            # "title": "Ward Hierarchical Clusters",
-            # "x_label": "# Particles In Cluster",
-            # "y_label": "# Of Clusters",
-            # "x_type": "cluster_id"
         },
         "props": [
             {
                 "title": "distance_threshold (px)",
-                "placeholder": "120"
+                "placeholder": "30"
             },
             {"title": "n_clusters",
              "placeholder": "None"
@@ -79,7 +74,7 @@ WORKFLOWS = [{
         "props": [
             {
                 "title": "distance_threshold (px)",
-                "placeholder": "120"
+                "placeholder": "30"
             },
             {"title": "n_clusters",
              "placeholder": "None"

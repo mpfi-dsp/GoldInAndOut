@@ -91,11 +91,11 @@ class GoldInAndOut(QWidget):
             self.load_data()
             self.home_page.progress.setValue(0)
 
-            item2 = QListWidgetItem(
-                NAV_ICON, str("Workflows"), self.nav_list)
-            item2.setSizeHint(QSize(60, 60))
-            item2.setTextAlignment(Qt.AlignCenter)
-            item2.setFlags(Qt.NoItemFlags)
+            # item2 = QListWidgetItem(
+            #     NAV_ICON, str("Workflows"), self.nav_list)
+            # item2.setSizeHint(QSize(60, 60))
+            # item2.setTextAlignment(Qt.AlignCenter)
+            # item2.setFlags(Qt.NoItemFlags)
 
             # TODO: remove when no longer using for testing
             img_drop = [self.home_page.img_le.text()] if len(self.home_page.img_le.text()) > 0 else ["./input/example_image.tif"]
