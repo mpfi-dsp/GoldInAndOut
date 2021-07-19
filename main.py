@@ -1,10 +1,7 @@
 # views
 import logging
 import traceback
-from time import sleep
-
 import pandas as pd
-
 from globals import WORKFLOWS, NAV_ICON
 from views.home import HomePage
 from typings import Unit
@@ -108,9 +105,9 @@ class GoldInAndOut(QWidget):
             # input/output units
             ou = unit_to_enum(self.home_page.op_scalar_type.currentText() if self.home_page.op_scalar_type.currentText() is not None else 'px')
             # scalar
-            s_i = float(self.home_page.csvs_ip_i.text() if len(self.home_page.csvs_ip_i.text()) > 0 else 1)
             s_o = float(self.home_page.csvs_ip_o.text() if len(self.home_page.csvs_ip_o.text()) > 0 else 1)
             dod = self.home_page.dod_cb.isChecked()
+            o_dir = self.home_page.output_dir_le.text()
 
             wf_td = 0
             for wf_cb in self.home_page.workflow_cbs:
@@ -133,6 +130,7 @@ class GoldInAndOut(QWidget):
                                      csv2=csv2_drop,
                                      output_scalar=s_o,
                                      output_unit=ou,
+                                     output_dir=o_dir,
                                      delete_old=dod,
                                      nav_list=self.nav_list,
                                      pg=partial(self.update_main_progress, (int((z / wf_td * 100))))
@@ -178,6 +176,7 @@ class GoldInAndOut(QWidget):
                     self.page_stack.removeWidget(self.page_stack.widget(i))
         except Exception as e:
             print(e, traceback.format_exc())
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
