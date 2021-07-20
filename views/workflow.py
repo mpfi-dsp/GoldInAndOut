@@ -6,7 +6,7 @@ import shutil
 import numpy as np
 import pandas as pd
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QSize
-from PyQt5.QtGui import QImage, QPixmap, QCursor
+from PyQt5.QtGui import QImage, QPixmap, QCursor, QMovie
 from PyQt5.QtWidgets import (QLabel, QRadioButton, QCheckBox, QHBoxLayout, QPushButton, QWidget, QSizePolicy,
                              QFormLayout, QLineEdit,
                              QComboBox, QProgressBar, QToolButton, QVBoxLayout, QListWidgetItem)
@@ -99,9 +99,11 @@ class WorkflowPage(QWidget):
         # init class vars
         self.is_init = False
         self.real_df = pd.DataFrame()
-        self.full_real_df = pd.DataFrame()
         self.rand_df = pd.DataFrame()
+        self.full_real_df = pd.DataFrame()
         self.full_rand_df = pd.DataFrame()
+        self.final_real = pd.DataFrame()
+        self.final_rand = pd.DataFrame()
         # allow referencing within functions without passing explicitly
         self.wf = wf
         self.pg = pg
@@ -418,9 +420,11 @@ class WorkflowPage(QWidget):
                 ax = fig.add_subplot(111)
 
                 self.real_df.sort_values(wf["graph"]["x_type"], inplace=True)
+                self.real_df = self.real_df.reset_index(drop=True)
                 self.final_real = pixels_conversion(data=self.real_df, unit=output_unit, scalar=output_scalar)
                 if wf["graph"]["x_type"] in self.rand_df.columns and len(self.rand_df[wf["graph"]["x_type"]]) > 0:
                     self.rand_df.sort_values(wf["graph"]["x_type"], inplace=True)
+                    self.rand_df = self.rand_df.reset_index(drop=True)
                 self.final_rand = pixels_conversion(data=self.rand_df, unit=output_unit, scalar=output_scalar)
 
                 # convert back to proper size
@@ -577,6 +581,10 @@ class WorkflowPage(QWidget):
                 print("finished generating visuals")
         except Exception as e:
             print(e, traceback.format_exc())
+            print('error')
+            self.error_gif = QMovie("./assets/caterror.gif")
+            self.image_frame.setMovie(self.error_gif)
+            self.error_gif.start()
 
     def open_large(self, event, img):
         """ OPEN IMAGE IN VIEWER """

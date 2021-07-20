@@ -37,6 +37,7 @@ def run_nnd(real_coords, rand_coords, pb):
         logging.info("running nnd")
         real_nnd_list = distance_to_closest_particle(coordinate_list)
         real_df = pd.DataFrame(data={'Nearest Neighbor Distance': real_nnd_list})
+        # real_df = real_df.reset_index(drop=True)
         # clean up df
         clean_real_df = pd.DataFrame()
         clean_real_df[['og_coord', 'closest_coord', 'dist']] = pd.DataFrame(
