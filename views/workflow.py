@@ -13,6 +13,8 @@ from PyQt5.QtWidgets import (QLabel, QRadioButton, QCheckBox, QHBoxLayout, QPush
 # general
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
+from past.builtins import raw_input
+
 from views.image_viewer import QImageViewer
 from functools import partial
 import seaborn as sns
@@ -334,6 +336,9 @@ class WorkflowPage(QWidget):
                 self.full_rand_df.to_csv(
                     f'{out_dir}/full_rand_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False,
                     header=True)
+            # TODO: if wf['type'] == Workflow.CLUST:
+            #     with open(os.path.join(f'{out_dir}', f'clust_metadata_{enum_to_unit(output_unit)}.txt'), "w") as file1:
+            #         file1.write(raw_input("Write what you want into the field"))
             print("downloaded output")
         except Exception as e:
             print(e, traceback.format_exc())
@@ -494,7 +499,13 @@ class WorkflowPage(QWidget):
                             ax.bar(graph_x, graph_y[0].values, width=20, color=c)
                         else:
                             # print('bar', graph_x, graph_y)
-                            ax.bar(graph_x, graph_y, color=c)
+                            bar_plot = ax.bar(graph_x, graph_y, color=c)
+                            for idx, rect in enumerate(bar_plot):
+                                height = rect.get_height()
+                                ax.text(rect.get_x() + rect.get_width() / 2., 1.05 * height,
+                                        graph_y[idx],
+                                        ha='center', va='bottom', rotation=0)
+
                     elif self.gen_real_cb.isChecked() and self.gen_rand_cb.isChecked():
                         real_graph_y = np.bincount(np.bincount(self.final_real[wf["graph"]["x_type"]]))[1:]
                         real_graph_x = list(range(1, (len(set(real_graph_y)))+1))
