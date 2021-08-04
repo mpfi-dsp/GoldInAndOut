@@ -6,7 +6,9 @@ import cv2
 
 from utils import create_color_pal
 
-def run_clust(df, pb, real_coords, rand_coords, distance_threshold=120, n_clusters=None, affinity='euclidean', linkage='ward'):
+
+def run_clust(df, pb, real_coords, rand_coords, img_path, distance_threshold=120, n_clusters=None, affinity='euclidean',
+              linkage='ward'):
     """
     WARD HIERARCHICAL CLUSTERING
     _______________________________
@@ -31,7 +33,8 @@ def run_clust(df, pb, real_coords, rand_coords, distance_threshold=120, n_cluste
     else:
         n_clusters = None
         distance_threshold = int(distance_threshold)
-    hc = AgglomerativeClustering(n_clusters=n_clusters, distance_threshold=distance_threshold, affinity=affinity, linkage=linkage)
+    hc = AgglomerativeClustering(n_clusters=n_clusters, distance_threshold=distance_threshold, affinity=affinity,
+                                 linkage=linkage)
     cluster = hc.fit_predict(real_coords)
     df['cluster_id'] = cluster
 
@@ -41,6 +44,39 @@ def run_clust(df, pb, real_coords, rand_coords, distance_threshold=120, n_cluste
     rand_cluster = hc.fit_predict(rand_coordinates)
     rand_df = pd.DataFrame(rand_coordinates, columns=["X", "Y"])
     rand_df['cluster_id'] = rand_cluster
+
+    img_og = cv2.imread(img_path)
+    og_img = img_og.copy()
+
+    # print(df.loc[df['cluster_id'] == 0])
+
+    lower_bound = np.array([0, 250, 0])
+    upper_bound = np.array([40, 255, 40])
+    for data in [df, rand_df]:
+        for _id in set(df['cluster_id']):
+            clust_area = 0
+            for index, row in df[df['cluster_id'] == _id].iterrows():
+                # cluster_area += (3.14 * distance_threshold * distance_threshold)
+                new_img = img_og.copy()
+                x, y = int(row['X']), int(row['Y'])
+                # thickness =  -1 for filled circle
+                og_img = cv2.circle(og_img, (x, y), radius=distance_threshold, color=(0, 255, 0))
+                new_img = cv2.circle(new_img, (x, y), radius=distance_threshold, color=(0, 255, 0), thickness=-1)
+                cv2.putText(og_img, str(int(_id)), org=(int(x), int(y)), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255, 255, 255), fontScale=1)
+                img_mask = cv2.inRange(new_img, lower_bound, upper_bound)
+                # find pface area
+                clust_cnts, clust_hierarchy = cv2.findContours(img_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+
+                # print(clust_cnts)
+
+                for cnt in clust_cnts:
+                    area = cv2.contourArea(cnt)
+                    clust_area += area
+
+            print(_id, clust_area)
+
+        cv2.imwrite('test.tif', og_img)
+        print('save')
 
     return df, rand_df
 
@@ -70,7 +106,8 @@ def draw_clust(clust_df, img, palette="rocket_r"):
             if n > 0:
                 x /= n
                 y /= n
-                cv2.putText(image, str(int(c_id)), org=(int(x), int(y)), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255,255,255), fontScale=1)
+                cv2.putText(image, str(int(c_id)), org=(int(x), int(y)), fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                            color=(255, 255, 255), fontScale=1)
 
     draw_clust_id_at_centroids(img, clust_df)
 

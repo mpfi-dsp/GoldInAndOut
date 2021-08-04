@@ -24,7 +24,7 @@ class Logger(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle('GoldInAndOut Logger')
-        self.setWindowIcon(QIcon('./assets/logo.png'))
+        self.setWindowIcon(QIcon('./images/logo.ico'))
         self.setMinimumSize(QSize(600, 300))
 
         self.log_text_box = QPlainTextEditLogger(self)

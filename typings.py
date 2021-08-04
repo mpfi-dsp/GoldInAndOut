@@ -6,6 +6,7 @@ class Workflow(Enum):
     NND_CLUST = 3
     RIPPLER = 4
     STARFISH = 5
+    # CLUST_AREA = 6
 
 
 class Unit(Enum):

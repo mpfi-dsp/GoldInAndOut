@@ -56,6 +56,10 @@ WORKFLOWS = [{
             {"title": "n_clusters",
              "placeholder": "None"
              },
+            {
+             "title": "clust_area",
+             "placeholder": "true"
+             },
         ]
     },
     {
@@ -122,7 +126,21 @@ WORKFLOWS = [{
             "x_type": "dist"
         },
         "props": []
-    }
+    },
+    # {
+    #     "name": "CLUST-AREA",
+    #     "type": Workflow.CLUST_AREA,
+    #     "header": "Cluster Area ",
+    #     "desc": "Find the cluster area.",
+    #     "graph": {
+    #         "type": "hist",
+    #         "title": "Nearest Neighbor Distances of Different Pops",
+    #         "x_label": "Nearest Neighbor Distance",
+    #         "y_label": "Number of Entries",
+    #         "x_type": "dist"
+    #     },
+    #     "props": []
+    # }
 ]
 
 """ COLOR PALETTE OPTIONS """

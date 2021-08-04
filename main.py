@@ -2,6 +2,8 @@
 import logging
 import traceback
 import pandas as pd
+
+from confetti import SuccessGif
 from globals import WORKFLOWS, NAV_ICON, DEFAULT_OUTPUT_DIR
 from views.home import HomePage
 from typings import Unit
@@ -13,20 +15,23 @@ from styles.stylesheet import styles
 # pyQT5
 from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal, QThread
 from PyQt5.QtGui import QIcon, QCursor
-from PyQt5.QtWidgets import (QWidget, QListWidget, QStackedWidget, QHBoxLayout, QListWidgetItem, QApplication)
+from PyQt5.QtWidgets import (QWidget, QListWidget, QStackedWidget, QHBoxLayout, QListWidgetItem, QApplication,
+                             QMainWindow)
 # general
 import sys
 from functools import partial
 import numexpr
 from workflows.random_coords import gen_random_coordinates
-
+import pathlib
 
 class GoldInAndOut(QWidget):
     """ PARENT WINDOW INITIALIZATION """
     def __init__(self):
         super().__init__()
         self.setWindowTitle('GoldInAndOut')
-        self.setWindowIcon(QIcon('./assets/logo.png'))
+        current_directory = str(pathlib.Path(__file__).parent.absolute())
+        iconp = current_directory + '/logo.ico'
+        self.setWindowIcon(QIcon(iconp))
         self.setMinimumSize(QSize(900, 1100))
         self.setMaximumSize(QSize(900, 1100))
         # set max threads
@@ -74,6 +79,15 @@ class GoldInAndOut(QWidget):
                 item.setSizeHint(QSize(60, 60))
                 item.setTextAlignment(Qt.AlignCenter)
         self.home_page.progress.setValue(100)
+
+        # self.w = QMainWindow()
+        # self.w.setWindowTitle('Success!')
+        # self.w.setWindowIcon(QIcon('./images/logo.png'))
+        # self.w.setMinimumSize(QSize(500, 500))
+        # self.w.setMaximumSize(QSize(500, 500))
+        # self.sg = SuccessGif()
+        # self.sg.mainUI(self.w)
+        # self.w.show()
 
     def open_logger(self):
         if self.home_page.show_logs.isChecked():

@@ -2,10 +2,11 @@
 import os
 import traceback
 
-from PyQt5.QtGui import QCursor
+import cv2
+from PyQt5.QtGui import QCursor, QMovie, QPixmap, QImage
 from PyQt5.QtWidgets import (QLabel, QFileDialog, QSpacerItem, QCheckBox, QHBoxLayout, QPushButton, QWidget,
                              QSizePolicy, QFormLayout, QLineEdit, QColorDialog, QComboBox, QProgressBar, QVBoxLayout)
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QByteArray
 # general
 from pathlib import Path
 from functools import partial
@@ -27,6 +28,7 @@ class HomePage(QWidget):
         super().__init__()
         # init layout
         layout = QFormLayout()
+
 
         # header
         header = QLabel(HEADER)
@@ -162,6 +164,8 @@ class HomePage(QWidget):
         self.start_btn.clicked.connect(start)
         self.start_btn.setCursor(QCursor(Qt.PointingHandCursor))
         layout.addRow(self.start_btn)
+
+
         # assign layout
         self.setLayout(layout)
 

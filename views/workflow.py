@@ -5,7 +5,7 @@ import shutil
 
 import numpy as np
 import pandas as pd
-from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QSize
+from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QSize, QByteArray
 from PyQt5.QtGui import QImage, QPixmap, QCursor, QMovie
 from PyQt5.QtWidgets import (QLabel, QRadioButton, QCheckBox, QHBoxLayout, QPushButton, QWidget, QSizePolicy,
                              QFormLayout, QLineEdit,
@@ -25,6 +25,7 @@ from typings import Unit, Workflow
 from utils import Progress, create_color_pal, pixels_conversion_w_distance, enum_to_unit, to_coord_list, \
     pixels_conversion
 from workflows.clust import run_clust, draw_clust
+from workflows.clust_area import run_clust_area
 from workflows.gold_rippler import run_rippler, draw_rippler
 from workflows.nnd import run_nnd, draw_length
 from workflows.nnd_clust import run_nnd_clust, draw_nnd_clust
@@ -46,7 +47,7 @@ class AnalysisWorker(QObject):
                 self.real_df, self.rand_df = run_nnd(real_coords=real_coords, rand_coords=rand_coords, pb=prog_wrapper)
                 self.output_data = [self.real_df, self.rand_df]
             elif wf['type'] == Workflow.CLUST:
-                self.real_df, self.rand_df = run_clust(df=df, real_coords=real_coords, rand_coords=rand_coords, pb=prog_wrapper,
+                self.real_df, self.rand_df = run_clust(df=df, real_coords=real_coords, rand_coords=rand_coords, img_path=img_path, pb=prog_wrapper,
                                                        distance_threshold=vals[0], n_clusters=vals[1])
                 self.output_data = [self.real_df, self.rand_df]
             elif wf['type'] == Workflow.NND_CLUST:
@@ -67,6 +68,9 @@ class AnalysisWorker(QObject):
             elif wf['type'] == Workflow.STARFISH:
                 self.real_df, self.rand_df = run_starfish(real_coords=real_coords, rand_coords=rand_coords, alt_coords=alt_coords, pb=prog_wrapper)
                 self.output_data = [self.real_df, self.rand_df]
+            # elif wf['type'] == Workflow.CLUST_AREA:
+            #     self.real_df, self.rand_df = run_clust_area(real_coords=real_coords, rand_coords=rand_coords, rad=30, pb=prog_wrapper, img_path=img_path, df=df)
+            #     self.output_data = [self.real_df, self.rand_df]
             self.progress.emit(self.output_data)
             self.finished.emit()
         except Exception as e:
@@ -590,10 +594,15 @@ class WorkflowPage(QWidget):
                 print("scale pixmap")
                 self.image_frame.setPixmap(smaller_pixmap)
                 print("finished generating visuals")
+                # self.error_gif = QMovie("./images/caterror.gif", QByteArray(), self)
+                # self.error_gif.setCacheMode(QMovie.CacheAll)
+                # self.error_gif.setSpeed(100)
+                # self.image_frame.setMovie(self.error_gif)
+                # self.error_gif.start()
         except Exception as e:
             print(e, traceback.format_exc())
             print('error')
-            self.error_gif = QMovie("./assets/caterror.gif")
+            self.error_gif = QMovie("./images/caterror.gif")
             self.image_frame.setMovie(self.error_gif)
             self.error_gif.start()
 
