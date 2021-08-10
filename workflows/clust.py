@@ -33,8 +33,7 @@ def run_clust(df, pb, real_coords, rand_coords, img_path, distance_threshold=120
     else:
         n_clusters = None
         distance_threshold = int(distance_threshold)
-    hc = AgglomerativeClustering(n_clusters=n_clusters, distance_threshold=distance_threshold, affinity=affinity,
-                                 linkage=linkage)
+    hc = AgglomerativeClustering(n_clusters=n_clusters, distance_threshold=distance_threshold*2, affinity=affinity, linkage=linkage)
     cluster = hc.fit_predict(real_coords)
     df['cluster_id'] = cluster
 
@@ -60,7 +59,7 @@ def run_clust(df, pb, real_coords, rand_coords, img_path, distance_threshold=120
                 new_img = img_og.copy()
                 x, y = int(row['X']), int(row['Y'])
                 # thickness =  -1 for filled circle
-                og_img = cv2.circle(og_img, (x, y), radius=distance_threshold, color=(0, 255, 0))
+                og_img = cv2.circle(og_img, (x, y), radius=distance_threshold, color=(0, 255, 0),  thickness=-1)
                 new_img = cv2.circle(new_img, (x, y), radius=distance_threshold, color=(0, 255, 0), thickness=-1)
                 cv2.putText(og_img, str(int(_id)), org=(int(x), int(y)), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255, 255, 255), fontScale=1)
                 img_mask = cv2.inRange(new_img, lower_bound, upper_bound)
