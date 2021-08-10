@@ -56,16 +56,21 @@ def run_clust(df, pb, real_coords, rand_coords, img_path, distance_threshold=120
             clust_area = 0
             for index, row in df[df['cluster_id'] == _id].iterrows():
                 # cluster_area += (3.14 * distance_threshold * distance_threshold)
-                new_img = img_og.copy()
+                # TODO: make blank image and find area
+                # new_img = img_og.copy()
+                new_img = np.zeros(img_og.shape, dtype=np.uint8)
+                new_img.fill(255)  # or img[:] = 255
                 x, y = int(row['X']), int(row['Y'])
                 # thickness =  -1 for filled circle
-                og_img = cv2.circle(og_img, (x, y), radius=distance_threshold, color=(0, 255, 0),  thickness=-1)
+                og_img = cv2.circle(og_img, (x, y), radius=distance_threshold, color=(0, 255, 0)) #  thickness=-1)
                 new_img = cv2.circle(new_img, (x, y), radius=distance_threshold, color=(0, 255, 0), thickness=-1)
                 cv2.putText(og_img, str(int(_id)), org=(int(x), int(y)), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255, 255, 255), fontScale=1)
                 img_mask = cv2.inRange(new_img, lower_bound, upper_bound)
                 # find pface area
                 clust_cnts, clust_hierarchy = cv2.findContours(img_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
+                if _id == 0:
+                    cv2.imwrite('test1.tif', new_img)
                 # print(clust_cnts)
 
                 for cnt in clust_cnts:
