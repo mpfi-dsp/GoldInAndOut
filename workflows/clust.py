@@ -80,7 +80,7 @@ def run_clust(df, pb, real_coords, rand_coords, img_path, distance_threshold=120
             #     cv2.imwrite('test1.tif', new_img)
             # print(clust_cnts)
 
-        new_df = pd.DataFrame(clust_objs, columns=["cluster_id", "size", "area"])
+        new_df = pd.DataFrame(clust_objs, columns=["cluster_id", "cluster_size", "cluster_area"])
         new_df = new_df.reset_index(drop=True)
         clust_details_dfs.append(new_df)
         # cv2.imwrite('test.tif', og_img)
@@ -88,7 +88,7 @@ def run_clust(df, pb, real_coords, rand_coords, img_path, distance_threshold=120
     return df, rand_df, clust_details_dfs[0], clust_details_dfs[1]
 
 
-def draw_clust(clust_df, img, palette="rocket_r"):
+def draw_clust(clust_df, img, palette="rocket_r", draw_clust_area=False):
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
@@ -99,6 +99,7 @@ def draw_clust(clust_df, img, palette="rocket_r"):
     for idx, entry in clust_df.iterrows():
         particle = tuple(int(x) for x in [entry['X'], entry['Y']])
         # TODO: remove int from this next line if able to stop from converting to float
+        print(palette[int(clust_df['cluster_id'][idx])])
         img = cv2.circle(img, particle, 10, sea_to_rgb(palette[int(clust_df['cluster_id'][idx])]), -1)
 
     # find centroids in df w/ clusters

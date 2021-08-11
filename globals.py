@@ -53,12 +53,13 @@ WORKFLOWS = [{
                 "title": "distance_threshold (px)",
                 "placeholder": "30"
             },
-            {"title": "n_clusters",
+            {
+             "title": "n_clusters",
              "placeholder": "None"
              },
             {
-             "title": "clust_area",
-             "placeholder": "true"
+             "title": "draw_clust_area",
+             "placeholder": "false"
              },
         ]
     },

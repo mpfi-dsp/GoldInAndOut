@@ -17,7 +17,7 @@ def run_nnd(real_coords, rand_coords, pb):
             nnd_list = []
             for z in range(len(coord_list)):
                 pb.update_progress(z)
-                small_dist = 10000000000000000000
+                closest_d = 10000000000000000000
                 # og coord (x, y), closest coord (x, y), distance
                 nnd_obj = [(0, 0), (0, 0), 0]
                 p_if = (round(coord_list[z][1], 3), round(coord_list[z][0], 3))
@@ -28,9 +28,9 @@ def run_nnd(real_coords, rand_coords, pb):
                     if z is not j and p_if is not p_jf:
                         p_jf_y, p_jf_x = p_jf
                         dist = math.sqrt(((p_jf_y - p_if_y) ** 2) + ((p_jf_x - p_if_x) ** 2))
-                        if dist < small_dist and dist != 0:
-                            small_dist = round(dist, 3)
-                            nnd_obj[1], nnd_obj[2] = p_jf, small_dist
+                        if dist < closest_d and dist != 0:
+                            closest_d = round(dist, 3)
+                            nnd_obj[1], nnd_obj[2] = p_jf, closest_d
                 nnd_list.append(nnd_obj)
             return nnd_list
 

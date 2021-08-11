@@ -331,14 +331,11 @@ class WorkflowPage(QWidget):
                 self.real_df2 = pixels_conversion(data=self.real_df2, unit=output_unit, scalar=self.output_scalar)
                 self.rand_df2 = pixels_conversion(data=self.rand_df2, unit=output_unit, scalar=self.output_scalar)
                 self.real_df2.to_csv(
-                    f'{out_dir}/full_real_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False,
+                    f'{out_dir}/detailed_real_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False,
                     header=True)
                 self.rand_df2.to_csv(
-                    f'{out_dir}/full_rand_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False,
+                    f'{out_dir}/detailed_rand_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False,
                     header=True)
-            # TODO: if wf['type'] == Workflow.CLUST:
-            #     with open(os.path.join(f'{out_dir}', f'clust_metadata_{enum_to_unit(output_unit)}.txt'), "w") as file1:
-            #         file1.write(raw_input("Write what you want into the field"))
             print("downloaded output")
         except Exception as e:
             print(e, traceback.format_exc())
@@ -356,6 +353,9 @@ class WorkflowPage(QWidget):
         for prop in self.theme_props:
             prop.setVisible(not prop.isVisible())
 
+    def get_custom_values(self):
+        return [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
+
     def run(self, wf, df):
         """ RUN WORKFLOW """
         try:
@@ -370,7 +370,7 @@ class WorkflowPage(QWidget):
                 count=int(self.n_coord_ip.text()) if self.n_coord_ip.text() else len(df.index))
 
             # TODO: ADD NEW WORKFLOW FUNCTION CALLS HERE
-            vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
+            vals = self.get_custom_values()
 
             self.thread = QThread()
             self.worker = AnalysisWorker()
@@ -553,10 +553,11 @@ class WorkflowPage(QWidget):
                     if self.gen_rand_cb.isChecked():
                         drawn_img = draw_length(nnd_df=self.rand_df1, bin_counts=n, img=drawn_img, palette=r_palette, circle_c=(18, 156, 232))
                 elif wf["type"] == Workflow.CLUST:
+                    vals = self.get_custom_values()
                     if self.gen_real_cb.isChecked():
-                        drawn_img = draw_clust(clust_df=self.real_df1, img=drawn_img, palette=palette)
+                        drawn_img = draw_clust(clust_df=self.real_df1, img=drawn_img, palette=palette, draw_clust_area=vals[2])
                     if self.gen_rand_cb.isChecked():
-                        drawn_img = draw_clust(clust_df=self.rand_df1, img=drawn_img, palette=r_palette)
+                        drawn_img = draw_clust(clust_df=self.rand_df1, img=drawn_img, palette=r_palette, draw_clust_area=vals[2])
                 elif wf["type"] == Workflow.NND_CLUST:
                     if self.gen_real_cb.isChecked():
                         drawn_img = draw_nnd_clust(nnd_df=self.real_df1, clust_df=self.real_df2, img=drawn_img,

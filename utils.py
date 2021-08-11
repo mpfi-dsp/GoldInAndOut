@@ -47,21 +47,26 @@ def figure_to_img(fig):
 
 def pixels_conversion(data, unit=Unit.PIXEL, scalar=1, r=5):
     """ UPLOAD CSV AND CONVERT DF FROM ONE METRIC UNIT TO ANOTHER """
+    ignored_cols = ['cluster_id', 'cluster_size']
+    i = 0
     for col in data.drop(index=data.index[0], columns=data.columns[0]):
-        # print(data[col].head())
-        if type(data[col][0]) == tuple:
-            new_col = []
-            for tup in data[col]:
-                if unit == Unit.PIXEL:
-                    new_col.append(tuple([round((x / scalar), r) for x in tup]))
-                else:
-                    new_col.append(tuple([round((x * scalar), r) for x in tup]))
-            data[col] = new_col
-        else:
-            if unit == Unit.PIXEL:
-                data[col] = round(data[col].div(scalar), r)
+        i += 1
+        print(data.columns[i])
+        if data.columns[i] not in ignored_cols:
+            # print(data[col].head())
+            if type(data[col][0]) == tuple:
+                new_col = []
+                for tup in data[col]:
+                    if unit == Unit.PIXEL:
+                        new_col.append(tuple([round((x / scalar), r) for x in tup]))
+                    else:
+                        new_col.append(tuple([round((x * scalar), r) for x in tup]))
+                data[col] = new_col
             else:
-                data[col] = round((data[col] * scalar), r)
+                if unit == Unit.PIXEL:
+                    data[col] = round(data[col].div(scalar), r)
+                else:
+                    data[col] = round((data[col] * scalar), r)
 
     return data
 
