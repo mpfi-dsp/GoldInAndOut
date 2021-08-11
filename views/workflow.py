@@ -13,8 +13,6 @@ from PyQt5.QtWidgets import (QLabel, QRadioButton, QCheckBox, QHBoxLayout, QPush
 # general
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
-from past.builtins import raw_input
-
 from views.image_viewer import QImageViewer
 from functools import partial
 import seaborn as sns
@@ -22,10 +20,8 @@ import cv2
 # utils
 from globals import PALETTE_OPS, MAX_DIRS_PRUNE, NAV_ICON
 from typings import Unit, Workflow
-from utils import Progress, create_color_pal, pixels_conversion_w_distance, enum_to_unit, to_coord_list, \
-    pixels_conversion
+from utils import Progress, create_color_pal, enum_to_unit, to_coord_list, pixels_conversion
 from workflows.clust import run_clust, draw_clust
-from workflows.clust_area import run_clust_area
 from workflows.gold_rippler import run_rippler, draw_rippler
 from workflows.nnd import run_nnd, draw_length
 from workflows.nnd_clust import run_nnd_clust, draw_nnd_clust
@@ -44,30 +40,30 @@ class AnalysisWorker(QObject):
             self.output_data = []
 
             if wf['type'] == Workflow.NND:
-                self.real_df, self.rand_df = run_nnd(real_coords=real_coords, rand_coords=rand_coords, pb=prog_wrapper)
-                self.output_data = [self.real_df, self.rand_df]
+                self.real_df1, self.rand_df1 = run_nnd(real_coords=real_coords, rand_coords=rand_coords, pb=prog_wrapper)
+                self.output_data = [self.real_df1, self.rand_df1]
             elif wf['type'] == Workflow.CLUST:
-                self.real_df, self.rand_df = run_clust(df=df, real_coords=real_coords, rand_coords=rand_coords, img_path=img_path, pb=prog_wrapper,
-                                                       distance_threshold=vals[0], n_clusters=vals[1])
-                self.output_data = [self.real_df, self.rand_df]
+                self.real_df1, self.rand_df1, self.real_df2, self.rand_df2 = run_clust(df=df, real_coords=real_coords, rand_coords=rand_coords, img_path=img_path, pb=prog_wrapper,
+                                                                                       distance_threshold=vals[0], n_clusters=vals[1])
+                self.output_data = [self.real_df1, self.rand_df1, self.real_df2, self.rand_df2]
             elif wf['type'] == Workflow.NND_CLUST:
-                self.full_real_df, self.full_rand_df, self.real_df, self.rand_df = run_nnd_clust(df=df, pb=prog_wrapper,
-                                                                                                 real_coords=real_coords,
-                                                                                                 rand_coords=rand_coords,
-                                                                                                 distance_threshold=vals[0],
-                                                                                                 n_clusters=vals[1],
-                                                                                                 min_clust_size=vals[2])
-                self.output_data = [self.full_real_df, self.full_rand_df, self.real_df, self.rand_df]
+                self.real_df2, self.rand_df2, self.real_df1, self.rand_df1 = run_nnd_clust(df=df, pb=prog_wrapper,
+                                                                                           real_coords=real_coords,
+                                                                                           rand_coords=rand_coords,
+                                                                                           distance_threshold=vals[0],
+                                                                                           n_clusters=vals[1],
+                                                                                           min_clust_size=vals[2])
+                self.output_data = [self.real_df1, self.rand_df1, self.real_df2, self.rand_df2]
             elif wf['type'] == Workflow.RIPPLER:
-                self.real_df, self.rand_df = run_rippler(real_coords=real_coords, alt_coords=alt_coords, rand_coords=rand_coords,
-                                                         pb=prog_wrapper, img_path=img_path,
-                                                         mask_path=mask_path, max_steps=vals[0],
-                                                         step_size=vals[1],
-                                                       )
-                self.output_data = [self.real_df, self.rand_df]
+                self.real_df1, self.rand_df1 = run_rippler(real_coords=real_coords, alt_coords=alt_coords, rand_coords=rand_coords,
+                                                           pb=prog_wrapper, img_path=img_path,
+                                                           mask_path=mask_path, max_steps=vals[0],
+                                                           step_size=vals[1],
+                                                           )
+                self.output_data = [self.real_df1, self.rand_df1]
             elif wf['type'] == Workflow.STARFISH:
-                self.real_df, self.rand_df = run_starfish(real_coords=real_coords, rand_coords=rand_coords, alt_coords=alt_coords, pb=prog_wrapper)
-                self.output_data = [self.real_df, self.rand_df]
+                self.real_df1, self.rand_df1 = run_starfish(real_coords=real_coords, rand_coords=rand_coords, alt_coords=alt_coords, pb=prog_wrapper)
+                self.output_data = [self.real_df1, self.rand_df1]
             # elif wf['type'] == Workflow.CLUST_AREA:
             #     self.real_df, self.rand_df = run_clust_area(real_coords=real_coords, rand_coords=rand_coords, rad=30, pb=prog_wrapper, img_path=img_path, df=df)
             #     self.output_data = [self.real_df, self.rand_df]
@@ -104,10 +100,10 @@ class WorkflowPage(QWidget):
         super().__init__()
         # init class vars
         self.is_init = False
-        self.real_df = pd.DataFrame()
-        self.rand_df = pd.DataFrame()
-        self.full_real_df = pd.DataFrame()
-        self.full_rand_df = pd.DataFrame()
+        self.real_df1 = pd.DataFrame()
+        self.rand_df1 = pd.DataFrame()
+        self.real_df2 = pd.DataFrame()
+        self.rand_df2 = pd.DataFrame()
         self.final_real = pd.DataFrame()
         self.final_rand = pd.DataFrame()
         # allow referencing within functions without passing explicitly
@@ -331,13 +327,13 @@ class WorkflowPage(QWidget):
             self.display_img.save(f'{out_dir}/drawn_{wf["name"].lower()}_img.tif')
             self.graph.save(f'{out_dir}/{wf["name"].lower()}_graph.jpg')
             # if workflow fills full dfs, output those two
-            if not self.full_real_df.empty and not self.full_rand_df.empty:
-                self.full_real_df = pixels_conversion(data=self.full_real_df, unit=output_unit, scalar=self.output_scalar)
-                self.full_rand_df = pixels_conversion(data=self.full_rand_df, unit=output_unit, scalar=self.output_scalar)
-                self.full_real_df.to_csv(
+            if not self.real_df2.empty and not self.rand_df2.empty:
+                self.real_df2 = pixels_conversion(data=self.real_df2, unit=output_unit, scalar=self.output_scalar)
+                self.rand_df2 = pixels_conversion(data=self.rand_df2, unit=output_unit, scalar=self.output_scalar)
+                self.real_df2.to_csv(
                     f'{out_dir}/full_real_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False,
                     header=True)
-                self.full_rand_df.to_csv(
+                self.rand_df2.to_csv(
                     f'{out_dir}/full_rand_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False,
                     header=True)
             # TODO: if wf['type'] == Workflow.CLUST:
@@ -390,10 +386,10 @@ class WorkflowPage(QWidget):
 
     def on_receive_data(self, output_data):
         try:
-            if self.wf["type"] == Workflow.NND_CLUST:
-                self.full_real_df, self.full_rand_df, self.real_df, self.rand_df = output_data
+            if self.wf["type"] == Workflow.NND_CLUST or self.wf["type"] == Workflow.CLUST:
+                self.real_df1, self.rand_df1, self.real_df2, self.rand_df2 = output_data
             else:
-                self.real_df, self.rand_df = output_data
+                self.real_df1, self.rand_df1 = output_data
             # end
             self.progress.setValue(100)
 
@@ -428,13 +424,14 @@ class WorkflowPage(QWidget):
                 canvas = FigureCanvas(fig)
                 ax = fig.add_subplot(111)
 
-                self.real_df.sort_values(wf["graph"]["x_type"], inplace=True)
-                self.real_df = self.real_df.reset_index(drop=True)
-                self.final_real = pixels_conversion(data=self.real_df, unit=output_unit, scalar=output_scalar)
-                if wf["graph"]["x_type"] in self.rand_df.columns and len(self.rand_df[wf["graph"]["x_type"]]) > 0:
-                    self.rand_df.sort_values(wf["graph"]["x_type"], inplace=True)
-                    self.rand_df = self.rand_df.reset_index(drop=True)
-                self.final_rand = pixels_conversion(data=self.rand_df, unit=output_unit, scalar=output_scalar)
+                # fix csv index not matching id
+                self.real_df1.sort_values(wf["graph"]["x_type"], inplace=True)
+                self.real_df1 = self.real_df1.reset_index(drop=True)
+                self.final_real = pixels_conversion(data=self.real_df1, unit=output_unit, scalar=output_scalar)
+                if wf["graph"]["x_type"] in self.rand_df1.columns and len(self.rand_df1[wf["graph"]["x_type"]]) > 0:
+                    self.rand_df1.sort_values(wf["graph"]["x_type"], inplace=True)
+                    self.rand_df1 = self.rand_df1.reset_index(drop=True)
+                self.final_rand = pixels_conversion(data=self.rand_df1, unit=output_unit, scalar=output_scalar)
 
                 # convert back to proper size
                 if wf["graph"]["type"] == "hist":
@@ -551,22 +548,22 @@ class WorkflowPage(QWidget):
                 if wf["type"] == Workflow.NND:
                     # if real coords selected, annotate them on img with lines indicating length
                     if self.gen_real_cb.isChecked():
-                        drawn_img = draw_length(nnd_df=self.real_df, bin_counts=n, img=drawn_img, palette=palette, circle_c=(103, 114, 0))
+                        drawn_img = draw_length(nnd_df=self.real_df1, bin_counts=n, img=drawn_img, palette=palette, circle_c=(103, 114, 0))
                     # if rand coords selected, annotate them on img with lines indicating length
                     if self.gen_rand_cb.isChecked():
-                        drawn_img = draw_length(nnd_df=self.rand_df, bin_counts=n, img=drawn_img, palette=r_palette, circle_c=(18, 156, 232))
+                        drawn_img = draw_length(nnd_df=self.rand_df1, bin_counts=n, img=drawn_img, palette=r_palette, circle_c=(18, 156, 232))
                 elif wf["type"] == Workflow.CLUST:
                     if self.gen_real_cb.isChecked():
-                        drawn_img = draw_clust(clust_df=self.real_df, img=drawn_img, palette=palette)
+                        drawn_img = draw_clust(clust_df=self.real_df1, img=drawn_img, palette=palette)
                     if self.gen_rand_cb.isChecked():
-                        drawn_img = draw_clust(clust_df=self.rand_df, img=drawn_img, palette=r_palette)
+                        drawn_img = draw_clust(clust_df=self.rand_df1, img=drawn_img, palette=r_palette)
                 elif wf["type"] == Workflow.NND_CLUST:
                     if self.gen_real_cb.isChecked():
-                        drawn_img = draw_nnd_clust(nnd_df=self.real_df, clust_df=self.full_real_df, img=drawn_img,
-                                                   palette=palette, bin_counts=n, circle_c=(103, 114, 0),)
+                        drawn_img = draw_nnd_clust(nnd_df=self.real_df1, clust_df=self.real_df2, img=drawn_img,
+                                                   palette=palette, bin_counts=n, circle_c=(103, 114, 0), )
                     if self.gen_rand_cb.isChecked():
-                        drawn_img = draw_nnd_clust(nnd_df=self.rand_df, clust_df=self.full_rand_df, img=drawn_img,
-                                                   palette=r_palette, bin_counts=n,  circle_c=(18, 156, 232),)
+                        drawn_img = draw_nnd_clust(nnd_df=self.rand_df1, clust_df=self.rand_df2, img=drawn_img,
+                                                   palette=r_palette, bin_counts=n, circle_c=(18, 156, 232), )
                 elif wf["type"] == Workflow.RIPPLER:
                     vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
                     if self.gen_real_cb.isChecked():
@@ -576,10 +573,10 @@ class WorkflowPage(QWidget):
                 elif wf["type"] == Workflow.STARFISH:
                     # if real coords selected, annotate them on img with lines indicating length
                     if self.gen_real_cb.isChecked():
-                        drawn_img = draw_starfish(nnd_df=self.real_df, bin_counts=n, img=drawn_img, palette=palette, circle_c=(103, 114, 0))
+                        drawn_img = draw_starfish(nnd_df=self.real_df1, bin_counts=n, img=drawn_img, palette=palette, circle_c=(103, 114, 0))
                     # if rand coords selected, annotate them on img with lines indicating length
                     if self.gen_rand_cb.isChecked():
-                        drawn_img = draw_starfish(nnd_df=self.rand_df, bin_counts=n, img=drawn_img, palette=r_palette, circle_c=(18, 156, 232))
+                        drawn_img = draw_starfish(nnd_df=self.rand_df1, bin_counts=n, img=drawn_img, palette=r_palette, circle_c=(18, 156, 232))
                 # end graph display, set display img to annotated image
                 # https://stackoverflow.com/questions/33741920/convert-opencv-3-iplimage-to-pyqt5-qimage-qpixmap-in-python
                 height, width, bytesPerComponent = drawn_img.shape

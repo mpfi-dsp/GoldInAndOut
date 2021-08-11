@@ -3,7 +3,6 @@ import pandas as pd
 from sklearn.cluster import AgglomerativeClustering
 import numpy as np
 import cv2
-
 from utils import create_color_pal
 
 
@@ -51,15 +50,17 @@ def run_clust(df, pb, real_coords, rand_coords, img_path, distance_threshold=120
 
     lower_bound = np.array([0, 250, 0])
     upper_bound = np.array([40, 255, 40])
+    clust_details_dfs = []
     for data in [df, rand_df]:
-        for _id in set(df['cluster_id']):
-            clust_area = 0
-            for index, row in df[df['cluster_id'] == _id].iterrows():
+        clust_objs = []
+        for _id in set(data['cluster_id']):
+            count = np.count_nonzero(np.array(data['cluster_id']) == _id)
+            clust_obj = [_id, count, 0]  # id, size, area
+            # new_img = img_og.copy()
+            new_img = np.zeros(img_og.shape, dtype=np.uint8)
+            new_img.fill(255)  # or img[:] = 255
+            for index, row in data[data['cluster_id'] == _id].iterrows():
                 # cluster_area += (3.14 * distance_threshold * distance_threshold)
-                # TODO: make blank image and find area
-                # new_img = img_og.copy()
-                new_img = np.zeros(img_og.shape, dtype=np.uint8)
-                new_img.fill(255)  # or img[:] = 255
                 x, y = int(row['X']), int(row['Y'])
                 # thickness =  -1 for filled circle
                 og_img = cv2.circle(og_img, (x, y), radius=distance_threshold, color=(0, 255, 0)) #  thickness=-1)
@@ -69,20 +70,22 @@ def run_clust(df, pb, real_coords, rand_coords, img_path, distance_threshold=120
                 # find pface area
                 clust_cnts, clust_hierarchy = cv2.findContours(img_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
-                if _id == 0:
-                    cv2.imwrite('test1.tif', new_img)
-                # print(clust_cnts)
-
                 for cnt in clust_cnts:
                     area = cv2.contourArea(cnt)
-                    clust_area += area
+                    clust_obj[2] += area
 
-            print(_id, clust_area)
+            print(_id, clust_obj[2])
+            clust_objs.append(clust_obj)
+            # if _id == 0:
+            #     cv2.imwrite('test1.tif', new_img)
+            # print(clust_cnts)
 
-        cv2.imwrite('test.tif', og_img)
-        print('save')
+        new_df = pd.DataFrame(clust_objs, columns=["cluster_id", "size", "area"])
+        new_df = new_df.reset_index(drop=True)
+        clust_details_dfs.append(new_df)
+        # cv2.imwrite('test.tif', og_img)
 
-    return df, rand_df
+    return df, rand_df, clust_details_dfs[0], clust_details_dfs[1]
 
 
 def draw_clust(clust_df, img, palette="rocket_r"):

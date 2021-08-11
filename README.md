@@ -53,19 +53,26 @@ Below is a sample workflow using JSON structure.
 }
 ```
 4) Finally, in the `workflow.py` file, in the section labeled `ADD NEW WORKFLOWS HERE`, add an elif statement for your workflow that reads like the following:
+
 ```python
  if workflow["type"] == Workflow.NND:
-    self.real_df, self.rand_df = run_nnd(df=scaled_df, prog=prog_wrapper, random_coordinate_list=random_coords)
+    self.real_df1, self.rand_df1 = run_nnd(df=scaled_df, prog=prog_wrapper, random_coordinate_list=random_coords)
 elif workflow["type"] == YOUR_WORKFLOW_ENUM:
-    self.real_df, self.rand_df = your_workflow_function_from_custom_file(df=scaled_df, prog=prog_wrapper, random_coordinate_list=random_coords)
+self.real_df1, self.rand_df1 = your_workflow_function_from_custom_file(df=scaled_df, prog=prog_wrapper,
+                                                                       random_coordinate_list=random_coords)
 ```
 If your workflow requires custom parameters/props, use custom values. This will appear in the following format:
+
 ```python
  if workflow["type"] == Workflow.NND:
-    self.real_df, self.rand_df = run_nnd(df=scaled_df, prog=prog_wrapper, random_coordinate_list=random_coords)
+    self.real_df1, self.rand_df1 = run_nnd(df=scaled_df, prog=prog_wrapper, random_coordinate_list=random_coords)
 elif workflow["type"] == YOUR_WORKFLOW_ENUM:
-    vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else workflow['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
-    self.real_df, self.rand_df = your_workflow_function_from_custom_file(df=scaled_df, random_coordinate_list=random_coords, prog=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1], linkage=vals[2])
+vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else workflow['props'][i]['placeholder'] for i in
+        range(len(self.cstm_props))]
+self.real_df1, self.rand_df1 = your_workflow_function_from_custom_file(df=scaled_df,
+                                                                       random_coordinate_list=random_coords,
+                                                                       prog=prog_wrapper, distance_threshold=vals[0],
+                                                                       n_clusters=vals[1], linkage=vals[2])
 ```
 
 ### Compile To EXE
