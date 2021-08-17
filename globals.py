@@ -59,7 +59,7 @@ WORKFLOWS = [{
              },
             {
              "title": "draw_clust_area",
-             "placeholder": "false"
+             "placeholder": "False"
              },
         ]
     },

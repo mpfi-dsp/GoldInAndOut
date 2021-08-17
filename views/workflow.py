@@ -64,9 +64,6 @@ class AnalysisWorker(QObject):
             elif wf['type'] == Workflow.STARFISH:
                 self.real_df1, self.rand_df1 = run_starfish(real_coords=real_coords, rand_coords=rand_coords, alt_coords=alt_coords, pb=prog_wrapper)
                 self.output_data = [self.real_df1, self.rand_df1]
-            # elif wf['type'] == Workflow.CLUST_AREA:
-            #     self.real_df, self.rand_df = run_clust_area(real_coords=real_coords, rand_coords=rand_coords, rad=30, pb=prog_wrapper, img_path=img_path, df=df)
-            #     self.output_data = [self.real_df, self.rand_df]
             self.progress.emit(self.output_data)
             self.finished.emit()
         except Exception as e:
@@ -555,9 +552,9 @@ class WorkflowPage(QWidget):
                 elif wf["type"] == Workflow.CLUST:
                     vals = self.get_custom_values()
                     if self.gen_real_cb.isChecked():
-                        drawn_img = draw_clust(clust_df=self.real_df1, img=drawn_img, palette=palette, draw_clust_area=vals[2])
+                        drawn_img = draw_clust(clust_df=self.real_df1, img=drawn_img, palette=palette, distance_threshold=vals[0], draw_clust_area=vals[2])
                     if self.gen_rand_cb.isChecked():
-                        drawn_img = draw_clust(clust_df=self.rand_df1, img=drawn_img, palette=r_palette, draw_clust_area=vals[2])
+                        drawn_img = draw_clust(clust_df=self.rand_df1, img=drawn_img, palette=r_palette, distance_threshold=vals[0], draw_clust_area=vals[2])
                 elif wf["type"] == Workflow.NND_CLUST:
                     if self.gen_real_cb.isChecked():
                         drawn_img = draw_nnd_clust(nnd_df=self.real_df1, clust_df=self.real_df2, img=drawn_img,
