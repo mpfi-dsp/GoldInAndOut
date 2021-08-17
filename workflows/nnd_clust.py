@@ -3,7 +3,6 @@ import logging
 import pandas as pd
 from sklearn.cluster import AgglomerativeClustering
 import numpy as np
-from typings import Unit
 from utils import create_color_pal
 from collections import Counter
 import math
@@ -28,7 +27,7 @@ def run_nnd_clust(df, pb, real_coords, rand_coords, min_clust_size=3, distance_t
         @single: uses the minimum of the distances between all observations of the two sets
     """
 
-    # remove elements of list that show up less than k times
+    # remove elements of list that show up fewer than k times
     def minify_list(lst, k):
         counted = Counter(lst)
         return [el for el in lst if counted[el] >= k]
@@ -62,7 +61,7 @@ def run_nnd_clust(df, pb, real_coords, rand_coords, min_clust_size=3, distance_t
             n_clust = None
             d_threshold = int(d_threshold)
         # actually run sklearn clustering function
-        hc = AgglomerativeClustering(n_clusters=n_clust, distance_threshold=d_threshold, affinity=affinity, linkage=linkage)
+        hc = AgglomerativeClustering(n_clusters=n_clust, distance_threshold=d_threshold*2, affinity=affinity, linkage=linkage)
         clust = hc.fit_predict(real_coords)
         # append cluster ids to df
         data['cluster_id'] = clust

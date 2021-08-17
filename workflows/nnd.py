@@ -37,7 +37,6 @@ def run_nnd(real_coords, rand_coords, pb):
         logging.info("running nnd")
         real_nnd_list = distance_to_closest_particle(coordinate_list)
         real_df = pd.DataFrame(data={'Nearest Neighbor Distance': real_nnd_list})
-        # real_df = real_df.reset_index(drop=True)
         # clean up df
         clean_real_df = pd.DataFrame()
         clean_real_df[['og_coord', 'closest_coord', 'dist']] = pd.DataFrame(
@@ -51,7 +50,6 @@ def run_nnd(real_coords, rand_coords, pb):
             [x for x in rand_df['Nearest Neighbor Distance'].tolist()])
         return clean_real_df, clean_rand_df
 
-    # if generate_random prop enabled, create random coordinates and return results, else return real coordinates
     return nnd(coordinate_list=real_coords, random_coordinate_list=rand_coords)
 
 
@@ -74,5 +72,5 @@ def draw_length(nnd_df, bin_counts, img, palette, circle_c=(0, 0, 255)):
 
     for idx, entry in nnd_df.iterrows():
         particle_1 = tuple(int(x) for x in entry['og_coord'])
-        cv2.putText(img, str(int(idx)), org=particle_1, fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255, 255, 255),fontScale=0.5)
+        cv2.putText(img, str(int(idx)), org=particle_1, fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255, 255, 255), fontScale=0.5)
     return img

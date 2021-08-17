@@ -75,7 +75,8 @@ class WorkflowPage(QWidget):
     """
     WORKFLOW PAGE
     __________________
-    @scaled_df: dataframe containing csv coordinate data of gold particles scaled via scalar to proper unit
+    @df: dataframe containing csv coordinate data of gold particles scaled via scalar to proper unit
+    @alt_coords: dataframe containing csv coordinate data of gold particles as lighthouse population
     @wf: selected workflow, JSON object containing the following data:
         @type: ENUM type of Workflow
         @header: string displayed as "header"
@@ -90,7 +91,10 @@ class WorkflowPage(QWidget):
     @csv2: array of selected csv2 paths
     @output_unit: metric output unit
     @output_scalar: multiplier ratio between pixels and desired output metric unit
+    @output_dir: the directory to create output data in
     @delete_old: delete output data older than 5 runs
+    @nav_list: ref of navigation sidebar
+    @pg: primary loading/progress bar ref
     """
     def __init__(self, df, alt_coords=None, wf=None, img=None, mask=None, csv=None, csv2=None, output_scalar=1,
                  output_unit=Unit.PIXEL, output_dir=None, delete_old=False, nav_list=None, pg=None):
@@ -589,11 +593,7 @@ class WorkflowPage(QWidget):
                 print("scale pixmap")
                 self.image_frame.setPixmap(smaller_pixmap)
                 print("finished generating visuals")
-                # self.error_gif = QMovie("./images/caterror.gif", QByteArray(), self)
-                # self.error_gif.setCacheMode(QMovie.CacheAll)
-                # self.error_gif.setSpeed(100)
-                # self.image_frame.setMovie(self.error_gif)
-                # self.error_gif.start()
+
         except Exception as e:
             print(e, traceback.format_exc())
             print('error')
