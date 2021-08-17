@@ -1,5 +1,6 @@
 # pyQT5
 import datetime
+import logging
 import os
 import shutil
 
@@ -21,6 +22,7 @@ import cv2
 from globals import PALETTE_OPS, MAX_DIRS_PRUNE, NAV_ICON
 from typings import Unit, Workflow
 from utils import Progress, create_color_pal, enum_to_unit, to_coord_list, pixels_conversion
+from views.logger import Logger
 from workflows.clust import run_clust, draw_clust
 from workflows.gold_rippler import run_rippler, draw_rippler
 from workflows.nnd import run_nnd, draw_length
@@ -67,7 +69,10 @@ class AnalysisWorker(QObject):
             self.progress.emit(self.output_data)
             self.finished.emit()
         except Exception as e:
-            print(e, traceback.format_exc())
+            self.dlg = Logger()
+            self.dlg.show()
+            print(traceback.format_exc())
+            logging.error(traceback.format_exc())
             self.finished.emit()
 
 
@@ -116,6 +121,9 @@ class WorkflowPage(QWidget):
         self.delete_old = delete_old
         self.alt_coords = alt_coords
         self.nav_list = nav_list
+
+        # create popup error logger
+        self.dlg = Logger()
 
         # init layout
         layout = QFormLayout()
@@ -314,7 +322,7 @@ class WorkflowPage(QWidget):
                     shutil.rmtree(oldest_dir)
                 print("pruned old output")
         except Exception as e:
-            print(e, traceback.format_exc())
+            self.handle_except(traceback.format_exc())
         # download files
         try:
             print("prepare to download output")
@@ -325,7 +333,10 @@ class WorkflowPage(QWidget):
                                 index=False, header=True)
             self.final_rand.to_csv(f'{out_dir}/rand_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv',
                                 index=False, header=True)
-            self.display_img.save(f'{out_dir}/drawn_{wf["name"].lower()}_img.tif')
+            if self.display_img:
+                self.display_img.save(f'{out_dir}/drawn_{wf["name"].lower()}_img.tif')
+            else:
+                print('no display image generated. An error likely occurred running workflow.')
             self.graph.save(f'{out_dir}/{wf["name"].lower()}_graph.jpg')
             # if workflow fills full dfs, output those two
             if not self.real_df2.empty and not self.rand_df2.empty:
@@ -339,7 +350,7 @@ class WorkflowPage(QWidget):
                     header=True)
             print("downloaded output")
         except Exception as e:
-            print(e, traceback.format_exc())
+            self.handle_except(traceback.format_exc())
 
     def toggle_file_adv(self):
         """ TOGGLE GENERAL ADV OPTIONS """
@@ -383,7 +394,7 @@ class WorkflowPage(QWidget):
             self.worker.progress.connect(self.on_receive_data)
             self.thread.start()
         except Exception as e:
-            print(e, traceback.format_exc())
+            self.handle_except(traceback.format_exc())
 
     def on_receive_data(self, output_data):
         try:
@@ -411,7 +422,8 @@ class WorkflowPage(QWidget):
             #     item.setTextAlignment(Qt.AlignCenter)
             #     self.is_init = True
         except Exception as e:
-            print(e, traceback.format_exc())
+            self.handle_except(traceback.format_exc())
+
 
     def create_visuals(self, wf, n_bins, output_unit, output_scalar, n=np.zeros(11)):
         """ CREATE DATA VISUALIZATIONS """
@@ -432,7 +444,8 @@ class WorkflowPage(QWidget):
                 if wf["graph"]["x_type"] in self.rand_df1.columns and len(self.rand_df1[wf["graph"]["x_type"]]) > 0:
                     self.rand_df1.sort_values(wf["graph"]["x_type"], inplace=True)
                     self.rand_df1 = self.rand_df1.reset_index(drop=True)
-                self.final_rand = pixels_conversion(data=self.rand_df1, unit=output_unit, scalar=output_scalar)
+                if not self.rand_df1.empty:
+                    self.final_rand = pixels_conversion(data=self.rand_df1, unit=output_unit, scalar=output_scalar)
 
                 # convert back to proper size
                 if wf["graph"]["type"] == "hist":
@@ -595,11 +608,10 @@ class WorkflowPage(QWidget):
                 print("finished generating visuals")
 
         except Exception as e:
-            print(e, traceback.format_exc())
-            print('error')
             self.error_gif = QMovie("./images/caterror.gif")
             self.image_frame.setMovie(self.error_gif)
             self.error_gif.start()
+            self.handle_except(traceback.format_exc())
 
     def open_large(self, event, img):
         """ OPEN IMAGE IN VIEWER """
@@ -607,4 +619,10 @@ class WorkflowPage(QWidget):
             self.image_viewer = QImageViewer(img)
             self.image_viewer.show()
         except Exception as e:
-            print(e, traceback.format_exc())
+            self.handle_except(traceback.format_exc())
+
+    def handle_except(self, trace="An error occurred"):
+        if not self.dlg.isVisible():
+            self.dlg.show()
+        print(trace)
+        logging.error(trace)

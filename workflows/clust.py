@@ -80,15 +80,18 @@ def draw_clust(clust_df, img, palette="rocket_r", distance_threshold=30, draw_cl
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
+
+    if distance_threshold != 30 and draw_clust_area:
+        distance_threshold = int(distance_threshold)
     # make color pal
     palette = create_color_pal(n_bins=len(set(clust_df['cluster_id'])), palette_type=palette)
     # draw dots
     for idx, entry in clust_df.iterrows():
         particle = tuple(int(x) for x in [entry['X'], entry['Y']])
+        # print(palette[int(clust_df['cluster_id'][idx])])
         # TODO: remove int from this next line if able to stop from converting to float
-        print(palette[int(clust_df['cluster_id'][idx])])
         img = cv2.circle(img, particle, 10, sea_to_rgb(palette[int(clust_df['cluster_id'][idx])]), -1)
-        if draw_clust_area or draw_clust_area == "True":
+        if draw_clust_area == "True" or draw_clust_area == "true":
             img = cv2.circle(img, particle, radius=distance_threshold, color=(0, 255, 0))
             # find centroids in df w/ clusters
 
