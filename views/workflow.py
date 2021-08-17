@@ -355,7 +355,7 @@ class WorkflowPage(QWidget):
             prop.setVisible(not prop.isVisible())
 
     def get_custom_values(self):
-        return [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
+        return [self.cstm_props[i].text() if self.cstm_props[i].text() else self.wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
 
     def run(self, wf, df):
         """ RUN WORKFLOW """
