@@ -19,8 +19,8 @@ from functools import partial
 import seaborn as sns
 import cv2
 # utils
-from globals import PALETTE_OPS, MAX_DIRS_PRUNE, NAV_ICON
-from typings import Unit, Workflow
+from globals import PALETTE_OPS, MAX_DIRS_PRUNE
+from typings import Unit, Workflow, DataObj
 from utils import Progress, create_color_pal, enum_to_unit, to_coord_list, pixels_conversion
 from views.logger import Logger
 from workflows.clust import run_clust, draw_clust
@@ -29,43 +29,38 @@ from workflows.nnd import run_nnd, draw_length
 from workflows.nnd_clust import run_nnd_clust, draw_nnd_clust
 from workflows.random_coords import gen_random_coordinates
 import traceback
-
 from workflows.starfish import run_starfish, draw_starfish
-
 
 class AnalysisWorker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(object)
+    
 
     def run(self, wf, df, vals, prog_wrapper, real_coords, rand_coords, img_path, mask_path=None, alt_coords=None):
         try:
-            self.output_data = []
-
+            real_df1 = real_df2 = rand_df1 = rand_df2 = pd.DataFrame()
+            
             if wf['type'] == Workflow.NND:
-                self.real_df1, self.rand_df1 = run_nnd(real_coords=real_coords, rand_coords=rand_coords, pb=prog_wrapper)
-                self.output_data = [self.real_df1, self.rand_df1]
+                real_df1, rand_df1 = run_nnd(real_coords=real_coords, rand_coords=rand_coords, pb=prog_wrapper)
             elif wf['type'] == Workflow.CLUST:
-                self.real_df1, self.rand_df1, self.real_df2, self.rand_df2 = run_clust(df=df, real_coords=real_coords, rand_coords=rand_coords, img_path=img_path, pb=prog_wrapper,
-                                                                                       distance_threshold=vals[0], n_clusters=vals[1])
-                self.output_data = [self.real_df1, self.rand_df1, self.real_df2, self.rand_df2]
+                real_df1, rand_df1, real_df2, rand_df2 = run_clust(df=df, real_coords=real_coords, rand_coords=rand_coords, img_path=img_path, pb=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1])
             elif wf['type'] == Workflow.NND_CLUST:
-                self.real_df2, self.rand_df2, self.real_df1, self.rand_df1 = run_nnd_clust(df=df, pb=prog_wrapper,
+                real_df2, rand_df2, real_df1, rand_df1 = run_nnd_clust(df=df, pb=prog_wrapper,
                                                                                            real_coords=real_coords,
                                                                                            rand_coords=rand_coords,
                                                                                            distance_threshold=vals[0],
                                                                                            n_clusters=vals[1],
                                                                                            min_clust_size=vals[2])
-                self.output_data = [self.real_df1, self.rand_df1, self.real_df2, self.rand_df2]
             elif wf['type'] == Workflow.RIPPLER:
-                self.real_df1, self.rand_df1 = run_rippler(real_coords=real_coords, alt_coords=alt_coords, rand_coords=rand_coords,
+                real_df1, rand_df1 = run_rippler(real_coords=real_coords, alt_coords=alt_coords, rand_coords=rand_coords,
                                                            pb=prog_wrapper, img_path=img_path,
                                                            mask_path=mask_path, max_steps=vals[0],
                                                            step_size=vals[1],
                                                            )
-                self.output_data = [self.real_df1, self.rand_df1]
             elif wf['type'] == Workflow.STARFISH:
-                self.real_df1, self.rand_df1 = run_starfish(real_coords=real_coords, rand_coords=rand_coords, alt_coords=alt_coords, pb=prog_wrapper)
-                self.output_data = [self.real_df1, self.rand_df1]
+                real_df1, rand_df1 = run_starfish(real_coords=real_coords, rand_coords=rand_coords, alt_coords=alt_coords, pb=prog_wrapper)
+
+            self.output_data = DataObj(real_df1, real_df2, rand_df1, rand_df2)
             self.progress.emit(self.output_data)
             self.finished.emit()
         except Exception as e:
@@ -98,20 +93,14 @@ class WorkflowPage(QWidget):
     @output_scalar: multiplier ratio between pixels and desired output metric unit
     @output_dir: the directory to create output data in
     @delete_old: delete output data older than 5 runs
-    @nav_list: ref of navigation sidebar
     @pg: primary loading/progress bar ref
     """
     def __init__(self, df, alt_coords=None, wf=None, img=None, mask=None, csv=None, csv2=None, output_scalar=1,
-                 output_unit=Unit.PIXEL, output_dir=None, delete_old=False, nav_list=None, pg=None):
+                 output_unit=Unit.PIXEL, output_dir=None, delete_old=False, pg=None):
         super().__init__()
         # init class vars
         self.is_init = False
-        self.real_df1 = pd.DataFrame()
-        self.rand_df1 = pd.DataFrame()
-        self.real_df2 = pd.DataFrame()
-        self.rand_df2 = pd.DataFrame()
-        self.final_real = pd.DataFrame()
-        self.final_rand = pd.DataFrame()
+        self.data: DataObj
         # allow referencing within functions without passing explicitly
         self.wf = wf
         self.pg = pg
@@ -120,7 +109,6 @@ class WorkflowPage(QWidget):
         self.output_dir = output_dir
         self.delete_old = delete_old
         self.alt_coords = alt_coords
-        self.nav_list = nav_list
 
         # create popup error logger
         self.dlg = Logger()
@@ -302,55 +290,12 @@ class WorkflowPage(QWidget):
         # assign layout
         self.setLayout(layout)
         # run on init
+        # TODO: handle this better
         self.run(wf, df)
 
     def update_progress(self, value):
         """ UPDATE PROGRESS BAR """
         self.progress.setValue(value)
-
-    def download(self, output_unit, wf, delete_old):
-        """ DOWNLOAD FILES """
-        out_start = self.output_dir if self.output_dir is not None else './output'
-        try:
-            # delete old files to make space if applicable
-            o_dir = f'{out_start}/{wf["name"].lower()}'
-            if delete_old:
-                while len(os.listdir(o_dir)) >= MAX_DIRS_PRUNE:
-                    oldest_dir = \
-                        sorted([os.path.abspath(f'{o_dir}/{f}') for f in os.listdir(o_dir)], key=os.path.getctime)[0]
-                    print("pruning ", oldest_dir)
-                    shutil.rmtree(oldest_dir)
-                print("pruned old output")
-        except Exception as e:
-            self.handle_except(traceback.format_exc())
-        # download files
-        try:
-            print("prepare to download output")
-            img_name = os.path.splitext(os.path.basename(self.img_drop.currentText()))[0]
-            out_dir = f'{out_start}/{wf["name"].lower()}/{img_name}-{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
-            os.makedirs(out_dir, exist_ok=True)
-            self.final_real.to_csv(f'{out_dir}/real_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv',
-                                index=False, header=True)
-            self.final_rand.to_csv(f'{out_dir}/rand_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv',
-                                index=False, header=True)
-            if self.display_img:
-                self.display_img.save(f'{out_dir}/drawn_{wf["name"].lower()}_img.tif')
-            else:
-                print('no display image generated. An error likely occurred running workflow.')
-            self.graph.save(f'{out_dir}/{wf["name"].lower()}_graph.jpg')
-            # if workflow fills full dfs, output those two
-            if not self.real_df2.empty and not self.rand_df2.empty:
-                self.real_df2 = pixels_conversion(data=self.real_df2, unit=output_unit, scalar=self.output_scalar)
-                self.rand_df2 = pixels_conversion(data=self.rand_df2, unit=output_unit, scalar=self.output_scalar)
-                self.real_df2.to_csv(
-                    f'{out_dir}/detailed_real_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False,
-                    header=True)
-                self.rand_df2.to_csv(
-                    f'{out_dir}/detailed_rand_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False,
-                    header=True)
-            print("downloaded output")
-        except Exception as e:
-            self.handle_except(traceback.format_exc())
 
     def toggle_file_adv(self):
         """ TOGGLE GENERAL ADV OPTIONS """
@@ -367,6 +312,19 @@ class WorkflowPage(QWidget):
 
     def get_custom_values(self):
         return [self.cstm_props[i].text() if self.cstm_props[i].text() else self.wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
+
+    def download(self, output_unit, wf, delete_old=False):
+        print('download')
+        # self.dl_thread = QThread()
+        # self.dl_worker = AnalysisWorker()
+        # self.worker.moveToThread(self.dl_thread)
+        # self.dl_thread.started.connect(partial(self.dl_worker.run, wf, df, vals, prog_wrapper, self.real_coords,
+        #                                        self.rand_coords, self.img_drop.currentText(), self.mask_drop.currentText(), self.alt_coords))
+        # self.dl_worker.finished.connect(self.dl_thread.quit)
+        # self.dl_worker.finished.connect(self.dl_worker.deleteLater)
+        # self.dl_thread.finished.connect(self.dl_thread.deleteLater)
+        # self.dl_worker.progress.connect(self.on_receive_data)
+        # self.dl_thread.start()
 
     def run(self, wf, df):
         """ RUN WORKFLOW """
@@ -398,29 +356,19 @@ class WorkflowPage(QWidget):
 
     def on_receive_data(self, output_data):
         try:
-            if self.wf["type"] == Workflow.NND_CLUST or self.wf["type"] == Workflow.CLUST:
-                self.real_df1, self.rand_df1, self.real_df2, self.rand_df2 = output_data
-            else:
-                self.real_df1, self.rand_df1 = output_data
-            # end
-            self.progress.setValue(100)
-
+            self.data = output_data
+            # TODO: handle this better 
             # create ui scheme
-            self.create_visuals(wf=self.wf, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), output_unit=self.output_unit, output_scalar=self.output_scalar)
-            # download files automatically
+            # self.create_visuals(wf=self.wf, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), output_unit=self.output_unit, output_scalar=self.output_scalar)
+            # # download files automatically
             self.download(output_unit=self.output_unit, wf=self.wf, delete_old=self.delete_old)
             self.download_btn.setStyleSheet(
                 "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
+            self.progress.setValue(100)
 
             if self.is_init is False:
                 self.pg()
                 self.is_init = True
-            #     # add icon to navbar
-            #     item = QListWidgetItem(
-            #         NAV_ICON, str(self.wf['name']), self.nav_list)
-            #     item.setSizeHint(QSize(60, 60))
-            #     item.setTextAlignment(Qt.AlignCenter)
-            #     self.is_init = True
         except Exception as e:
             self.handle_except(traceback.format_exc())
 
@@ -438,26 +386,26 @@ class WorkflowPage(QWidget):
                 ax = fig.add_subplot(111)
 
                 # fix csv index not matching id
-                self.real_df1.sort_values(wf["graph"]["x_type"], inplace=True)
-                self.real_df1 = self.real_df1.reset_index(drop=True)
-                self.final_real = pixels_conversion(data=self.real_df1, unit=output_unit, scalar=output_scalar)
-                if wf["graph"]["x_type"] in self.rand_df1.columns and len(self.rand_df1[wf["graph"]["x_type"]]) > 0:
-                    self.rand_df1.sort_values(wf["graph"]["x_type"], inplace=True)
-                    self.rand_df1 = self.rand_df1.reset_index(drop=True)
-                if not self.rand_df1.empty:
-                    self.final_rand = pixels_conversion(data=self.rand_df1, unit=output_unit, scalar=output_scalar)
+                self.data.real_df1.sort_values(wf["graph"]["x_type"], inplace=True)
+                self.data.real_df1 = self.data.real_df1.reset_index(drop=True)
+                self.data.final_real = pixels_conversion(data=self.data.real_df1, unit=output_unit, scalar=output_scalar)
+                if wf["graph"]["x_type"] in self.data.rand_df1.columns and len(self.data.rand_df1[wf["graph"]["x_type"]]) > 0:
+                    self.data.rand_df1.sort_values(wf["graph"]["x_type"], inplace=True)
+                    self.data.rand_df1 = self.data.rand_df1.reset_index(drop=True)
+                if not self.data.rand_df1.empty:
+                    self.data.final_rand = pixels_conversion(data=self.data.rand_df1, unit=output_unit, scalar=output_scalar)
 
                 # convert back to proper size
                 if wf["graph"]["type"] == "hist":
                     # create histogram
                     if self.gen_real_cb.isChecked() and not self.gen_rand_cb.isChecked():
-                        graph_df = self.final_real[wf["graph"]["x_type"]]
+                        graph_df = self.data.final_real[wf["graph"]["x_type"]]
                         cm = sns.color_palette(self.pal_type.currentText(), as_cmap=True)
                         ax.set_title(f'{wf["graph"]["title"]} (Real)')
                     elif self.gen_rand_cb.isChecked() and not self.gen_real_cb.isChecked():
                         ax.set_title(f'{wf["graph"]["title"]} (Rand)')
                         cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
-                        graph_df = self.final_rand[wf["graph"]["x_type"]]
+                        graph_df = self.data.final_rand[wf["graph"]["x_type"]]
                     if self.gen_real_cb.isChecked() and not self.gen_rand_cb.isChecked() or self.gen_rand_cb.isChecked() and not self.gen_real_cb.isChecked():
                         # draw graph
                         n, bins, patches = ax.hist(graph_df, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), color='green')
@@ -466,8 +414,8 @@ class WorkflowPage(QWidget):
                         for c, p in zip(col, patches):
                             p.set_facecolor(cm(c))
                     elif self.gen_real_cb.isChecked() and self.gen_rand_cb.isChecked():
-                        rand_graph = self.final_rand[wf["graph"]["x_type"]]
-                        real_graph = self.final_real[wf["graph"]["x_type"]]
+                        rand_graph = self.data.final_rand[wf["graph"]["x_type"]]
+                        real_graph = self.data.final_real[wf["graph"]["x_type"]]
                         ax.hist(rand_graph, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), alpha=0.75, color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()), label='Rand')
                         n, bins, patches = ax.hist(real_graph, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), alpha=0.75, color=create_color_pal(n_bins=1, palette_type=self.pal_type.currentText()), label='Real')
                         ax.set_title(f'{wf["graph"]["title"]} (Real & Rand)')
@@ -477,22 +425,22 @@ class WorkflowPage(QWidget):
                     if self.gen_real_cb.isChecked():
                         cm = sns.color_palette(self.pal_type.currentText(), as_cmap=True)
                         ax.set_title(f'{wf["graph"]["title"]} (Real)')
-                        graph_df = self.final_real
+                        graph_df = self.data.final_real
                     elif self.gen_rand_cb.isChecked():
                         ax.set_title(f'{wf["graph"]["title"]} (Rand)')
                         cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
-                        graph_df = self.final_rand
+                        graph_df = self.data.final_rand
                     ax.plot(graph_df[wf["graph"]["x_type"]], graph_df[wf["graph"]["y_type"]], color='blue')
                 elif wf["graph"]["type"] == "bar":
                     # create bar graph
                     if self.gen_real_cb.isChecked():
                         c = 1
                         ax.set_title(f'{wf["graph"]["title"]} (Real)')
-                        graph_y = self.final_rand[wf["graph"]["y_type"]],
-                        graph_x = np.array(self.final_real[wf["graph"]["x_type"]])
+                        graph_y = self.data.final_rand[wf["graph"]["y_type"]],
+                        graph_x = np.array(self.data.final_real[wf["graph"]["x_type"]])
                         # print(self.real_df[wf["graph"]["y_type"]], np.array(self.real_df[wf["graph"]["y_type"]]))
                         if wf['type'] == Workflow.CLUST:
-                            graph_y = np.bincount(np.bincount(self.final_real[wf["graph"]["x_type"]]))[1:]
+                            graph_y = np.bincount(np.bincount(self.data.final_real[wf["graph"]["x_type"]]))[1:]
                             graph_x = list(range(1, (len(graph_y) + 1)))
                             c = len(graph_x)
                         c = create_color_pal(n_bins=c, palette_type=self.pal_type.currentText())
@@ -500,10 +448,10 @@ class WorkflowPage(QWidget):
                     elif self.gen_rand_cb.isChecked():
                         ax.set_title(f'{wf["graph"]["title"]} (Rand)')
                         c = 1
-                        graph_y = self.final_rand[wf["graph"]["y_type"]],
-                        graph_x = np.array(self.final_real[wf["graph"]["x_type"]])
+                        graph_y = self.data.final_rand[wf["graph"]["y_type"]],
+                        graph_x = np.array(self.data.final_real[wf["graph"]["x_type"]])
                         if wf['type'] == Workflow.CLUST:
-                            graph_y = np.bincount(np.bincount(self.final_rand[wf["graph"]["x_type"]]))[1:]
+                            graph_y = np.bincount(np.bincount(self.data.final_rand[wf["graph"]["x_type"]]))[1:]
                             graph_x = list(range(1, (len(graph_y)+1)))
                             c = len(graph_x)
                         c = create_color_pal(n_bins=c, palette_type=self.r_pal_type.currentText())
@@ -522,13 +470,13 @@ class WorkflowPage(QWidget):
                                         ha='center', va='bottom', rotation=0)
 
                     elif self.gen_real_cb.isChecked() and self.gen_rand_cb.isChecked():
-                        real_graph_y = np.bincount(np.bincount(self.final_real[wf["graph"]["x_type"]]))[1:]
+                        real_graph_y = np.bincount(np.bincount(self.data.final_real[wf["graph"]["x_type"]]))[1:]
                         real_graph_x = list(range(1, (len(set(real_graph_y)))+1))
-                        rand_graph_y = np.bincount(np.bincount(self.final_rand[wf["graph"]["x_type"]]))[1:]
+                        rand_graph_y = np.bincount(np.bincount(self.data.final_rand[wf["graph"]["x_type"]]))[1:]
                         rand_graph_x = list(range(1, (len(set(rand_graph_y)))+1))
                         if wf['type'] == Workflow.RIPPLER:
-                            ax.bar([el - 5 for el in np.array(self.final_rand[wf["graph"]["x_type"]])], np.array(self.final_rand[wf["graph"]["y_type"]]), width=20, alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()), label='Rand')
-                            ax.bar([el + 5 for el in np.array(self.final_real[wf["graph"]["x_type"]])], np.array(self.final_real[wf["graph"]["y_type"]]), width=20, alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.pal_type.currentText()), label='Real')
+                            ax.bar([el - 5 for el in np.array(self.data.final_rand[wf["graph"]["x_type"]])], np.array(self.data.final_rand[wf["graph"]["y_type"]]), width=20, alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()), label='Rand')
+                            ax.bar([el + 5 for el in np.array(self.data.final_real[wf["graph"]["x_type"]])], np.array(self.data.final_real[wf["graph"]["y_type"]]), width=20, alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.pal_type.currentText()), label='Real')
                         else:
                             ax.bar(rand_graph_x, rand_graph_y, color=create_color_pal(n_bins=len(rand_graph_x), palette_type=self.r_pal_type.currentText()), alpha=0.7,  label='Rand')
                             ax.bar(real_graph_x, real_graph_y, color=create_color_pal(n_bins=len(real_graph_x), palette_type=self.pal_type.currentText()),  alpha=0.7, label='Real')
@@ -562,22 +510,22 @@ class WorkflowPage(QWidget):
                 if wf["type"] == Workflow.NND:
                     # if real coords selected, annotate them on img with lines indicating length
                     if self.gen_real_cb.isChecked():
-                        drawn_img = draw_length(nnd_df=self.real_df1, bin_counts=n, img=drawn_img, palette=palette, circle_c=(103, 114, 0))
+                        drawn_img = draw_length(nnd_df=self.data.real_df1, bin_counts=n, img=drawn_img, palette=palette, circle_c=(103, 114, 0))
                     # if rand coords selected, annotate them on img with lines indicating length
                     if self.gen_rand_cb.isChecked():
-                        drawn_img = draw_length(nnd_df=self.rand_df1, bin_counts=n, img=drawn_img, palette=r_palette, circle_c=(18, 156, 232))
+                        drawn_img = draw_length(nnd_df=self.data.rand_df1, bin_counts=n, img=drawn_img, palette=r_palette, circle_c=(18, 156, 232))
                 elif wf["type"] == Workflow.CLUST:
                     vals = self.get_custom_values()
                     if self.gen_real_cb.isChecked():
-                        drawn_img = draw_clust(clust_df=self.real_df1, img=drawn_img, palette=palette, distance_threshold=vals[0], draw_clust_area=vals[2])
+                        drawn_img = draw_clust(clust_df=self.data.real_df1, img=drawn_img, palette=palette, distance_threshold=vals[0], draw_clust_area=vals[2])
                     if self.gen_rand_cb.isChecked():
-                        drawn_img = draw_clust(clust_df=self.rand_df1, img=drawn_img, palette=r_palette, distance_threshold=vals[0], draw_clust_area=vals[2])
+                        drawn_img = draw_clust(clust_df=self.data.rand_df1, img=drawn_img, palette=r_palette, distance_threshold=vals[0], draw_clust_area=vals[2])
                 elif wf["type"] == Workflow.NND_CLUST:
                     if self.gen_real_cb.isChecked():
-                        drawn_img = draw_nnd_clust(nnd_df=self.real_df1, clust_df=self.real_df2, img=drawn_img,
+                        drawn_img = draw_nnd_clust(nnd_df=self.data.real_df1, clust_df=self.data.real_df2, img=drawn_img,
                                                    palette=palette, bin_counts=n, circle_c=(103, 114, 0), )
                     if self.gen_rand_cb.isChecked():
-                        drawn_img = draw_nnd_clust(nnd_df=self.rand_df1, clust_df=self.rand_df2, img=drawn_img,
+                        drawn_img = draw_nnd_clust(nnd_df=self.data.rand_df1, clust_df=self.data.rand_df2, img=drawn_img,
                                                    palette=r_palette, bin_counts=n, circle_c=(18, 156, 232), )
                 elif wf["type"] == Workflow.RIPPLER:
                     vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
@@ -588,10 +536,10 @@ class WorkflowPage(QWidget):
                 elif wf["type"] == Workflow.STARFISH:
                     # if real coords selected, annotate them on img with lines indicating length
                     if self.gen_real_cb.isChecked():
-                        drawn_img = draw_starfish(nnd_df=self.real_df1, bin_counts=n, img=drawn_img, palette=palette, circle_c=(103, 114, 0))
+                        drawn_img = draw_starfish(nnd_df=self.data.real_df1, bin_counts=n, img=drawn_img, palette=palette, circle_c=(103, 114, 0))
                     # if rand coords selected, annotate them on img with lines indicating length
                     if self.gen_rand_cb.isChecked():
-                        drawn_img = draw_starfish(nnd_df=self.rand_df1, bin_counts=n, img=drawn_img, palette=r_palette, circle_c=(18, 156, 232))
+                        drawn_img = draw_starfish(nnd_df=self.data.rand_df1, bin_counts=n, img=drawn_img, palette=r_palette, circle_c=(18, 156, 232))
                 # end graph display, set display img to annotated image
                 # https://stackoverflow.com/questions/33741920/convert-opencv-3-iplimage-to-pyqt5-qimage-qpixmap-in-python
                 height, width, bytesPerComponent = drawn_img.shape
@@ -626,3 +574,66 @@ class WorkflowPage(QWidget):
             self.dlg.show()
         print(trace)
         logging.error(trace)
+
+
+class DownloadWorker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(object)
+
+    def run(self, wf, delete_old, output_unit, output_dir, output_scalar, img_drop, final_real, final_rand, display_img, graph, real_df2, rand_df2):
+        """ DOWNLOAD FILES """
+        try:
+            out_start = output_dir if output_dir is not None else './output'
+            # delete old files to make space if applicable
+            o_dir = f'{out_start}/{wf["name"].lower()}'
+            if delete_old:
+                while len(os.listdir(o_dir)) >= MAX_DIRS_PRUNE:
+                    oldest_dir = \
+                        sorted([os.path.abspath(
+                            f'{o_dir}/{f}') for f in os.listdir(o_dir)], key=os.path.getctime)[0]
+                    print("pruning ", oldest_dir)
+                    shutil.rmtree(oldest_dir)
+                print("pruned old output")
+        except Exception as e:
+            self.dlg = Logger()
+            self.dlg.show()
+            logging.error(traceback.format_exc())
+            self.finished.emit()
+          
+        # download files
+        try:
+            print("prepare to download output")
+            img_name = os.path.splitext(
+                os.path.basename(img_drop.currentText()))[0]
+            out_dir = f'{out_start}/{wf["name"].lower()}/{img_name}-{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
+            os.makedirs(out_dir, exist_ok=True)
+            final_real.to_csv(f'{out_dir}/real_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv',
+                                   index=False, header=True)
+            final_rand.to_csv(f'{out_dir}/rand_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv',
+                                   index=False, header=True)
+            if display_img:
+                display_img.save(
+                    f'{out_dir}/drawn_{wf["name"].lower()}_img.tif')
+            else:
+                print(
+                    'no display image generated. An error likely occurred running workflow.')
+            graph.save(f'{out_dir}/{wf["name"].lower()}_graph.jpg')
+            # if workflow fills full dfs, output those two
+            if not real_df2.empty and not rand_df2.empty:
+                real_df2 = pixels_conversion(
+                    data=real_df2, unit=output_unit, scalar=output_scalar)
+                rand_df2 = pixels_conversion(
+                    data=rand_df2, unit=output_unit, scalar=output_scalar)
+                real_df2.to_csv(
+                    f'{out_dir}/detailed_real_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False,
+                    header=True)
+                rand_df2.to_csv(
+                    f'{out_dir}/detailed_rand_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False,
+                    header=True)
+            print("downloaded output")
+        except Exception as e:
+            self.dlg = Logger()
+            self.dlg.show()
+            logging.error(traceback.format_exc())
+            self.finished.emit()
+          

@@ -1,5 +1,6 @@
 from PyQt5.QtGui import QIcon
-from typings import Workflow
+from typings import Workflow, WorkflowObj
+from typing import List
 
 """
 WORKFLOW METADATA 
@@ -22,7 +23,8 @@ Array of JSON objects containing the following data:
         @placeholder: placeholder for prop label
 """
 # TODO: ADD NEW WORKFLOW METADATA HERE
-WORKFLOWS = [{
+WORKFLOWS: List[WorkflowObj] = [
+    {
     "name": "NND",
     "type": Workflow.NND,
     "header": "Nearest Neighbor Distance",
@@ -134,28 +136,14 @@ WORKFLOWS = [{
         },
         "props": []
     },
-    # {
-    #     "name": "CLUST-AREA",
-    #     "type": Workflow.CLUST_AREA,
-    #     "header": "Cluster Area ",
-    #     "desc": "Find the cluster area.",
-    #     "graph": {
-    #         "type": "hist",
-    #         "title": "Nearest Neighbor Distances of Different Pops",
-    #         "x_label": "Nearest Neighbor Distance",
-    #         "y_label": "Number of Entries",
-    #         "x_type": "dist"
-    #     },
-    #     "props": []
-    # }
 ]
 
 """ COLOR PALETTE OPTIONS """
-PALETTE_OPS = ["rocket", "crest", "mako", "flare", "viridis", "magma", "cubehelix", "rocket_r", "mako_r", "crest_r",
+PALETTE_OPS: List[str] = ["rocket", "crest", "mako", "flare", "viridis", "magma", "cubehelix", "rocket_r", "mako_r", "crest_r",
                "flare_r", "viridis_r", "magma_r", ]
 
 """ METRIC UNIT OPTIONS """
-UNIT_OPS = ['px', 'nm', 'μm', 'metric']
+UNIT_OPS: List[str] = ['px', 'nm', 'μm', 'metric']
 
 """ UNIT SCALARS """
 UNIT_PX_SCALARS = {
@@ -169,7 +157,7 @@ UNIT_PX_SCALARS = {
 NAV_ICON = QIcon('foo.png')
 
 """ MAX DIRS TO KEEP WHEN PRUNING OLD DIRS """
-MAX_DIRS_PRUNE = 5
+MAX_DIRS_PRUNE: int = 5
 
 """ DEFAULT OUTPUT DIRECTORY """
-DEFAULT_OUTPUT_DIR = './output'
+DEFAULT_OUTPUT_DIR: str = './output'

@@ -33,8 +33,8 @@ class GoldInAndOut(QWidget):
         current_directory = str(pathlib.Path(__file__).parent.absolute())
         iconp = current_directory + '/logo.ico'
         self.setWindowIcon(QIcon(iconp))
-        # self.setMinimumSize(QSize(900, 1100))
-        # self.setMaximumSize(QSize(900, 1100))
+        self.setMinimumSize(QSize(800, 1000))
+        # self.setMaximumSize(QSize(800, 1100))
         # set max threads
         numexpr.set_num_threads(numexpr.detect_number_of_cores())
 
@@ -69,16 +69,11 @@ class GoldInAndOut(QWidget):
         self.nav_list.item(0).setSelected(True)
         self.home_page.show_logs.clicked.connect(self.open_logger)
 
+
     def on_run_complete(self):
         self.home_page.start_btn.setEnabled(True)
         self.home_page.start_btn.setText("Run Again")
         self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #E89C12")
-        for i in range(len(WORKFLOWS)):
-            if self.home_page.workflow_cbs[i].isChecked():
-                item = QListWidgetItem(
-                        NAV_ICON, str(WORKFLOWS[i]['name']), self.nav_list)
-                item.setSizeHint(QSize(60, 60))
-                item.setTextAlignment(Qt.AlignCenter)
         self.home_page.progress.setValue(100)
 
         # self.w = QMainWindow()
@@ -113,16 +108,16 @@ class GoldInAndOut(QWidget):
             # item2.setFlags(Qt.NoItemFlags)
 
             # TODO: remove when no longer using for testing
-            img_drop = [self.home_page.img_le.text()] if len(self.home_page.img_le.text()) > 0 else ["./input/example_image.tif"]
-            mask_drop = self.home_page.mask_le.text() # [self.home_page.mask_le.text()] if len(self.home_page.mask_le.text()) > 0 else ["./input/example_mask.tif"]
-            csv_drop = [self.home_page.csv_le.text()] if len(self.home_page.csv_le.text()) > 0 else ["./input/example_csv.csv"]
-            csv2_drop = [self.home_page.csv2_le.text()] # if len(self.home_page.csv2_le.text()) > 0 else ["./input/example_csv.csv"]
+            img_drop: list = [self.home_page.img_le.text()] if len(self.home_page.img_le.text()) > 0 else ["./input/example_image.tif"]
+            mask_drop: list = [self.home_page.mask_le.text()] if len(self.home_page.mask_le.text()) > 0 else ["./input/example_mask.tif"]
+            csv_drop: list = [self.home_page.csv_le.text()] if len(self.home_page.csv_le.text()) > 0 else ["./input/example_csv.csv"]
+            csv2_drop: list = [self.home_page.csv2_le.text()] # if len(self.home_page.csv2_le.text()) > 0 else ["./input/example_csv.csv"]
             # input/output units
-            ou = unit_to_enum(self.home_page.op_scalar_type.currentText() if self.home_page.op_scalar_type.currentText() is not None else 'px')
+            ou: Unit = unit_to_enum(self.home_page.op_scalar_type.currentText() if self.home_page.op_scalar_type.currentText() is not None else 'px')
             # scalar
-            s_o = float(self.home_page.csvs_ip_o.text() if len(self.home_page.csvs_ip_o.text()) > 0 else 1)
-            dod = self.home_page.dod_cb.isChecked()
-            o_dir = self.home_page.output_dir_le.text() if len(self.home_page.output_dir_le.text()) > 0 else DEFAULT_OUTPUT_DIR
+            s_o: float = float(self.home_page.csvs_ip_o.text() if len(self.home_page.csvs_ip_o.text()) > 0 else 1)
+            dod: bool = self.home_page.dod_cb.isChecked()
+            o_dir: str = self.home_page.output_dir_le.text() if len(self.home_page.output_dir_le.text()) > 0 else DEFAULT_OUTPUT_DIR
 
             wf_td = 0
             for wf_cb in self.home_page.workflow_cbs:
@@ -133,6 +128,10 @@ class GoldInAndOut(QWidget):
             for i in range(len(WORKFLOWS)):
                 if self.home_page.workflow_cbs[i].isChecked():
                     z += 1
+                    item = QListWidgetItem(
+                            NAV_ICON, str(WORKFLOWS[i]['name']), self.nav_list)
+                    item.setSizeHint(QSize(60, 60))
+                    item.setTextAlignment(Qt.AlignCenter)
                     # generate workflow page
                     print(WORKFLOWS[i]['name'])
                     self.page_stack.addWidget(
@@ -147,7 +146,6 @@ class GoldInAndOut(QWidget):
                                      output_unit=ou,
                                      output_dir=o_dir,
                                      delete_old=dod,
-                                     nav_list=self.nav_list,
                                      pg=partial(self.update_main_progress, (int((z / wf_td * 100))))
                                      ))
         except Exception as e:

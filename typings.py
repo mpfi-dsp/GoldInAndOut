@@ -1,4 +1,7 @@
 from enum import Enum
+from typing_extensions import TypedDict
+from typing import List
+import pandas as pd
 
 class Workflow(Enum):
     NND = 1
@@ -20,3 +23,54 @@ class FileType(Enum):
     MASK = 2
     CSV = 3
     CSV2 = 4
+
+
+class WorkflowGraph(TypedDict):
+    type: str
+    title: str
+    x_label: str
+    y_label: str
+    x_type: str
+
+
+class WorkflowProps(TypedDict):
+    title: str
+    placeholder: str
+
+
+
+class WorkflowObj(TypedDict):
+   name: str
+   type: Workflow
+   header: str
+   desc: str
+   checked: bool
+   graph: WorkflowGraph
+   props: List[WorkflowProps]
+
+
+class DataObj:
+    real_df1: pd.DataFrame
+    real_df2: pd.DataFrame
+    rand_df1: pd.DataFrame
+    rand_df2: pd.DataFrame
+    final_real: pd.DataFrame
+    final_rand: pd.DataFrame
+
+    # def __init__():
+    #     real_df1 = pd.DataFrame()
+    #     real_df2 = pd.DataFrame()
+    #     rand_df1 = pd.DataFrame()
+    #     rand_df2 = pd.DataFrame()
+    #     final_real = pd.DataFrame()
+    #     final_rand = pd.DataFrame()
+
+    def __init__(self, real_df1: pd.DataFrame, real_df2: pd.DataFrame, rand_df1: pd.DataFrame, rand_df2: pd.DataFrame):
+        self.real_df1 = real_df1
+        self.real_df2 = real_df2
+        self.rand_df1 = rand_df1
+        self.rand_df2 = rand_df2
+        self.final_real = pd.DataFrame()
+        self.final_rand = pd.DataFrame()
+    
+
