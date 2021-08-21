@@ -25,11 +25,23 @@ def gen_random_coordinates(img_path, mask_path, count=0):
                 num += 1
         # print(f"The total number of particles inside the p-face are {count}.")
         return coords
+
+    if len(img_path) == 0:
+        return []
     # import img
     img_original = cv2.imread(img_path)
     crop = img_original.shape
-    img_pface = cv2.imread(mask_path)
+
+    if len(mask_path) > 0:
+        img_pface = cv2.imread(mask_path)
+    else:
+        print('creating')
+        img_pface = np.zeros(crop, dtype=np.uint8)
+        print('filling')
+        img_pface.fill(245)
+    print('cropping')
     img_pface = img_pface[:crop[0], :crop[1], :3]
+
     # grab contours of pface
     lower_bound = np.array([239, 174, 0])
     upper_bound = np.array([254, 254, 254])

@@ -160,19 +160,19 @@ class WorkflowPage(QWidget):
         img_lb = QLabel("image")
         img_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.img_drop = QComboBox()
-        self.img_drop.addItems(img)
+        self.img_drop.addItems(img or [""])
         layout.addRow(img_lb, self.img_drop)  # csv
         # mask path
         mask_lb = QLabel("mask")
         mask_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.mask_drop = QComboBox()
-        self.mask_drop.addItems(mask)
+        self.mask_drop.addItems(mask or [""])
         layout.addRow(mask_lb, self.mask_drop)
         # csv
         csv_lb = QLabel("csv")
         csv_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.csv_drop = QComboBox()
-        self.csv_drop.addItems(csv)
+        self.csv_drop.addItems(csv or [""])
         layout.addRow(csv_lb, self.csv_drop)
 
         # hide hidden props by default

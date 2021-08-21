@@ -58,15 +58,16 @@ def pixels_conversion(data, unit=Unit.PIXEL, scalar=1, r=5):
                 new_col = []
                 for tup in data[col]:
                     if unit == Unit.PIXEL:
-                        new_col.append(tuple([round((x / scalar), r) for x in tup]))
-                    else:
                         new_col.append(tuple([round((x * scalar), r) for x in tup]))
+                    else:
+                        new_col.append(tuple([round((x / scalar), r) for x in tup]))
                 data[col] = new_col
             else:
                 if unit == Unit.PIXEL:
-                    data[col] = round(data[col].div(scalar), r)
-                else:
                     data[col] = round((data[col] * scalar), r)
+                else:
+                    data[col] = round(data[col].div(scalar), r)
+
 
     return data
 

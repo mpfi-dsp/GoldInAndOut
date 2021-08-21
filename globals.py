@@ -9,6 +9,7 @@ Array of JSON objects containing the following data:
     @type: ENUM type of Workflow
     @header: string displayed as "header"
     @desc: string displayed as "description" below header
+    @checked: is workflow checked by default
     @graph: graph metadata:
         @type: type of graph
         @title: title of graph
@@ -26,6 +27,7 @@ WORKFLOWS = [{
     "type": Workflow.NND,
     "header": "Nearest Neighbor Distance",
     "desc": "Find the nearest neighbor distance between gold particles. Optionally generate random coordinates.",
+    "checked": True,
     "graph": {
         "type": "hist",
         "title": "Distances Between Nearest Neighbors",
@@ -40,6 +42,7 @@ WORKFLOWS = [{
         "type": Workflow.CLUST,
         "header": "Ward Hierarchical Clustering",
         "desc": "Cluster gold particles into groups. Optionally generate random coordinates.",
+        "checked": True,
         "graph": {
             "type": "bar",
             "title": "Ward Hierarchical Clusters",
@@ -51,7 +54,7 @@ WORKFLOWS = [{
         "props": [
             {
                 "title": "distance_threshold (px)",
-                "placeholder": "30"
+                "placeholder": "34"
             },
             {
              "title": "n_clusters",
@@ -68,6 +71,7 @@ WORKFLOWS = [{
         "type": Workflow.NND_CLUST,
         "header": "Nearest Neighbor Distance Between Clusters",
         "desc": "Find the nearest neighbor distance between clusters. Optionally generate random coordinates.",
+        "checked": True,
         "graph": {
             "type": "hist",
             "title": "Nearest Neighbor Distance for Ward Hierarchical Clusters",
@@ -79,7 +83,7 @@ WORKFLOWS = [{
         "props": [
             {
                 "title": "distance_threshold (px)",
-                "placeholder": "30"
+                "placeholder": "34"
             },
             {"title": "n_clusters",
              "placeholder": "None"
@@ -95,6 +99,7 @@ WORKFLOWS = [{
         "type": Workflow.RIPPLER,
         "header": "Gold Rippler: Spine-Particle Correlation",
         "desc": "Separate spine masks as individual components, grow components until they contain X gold particles, calculate Spine Correlated Particles Per P-face Area (SC3PA) (% of gold particles within spine masks) / (% of total area of p-face taken up by spine masks).  Requires lighthouse population.",
+        "checked": False,
         "graph": {
             "type": "bar",
             "title": "Spine Correlated Particles Per P-face Area By Radius",
@@ -119,6 +124,7 @@ WORKFLOWS = [{
         "type": Workflow.STARFISH,
         "header": "Starfish Nearest Neighbor Distance",
         "desc": "Find the nearest neighbor distance of two different populations. Requires lighthouse population.",
+        "checked": False,
         "graph": {
             "type": "hist",
             "title": "Nearest Neighbor Distances of Different Pops",
@@ -154,8 +160,8 @@ UNIT_OPS = ['px', 'nm', 'μm', 'metric']
 """ UNIT SCALARS """
 UNIT_PX_SCALARS = {
     'px': 1,
-    'nm': 888,
-    'μm': 264.38,
+    'nm': 0.888,  # 1 px = 0.888nm
+    'μm': 0.000888,  # 1px = 0.000888μm
     'metric': 1
 }
 

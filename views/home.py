@@ -102,7 +102,8 @@ class HomePage(QWidget):
         v_cb = QVBoxLayout()
         for i in range(len(WORKFLOWS)):
             cb = QCheckBox(WORKFLOWS[i]['header'])
-            cb.setChecked(True)
+            if WORKFLOWS[i]['checked']:
+                cb.setChecked(True)
             self.workflow_cbs.append(cb)
             v_cb.addWidget(cb)
         layout.addRow(v_cb)
