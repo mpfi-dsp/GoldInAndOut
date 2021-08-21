@@ -108,10 +108,10 @@ class GoldInAndOut(QWidget):
             # item2.setFlags(Qt.NoItemFlags)
 
             # TODO: remove when no longer using for testing
-            img_drop: list = [self.home_page.img_le.text()] if len(self.home_page.img_le.text()) > 0 else ["./input/example_image.tif"]
-            mask_drop: list = [self.home_page.mask_le.text()] if len(self.home_page.mask_le.text()) > 0 else ["./input/example_mask.tif"]
-            csv_drop: list = [self.home_page.csv_le.text()] if len(self.home_page.csv_le.text()) > 0 else ["./input/example_csv.csv"]
-            csv2_drop: list = [self.home_page.csv2_le.text()] # if len(self.home_page.csv2_le.text()) > 0 else ["./input/example_csv.csv"]
+            img_path: str = self.home_page.img_le.text() if len(self.home_page.img_le.text()) > 0 else "./input/example_image.tif"
+            mask_path: str = self.home_page.mask_le.text() if len(self.home_page.mask_le.text()) > 0 else "./input/example_mask.tif"
+            csv_path: str = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else "./input/example_csv.csv"
+            csv2_path: str = self.home_page.csv2_le.text() # if len(self.home_page.csv2_le.text()) > 0 else ["./input/example_csv.csv"]
 
             # output unit options
             ou: Unit = unit_to_enum(self.home_page.op_scalar_type.currentText() if self.home_page.op_scalar_type.currentText() is not None else 'px')
@@ -139,10 +139,10 @@ class GoldInAndOut(QWidget):
                         WorkflowPage(df=self.SCALED_DF,
                                      alt_coords=self.ALT_COORDS,
                                      wf=WORKFLOWS[i],
-                                     img=img_drop,
-                                     mask=mask_drop,
-                                     csv=csv_drop,
-                                     csv2=csv2_drop,
+                                     img=img_path,
+                                     mask=mask_path,
+                                     csv=csv_path,
+                                     csv2=csv2_path,
                                      output_ops=output_ops,
                                      pg=partial(self.update_main_progress, (int((z / wf_td * 100))))
                                      ))
