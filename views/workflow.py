@@ -20,7 +20,7 @@ import seaborn as sns
 import cv2
 # utils
 from globals import PALETTE_OPS, MAX_DIRS_PRUNE
-from typings import Unit, Workflow, DataObj
+from typings import Unit, Workflow, DataObj, OutputOptions
 from utils import Progress, create_color_pal, enum_to_unit, to_coord_list, pixels_conversion
 from views.logger import Logger
 from workflows.clust import run_clust, draw_clust
@@ -89,14 +89,14 @@ class WorkflowPage(QWidget):
     @mask: array of selected mask paths
     @csv: array of selected csv paths
     @csv2: array of selected csv2 paths
-    @output_unit: metric output unit
-    @output_scalar: multiplier ratio between pixels and desired output metric unit
-    @output_dir: the directory to create output data in
-    @delete_old: delete output data older than 5 runs
+    @output_ops.output_unit: metric output unit
+    @output_ops.output_scalar: multiplier ratio between pixels and desired output metric unit
+    @output_ops.output_dir: the directory to create output data in
+    @output_ops.delete_old: delete output data older than 5 runs
     @pg: primary loading/progress bar ref
     """
-    def __init__(self, df, alt_coords=None, wf=None, img=None, mask=None, csv=None, csv2=None, output_scalar=1,
-                 output_unit=Unit.PIXEL, output_dir=None, delete_old=False, pg=None):
+
+    def __init__(self, df, output_ops: OutputOptions, alt_coords=None, wf=None, img=None, mask=None, csv=None, csv2=None, pg=None):
         super().__init__()
         # init class vars
         self.is_init = False
@@ -104,10 +104,7 @@ class WorkflowPage(QWidget):
         # allow referencing within functions without passing explicitly
         self.wf = wf
         self.pg = pg
-        self.output_unit = output_unit
-        self.output_scalar = output_scalar
-        self.output_dir = output_dir
-        self.delete_old = delete_old
+        self.output_ops = output_ops
         self.alt_coords = alt_coords
 
         # create popup error logger
@@ -234,13 +231,13 @@ class WorkflowPage(QWidget):
         self.gen_real_lb = QLabel("display real coords")
         self.gen_real_lb.setStyleSheet("margin-left: 50px; font-size: 17px; font-weight: 400;")
         self.gen_real_cb = QCheckBox()
-        self.gen_real_cb.clicked.connect(partial(self.create_visuals, self.wf, (self.bars_ip.text() if self.bars_ip.text() else 'fd'), self.output_unit, self.output_scalar))
+        self.gen_real_cb.clicked.connect(partial(self.create_visuals, self.wf, (self.bars_ip.text() if self.bars_ip.text() else 'fd'), self.output_ops.output_unit, self.output_ops.output_scalar))
         self.gen_real_cb.setChecked(True)
         # rand
         self.gen_rand_lb = QLabel("display random coords")
         self.gen_rand_lb.setStyleSheet("margin-left: 50px; font-size: 17px; font-weight: 400;")
         self.gen_rand_cb = QCheckBox()
-        self.gen_rand_cb.clicked.connect(partial(self.create_visuals, self.wf, (self.bars_ip.text() if self.bars_ip.text() else 'fd'), self.output_unit, self.output_scalar))
+        self.gen_rand_cb.clicked.connect(partial(self.create_visuals, self.wf, (self.bars_ip.text() if self.bars_ip.text() else 'fd'), self.output_ops.output_unit, self.output_ops.output_scalar))
         # cb row
         cb_row = QHBoxLayout()
         cb_row.addWidget(self.gen_real_lb)
@@ -281,7 +278,7 @@ class WorkflowPage(QWidget):
         self.download_btn = QPushButton('Download Again', self)
         self.download_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #ccc; color: white; border-radius: 7px; ")
-        self.download_btn.clicked.connect(partial(self.download, output_unit, wf))
+        self.download_btn.clicked.connect(partial(self.download, output_ops, wf))
         self.download_btn.setCursor(QCursor(Qt.PointingHandCursor))
         btn_r = QHBoxLayout()
         btn_r.addWidget(self.run_btn)
@@ -313,7 +310,7 @@ class WorkflowPage(QWidget):
     def get_custom_values(self):
         return [self.cstm_props[i].text() if self.cstm_props[i].text() else self.wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
 
-    def download(self, output_unit, wf, delete_old=False):
+    def download(self, output_ops, wf):
         print('download')
         # self.dl_thread = QThread()
         # self.dl_worker = AnalysisWorker()
@@ -359,9 +356,9 @@ class WorkflowPage(QWidget):
             self.data = output_data
             # TODO: handle this better 
             # create ui scheme
-            # self.create_visuals(wf=self.wf, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), output_unit=self.output_unit, output_scalar=self.output_scalar)
+            # self.create_visuals(wf=self.wf, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), output_ops.output_unit=self.output_ops.output_unit, output_ops.output_scalar=self.output_ops.output_scalar)
             # # download files automatically
-            self.download(output_unit=self.output_unit, wf=self.wf, delete_old=self.delete_old)
+            self.download(output_ops=self.output_ops, wf=self.wf)
             self.download_btn.setStyleSheet(
                 "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
             self.progress.setValue(100)
@@ -373,7 +370,7 @@ class WorkflowPage(QWidget):
             self.handle_except(traceback.format_exc())
 
 
-    def create_visuals(self, wf, n_bins, output_unit, output_scalar, n=np.zeros(11)):
+    def create_visuals(self, wf, n_bins, output_ops, n=np.zeros(11)):
         """ CREATE DATA VISUALIZATIONS """
         try:
             if self.gen_real_cb.isChecked() or self.gen_rand_cb.isChecked() and len(self.real_coords) > 0:
@@ -388,12 +385,12 @@ class WorkflowPage(QWidget):
                 # fix csv index not matching id
                 self.data.real_df1.sort_values(wf["graph"]["x_type"], inplace=True)
                 self.data.real_df1 = self.data.real_df1.reset_index(drop=True)
-                self.data.final_real = pixels_conversion(data=self.data.real_df1, unit=output_unit, scalar=output_scalar)
+                self.data.final_real = pixels_conversion(data=self.data.real_df1, unit=output_ops.output_unit, scalar=output_ops.output_scalar)
                 if wf["graph"]["x_type"] in self.data.rand_df1.columns and len(self.data.rand_df1[wf["graph"]["x_type"]]) > 0:
                     self.data.rand_df1.sort_values(wf["graph"]["x_type"], inplace=True)
                     self.data.rand_df1 = self.data.rand_df1.reset_index(drop=True)
                 if not self.data.rand_df1.empty:
-                    self.data.final_rand = pixels_conversion(data=self.data.rand_df1, unit=output_unit, scalar=output_scalar)
+                    self.data.final_rand = pixels_conversion(data=self.data.rand_df1, unit=output_ops.output_unit, scalar=output_ops.output_scalar)
 
                 # convert back to proper size
                 if wf["graph"]["type"] == "hist":
@@ -485,7 +482,7 @@ class WorkflowPage(QWidget):
                         n = rand_graph_x
 
                         # label graph
-                ax.set_xlabel(f'{wf["graph"]["x_label"]} ({enum_to_unit(output_unit)})')
+                ax.set_xlabel(f'{wf["graph"]["x_label"]} ({enum_to_unit(output_ops.output_unit)})')
                 ax.set_ylabel(wf["graph"]["y_label"])
                 ax.set_ylim(ymin=0)
                 print("generated graphs")
@@ -579,14 +576,14 @@ class WorkflowPage(QWidget):
 class DownloadWorker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(object)
-
-    def run(self, wf, delete_old, output_unit, output_dir, output_scalar, img_drop, final_real, final_rand, display_img, graph, real_df2, rand_df2):
+    # TODO: actually use otuput dir
+    def run(self, wf, data, output_ops, img_drop, display_img, graph):
         """ DOWNLOAD FILES """
         try:
-            out_start = output_dir if output_dir is not None else './output'
+            out_start = output_ops.output_dir if output_ops.output_dir is not None else './output'
             # delete old files to make space if applicable
             o_dir = f'{out_start}/{wf["name"].lower()}'
-            if delete_old:
+            if output_ops.delete_old:
                 while len(os.listdir(o_dir)) >= MAX_DIRS_PRUNE:
                     oldest_dir = \
                         sorted([os.path.abspath(
@@ -607,9 +604,9 @@ class DownloadWorker(QObject):
                 os.path.basename(img_drop.currentText()))[0]
             out_dir = f'{out_start}/{wf["name"].lower()}/{img_name}-{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
             os.makedirs(out_dir, exist_ok=True)
-            final_real.to_csv(f'{out_dir}/real_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv',
+            data.final_real.to_csv(f'{out_dir}/real_{wf["name"].lower()}_output_{enum_to_unit(output_ops.output_unit)}.csv',
                                    index=False, header=True)
-            final_rand.to_csv(f'{out_dir}/rand_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv',
+            data.final_rand.to_csv(f'{out_dir}/rand_{wf["name"].lower()}_output_{enum_to_unit(output_ops.output_unit)}.csv',
                                    index=False, header=True)
             if display_img:
                 display_img.save(
@@ -619,16 +616,16 @@ class DownloadWorker(QObject):
                     'no display image generated. An error likely occurred running workflow.')
             graph.save(f'{out_dir}/{wf["name"].lower()}_graph.jpg')
             # if workflow fills full dfs, output those two
-            if not real_df2.empty and not rand_df2.empty:
-                real_df2 = pixels_conversion(
-                    data=real_df2, unit=output_unit, scalar=output_scalar)
-                rand_df2 = pixels_conversion(
-                    data=rand_df2, unit=output_unit, scalar=output_scalar)
-                real_df2.to_csv(
-                    f'{out_dir}/detailed_real_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False,
+            if not data.real_df2.empty and not data.rand_df2.empty:
+                data.real_df2 = pixels_conversion(
+                    data=data.real_df2, unit=output_ops.output_unit, scalar=output_ops.output_scalar)
+                data.rand_df2 = pixels_conversion(
+                    data=data.rand_df2, unit=output_ops.output_unit, scalar=output_ops.output_scalar)
+                data.real_df2.to_csv(
+                    f'{out_dir}/detailed_real_{wf["name"].lower()}_output_{enum_to_unit(output_ops.output_unit)}.csv', index=False,
                     header=True)
-                rand_df2.to_csv(
-                    f'{out_dir}/detailed_rand_{wf["name"].lower()}_output_{enum_to_unit(output_unit)}.csv', index=False,
+                data.rand_df2.to_csv(
+                    f'{out_dir}/detailed_rand_{wf["name"].lower()}_output_{enum_to_unit(output_ops.output_unit)}.csv', index=False,
                     header=True)
             print("downloaded output")
         except Exception as e:

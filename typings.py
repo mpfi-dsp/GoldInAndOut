@@ -57,14 +57,6 @@ class DataObj:
     final_real: pd.DataFrame
     final_rand: pd.DataFrame
 
-    # def __init__():
-    #     real_df1 = pd.DataFrame()
-    #     real_df2 = pd.DataFrame()
-    #     rand_df1 = pd.DataFrame()
-    #     rand_df2 = pd.DataFrame()
-    #     final_real = pd.DataFrame()
-    #     final_rand = pd.DataFrame()
-
     def __init__(self, real_df1: pd.DataFrame, real_df2: pd.DataFrame, rand_df1: pd.DataFrame, rand_df2: pd.DataFrame):
         self.real_df1 = real_df1
         self.real_df2 = real_df2
@@ -74,3 +66,14 @@ class DataObj:
         self.final_rand = pd.DataFrame()
     
 
+class OutputOptions:
+    output_unit: Unit
+    output_scalar: str
+    output_dir: str
+    delete_old: bool
+
+    def __init__(self, output_scalar: str, output_unit: Unit = Unit.PIXEL, output_dir: str = "./output", delete_old: bool = False):
+        self.output_unit = output_unit
+        self.output_scalar = output_scalar
+        self.output_dir = output_dir
+        self.delete_old = delete_old

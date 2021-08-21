@@ -6,7 +6,7 @@ import pandas as pd
 from confetti import SuccessGif
 from globals import WORKFLOWS, NAV_ICON, DEFAULT_OUTPUT_DIR
 from views.home import HomePage
-from typings import Unit
+from typings import Unit, OutputOptions
 from utils import pixels_conversion, unit_to_enum, to_coord_list
 from views.logger import Logger
 from views.workflow import WorkflowPage
@@ -112,12 +112,13 @@ class GoldInAndOut(QWidget):
             mask_drop: list = [self.home_page.mask_le.text()] if len(self.home_page.mask_le.text()) > 0 else ["./input/example_mask.tif"]
             csv_drop: list = [self.home_page.csv_le.text()] if len(self.home_page.csv_le.text()) > 0 else ["./input/example_csv.csv"]
             csv2_drop: list = [self.home_page.csv2_le.text()] # if len(self.home_page.csv2_le.text()) > 0 else ["./input/example_csv.csv"]
-            # input/output units
+
+            # output unit options
             ou: Unit = unit_to_enum(self.home_page.op_scalar_type.currentText() if self.home_page.op_scalar_type.currentText() is not None else 'px')
-            # scalar
             s_o: float = float(self.home_page.csvs_ip_o.text() if len(self.home_page.csvs_ip_o.text()) > 0 else 1)
             dod: bool = self.home_page.dod_cb.isChecked()
             o_dir: str = self.home_page.output_dir_le.text() if len(self.home_page.output_dir_le.text()) > 0 else DEFAULT_OUTPUT_DIR
+            output_ops: OutputOptions = OutputOptions(output_unit=ou, output_dir=o_dir, output_scalar=s_o, delete_old=dod)
 
             wf_td = 0
             for wf_cb in self.home_page.workflow_cbs:
@@ -142,10 +143,7 @@ class GoldInAndOut(QWidget):
                                      mask=mask_drop,
                                      csv=csv_drop,
                                      csv2=csv2_drop,
-                                     output_scalar=s_o,
-                                     output_unit=ou,
-                                     output_dir=o_dir,
-                                     delete_old=dod,
+                                     output_ops=output_ops,
                                      pg=partial(self.update_main_progress, (int((z / wf_td * 100))))
                                      ))
         except Exception as e:
