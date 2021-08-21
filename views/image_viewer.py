@@ -95,7 +95,7 @@ class QImageViewer(QMainWindow):
 
         self.setWindowTitle("EM Image Viewer")
         self.setWindowIcon(QIcon('./images/logo.ico'))
-        self.resize(800, 800)
+        # self.resize(800, 800)
         self.printer = QPrinter()
 
         self.img = img
@@ -106,9 +106,9 @@ class QImageViewer(QMainWindow):
         self.menu = self.menuBar()
         self.create_actions()
         self.create_menus()
-
-        self.viewer.fitInView(True)
         # self.setWindowFlags(Qt.FramelessWindowHint)
+        # self.viewer.fitInView(True)
+
 
     def save(self):
         print("save file")
@@ -158,3 +158,4 @@ class QImageViewer(QMainWindow):
         view_menu.addAction(self.zoom_out_act)
         view_menu.addAction(self.normal_size_act)
         view_menu.addSeparator()
+

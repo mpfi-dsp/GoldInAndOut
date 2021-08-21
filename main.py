@@ -13,6 +13,7 @@ from views.workflow import WorkflowPage
 # stylesheet
 from styles.stylesheet import styles
 # pyQT5
+import PyQt5
 from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal, QThread
 from PyQt5.QtGui import QIcon, QCursor
 from PyQt5.QtWidgets import (QWidget, QListWidget, QStackedWidget, QHBoxLayout, QListWidgetItem, QApplication,
@@ -32,8 +33,8 @@ class GoldInAndOut(QWidget):
         current_directory = str(pathlib.Path(__file__).parent.absolute())
         iconp = current_directory + '/logo.ico'
         self.setWindowIcon(QIcon(iconp))
-        self.setMinimumSize(QSize(900, 1100))
-        self.setMaximumSize(QSize(900, 1100))
+        # self.setMinimumSize(QSize(900, 1100))
+        # self.setMaximumSize(QSize(900, 1100))
         # set max threads
         numexpr.set_num_threads(numexpr.detect_number_of_cores())
 
