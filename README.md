@@ -8,9 +8,10 @@ MPFI EM Core Pipeline & Gold Cluster Analysis For Freeze Fracture
 class Workflow(Enum):
     NND = 1
     CLUST = 2
-    YOUR_WORKFLOW = 3 (LAST NUMBER + 1) 
+    ...
+    YOUR_WORKFLOW = (LAST NUMBER + 1) 
 ```
-2) Add a python file to the `worflows/` directory containing the workflow or macro you'd like to add to the GUI. Ideally, this is in the format `<WorkflowName>.py`.
+2) Add a python file to the `workflows/` directory containing the workflow or macro you'd like to add to the GUI. Ideally, this is in the format `<WorkflowName>.py`.
 3) In the `globals.py` file, add your workflow to the `WORKFLOW_METADATA` dictionary. This is in the following format:
 ```buildoutcfg
     @name: short abreviation of workflow, no spaces
@@ -41,7 +42,7 @@ Below is a sample workflow using JSON structure.
     "props": [
             {
             "title": "distance_threshold",
-              "placeholder": "120"
+              "placeholder": "34"
             },
             {"title": "n_clusters",
              "placeholder": "None"
@@ -52,7 +53,7 @@ Below is a sample workflow using JSON structure.
         ]
 }
 ```
-4) Finally, in the `workflow.py` file, in the section labeled `ADD NEW WORKFLOWS HERE`, add an elif statement for your workflow that reads like the following:
+4) Finally, in the `threads.py` file, in the section labeled `ADD NEW WORKFLOWS HERE`, add an `elif` statement for your workflow that reads like the following:
 
 ```python
  if workflow["type"] == Workflow.NND:
@@ -61,7 +62,7 @@ elif workflow["type"] == YOUR_WORKFLOW_ENUM:
 self.real_df1, self.rand_df1 = your_workflow_function_from_custom_file(df=scaled_df, prog=prog_wrapper,
                                                                        random_coordinate_list=random_coords)
 ```
-If your workflow requires custom parameters/props, use custom values. This will appear in the following format:
+If your workflow requires custom parameters/props, use custom values. This will appear in the following format in the `workflow.py`:
 
 ```python
  if workflow["type"] == Workflow.NND:

@@ -3,12 +3,15 @@ import logging
 import pandas as pd
 from sklearn.cluster import AgglomerativeClustering
 import numpy as np
-from utils import create_color_pal
+from utils import create_color_pal, to_df
 from collections import Counter
+from PyQt5.QtCore import pyqtSignal
+from typing import List, Tuple
 import math
 import cv2
 
-def run_nnd_clust(pb, real_coords, rand_coords, min_clust_size=3, distance_threshold=120, n_clusters=None, affinity='euclidean', linkage='ward'):
+
+def run_nnd_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], min_clust_size: int =3, distance_threshold: int = 34, n_clusters: int = None, affinity: str ='euclidean', linkage: str ='ward'):
     """
     NEAREST NEIGHBOR DISTANCE OF WARD HIERARCHICAL CLUSTERING
     _______________________________
@@ -27,12 +30,12 @@ def run_nnd_clust(pb, real_coords, rand_coords, min_clust_size=3, distance_thres
     """
 
     # remove elements of list that show up fewer than k times
-    def minify_list(lst, k):
+    def minify_list(lst: List[int], k: int = 3):
         counted = Counter(lst)
         return [el for el in lst if counted[el] >= k]
 
     # find centroids in df w/ clusters
-    def find_centroids(cl_df, clust):
+    def find_centroids(cl_df: pd.DataFrame, clust: List[int]):
         centroids, centroid_ids = [], []
         for c in set(clust):
             cl = cl_df.loc[cl_df['cluster_id'] == c]
@@ -46,11 +49,11 @@ def run_nnd_clust(pb, real_coords, rand_coords, min_clust_size=3, distance_thres
                 y /= n
                 centroids.append((round(y, 3), round(x, 3)))
                 centroid_ids.append(c)
-        # print("generated centroids")
+        print("generated centroids")
         return centroids, centroid_ids
 
     # cluster data
-    def cluster(coords, n_clust, d_threshold, min_size):
+    def cluster(coords: List[Tuple[float, float]], r_coords: List[Tuple[float, float]], n_clust: int, d_threshold: int, min_size: int = 3):
         # TODO: come up with a better way of handling this
         # translate string var props to their real value (unfortunately necessary because of text inputs)
         if n_clust != "None":
@@ -61,21 +64,24 @@ def run_nnd_clust(pb, real_coords, rand_coords, min_clust_size=3, distance_thres
             d_threshold = int(d_threshold)
         # actually run sklearn clustering function
         hc = AgglomerativeClustering(n_clusters=n_clust, distance_threshold=d_threshold*2, affinity=affinity, linkage=linkage)
-        clust = hc.fit_predict(real_coords)
+        clust = hc.fit_predict(coords)
         # append cluster ids to df
-        df = to_df(real_coords)
+        print('before conversion')
+        df = to_df(coords)
         df['cluster_id'] = clust
+        print('after conversion')
         # setup random coords
-        pb.emit(70)
-        rand_coordinates = np.array(rand_coords)
+        rand_coordinates = np.array(r_coords)
         rand_cluster = hc.fit_predict(rand_coordinates)
+        pb.emit(70)
         # fill random df
         rand_df = pd.DataFrame(rand_coordinates, columns=["X", "Y"])
         rand_df['cluster_id'] = rand_cluster
-        # print("generated clusters")
+        print("generated clusters")
+
         return df, rand_df, minify_list(clust, float(min_size)), minify_list(rand_cluster, float(min_size))
 
-    def nnd(coordinate_list, random_coordinate_list):
+    def nnd(coordinate_list: List[Tuple[float, float]], random_coordinate_list: List[Tuple[float, float]]):
         # finds nnd between centroids
         def distance_to_closest_particle(coord_list):
             nnd_list = []
@@ -103,18 +109,18 @@ def run_nnd_clust(pb, real_coords, rand_coords, min_clust_size=3, distance_thres
                 # clean up df
                 clean_df[['og_centroid', 'closest_centroid', 'dist']] = pd.DataFrame(
                     [x for x in data['NND'].tolist()])
-                # print("generated nnd list")
+                print("generated nnd list")
             return clean_df
         # find nnd
         cleaned_real_df = distance_to_closest_particle(coordinate_list)
         cleaned_rand_df = distance_to_closest_particle(random_coordinate_list)
-        # print("found nnd")
+        print("found nnd")
         return cleaned_real_df, cleaned_rand_df
 
     logging.info("running nearest neighbor distance between clusters")
     pb.emit(30)
     # cluster
-    full_real_df, full_rand_df, cluster, rand_cluster = cluster(coords, n_clusters, distance_threshold, min_clust_size)
+    full_real_df, full_rand_df, cluster, rand_cluster = cluster(real_coords, rand_coords, n_clusters, distance_threshold, min_clust_size)
     # generate centroids of clusters
     real_centroids, real_clust_ids = find_centroids(full_real_df, cluster)
     rand_centroids, rand_clust_ids = find_centroids(full_rand_df, rand_cluster)

@@ -1,9 +1,12 @@
+from PyQt5.QtCore import pyqtSignal
+from typing import List, Tuple
 import logging
 import pandas as pd
 import math
 import cv2
 
-def run_nnd(real_coords, rand_coords, pb):
+
+def run_nnd(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], pb: pyqtSignal):
     """
     NEAREST NEIGHBOR DISTANCE
     _______________________________
@@ -11,7 +14,7 @@ def run_nnd(real_coords, rand_coords, pb):
     @rand_coords: list of randomly generated coordinates
     @pb: progress bar wrapper element, allows us to track how much time is left in process
     """
-    def nnd(coordinate_list, random_coordinate_list):
+    def nnd(coordinate_list: List[Tuple[float, float]], random_coordinate_list: List[Tuple[float, float]]):
         # find dist to closest particle
         def distance_to_closest_particle(coord_list):
             nnd_list = []
@@ -53,7 +56,7 @@ def run_nnd(real_coords, rand_coords, pb):
     return nnd(coordinate_list=real_coords, random_coordinate_list=rand_coords)
 
 
-def draw_length(nnd_df, bin_counts, img, palette, circle_c=(0, 0, 255)):
+def draw_length(nnd_df: pd.DataFrame, bin_counts: List[int], img, palette, circle_c=(0, 0, 255)):
     """ DRAW LINES TO ANNOTATE N NEAREST DIST ON IMAGE """
     def sea_to_rgb(color):
         color = [val * 255 for val in color]

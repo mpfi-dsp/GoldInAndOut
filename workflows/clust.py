@@ -5,10 +5,10 @@ import numpy as np
 import cv2
 from utils import create_color_pal, to_df
 from PyQt5.QtCore import pyqtSignal
+from typing import List, Tuple
 
 
-def run_clust(pb: pyqtSignal, real_coords, rand_coords, img_path, distance_threshold=120, n_clusters=None, affinity='euclidean',
-              linkage='ward'):
+def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], img_path: str, distance_threshold: int = 34, n_clusters: int =None, affinity: str = 'euclidean', linkage: str ='ward'):
     """
     WARD HIERARCHICAL CLUSTERING
     _______________________________

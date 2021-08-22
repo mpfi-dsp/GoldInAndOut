@@ -26,6 +26,7 @@ class AnalysisWorker(QObject):
     def run(self, wf: WorkflowObj, vals: List[str], coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]] = None, img_path: str = "", mask_path: str = ""):
         try:
             real_df1 = real_df2 = rand_df1 = rand_df2 = pd.DataFrame()
+            # ADD NEW WORKFLOWS HERE
             if wf['type'] == Workflow.NND:
                 real_df1, rand_df1 = run_nnd(
                     real_coords=coords, rand_coords=rand_coords, pb=self.progress)
