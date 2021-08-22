@@ -66,7 +66,7 @@ def run_nnd_clust(pb, real_coords, rand_coords, min_clust_size=3, distance_thres
         df = to_df(real_coords)
         df['cluster_id'] = clust
         # setup random coords
-        pb.update_progress(70)
+        pb.emit(70)
         rand_coordinates = np.array(rand_coords)
         rand_cluster = hc.fit_predict(rand_coordinates)
         # fill random df
@@ -112,7 +112,7 @@ def run_nnd_clust(pb, real_coords, rand_coords, min_clust_size=3, distance_thres
         return cleaned_real_df, cleaned_rand_df
 
     logging.info("running nearest neighbor distance between clusters")
-    pb.update_progress(30)
+    pb.emit(30)
     # cluster
     full_real_df, full_rand_df, cluster, rand_cluster = cluster(coords, n_clusters, distance_threshold, min_clust_size)
     # generate centroids of clusters

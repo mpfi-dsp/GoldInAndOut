@@ -15,7 +15,7 @@ def run_starfish(real_coords, rand_coords, alt_coords, pb):
         def starfish_distance_closest(coord_list, alt_list):
             nnd_list = []
             for p in coord_list:
-                pb.update_progress(p)
+                pb.emit(p)
                 small_dist = 10000000000000000000
                 p1 = (round(p[1], 3), round(p[0], 3))
                 nnd_obj = [p1, (0,0), 0]
@@ -33,7 +33,7 @@ def run_starfish(real_coords, rand_coords, alt_coords, pb):
         # def starfish_distance_closest(coord_list, alt_list):
         #     nnd_list = []
         #     for z in range(len(coord_list)):
-        #         pb.update_progress(z)
+        #         pb.emit(z)
         #         d = 10000000000000000000
         #         p1 = (round(coord_list[z][1], 3), round(coord_list[z][0], 3))
         #         nnd_obj = [p1, (0, 0), 0]

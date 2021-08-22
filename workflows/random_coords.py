@@ -8,7 +8,6 @@ def gen_random_coordinates(img_path, mask_path, count=0):
     """
     RANDOM COORDS GENERATOR
     _______________________________
-    @data: dataframe with coordinates scaled to whatever format desired
     @img_path: path to image we are finding the n nearest distance of (only needed if gen_rand is True)
     @mask_path: path to mask we are finding the n nearest distance of (only needed if gen_rand is True)
     @count: number of random particles to generate
@@ -35,16 +34,13 @@ def gen_random_coordinates(img_path, mask_path, count=0):
     if len(mask_path) > 0:
         img_pface = cv2.imread(mask_path)
     else:
-        print('creating')
         img_pface = np.zeros(crop, dtype=np.uint8)
-        print('filling')
         img_pface.fill(245)
-    print('cropping')
     img_pface = img_pface[:crop[0], :crop[1], :3]
 
     # grab contours of pface
     lower_bound = np.array([239, 174, 0])
     upper_bound = np.array([254, 254, 254])
     pface_mask = cv2.inRange(img_pface, lower_bound, upper_bound)
-    logging.info("generated random particles")
+    logging.info("Generated random particles")
     return generate_random_points(pface_mask.shape, count, pface_mask)

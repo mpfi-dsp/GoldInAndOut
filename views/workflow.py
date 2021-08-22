@@ -11,31 +11,27 @@ import os
 import shutil
 import traceback
 import cv2
-
 # pyQT5
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QSize, QByteArray
 from PyQt5.QtGui import QImage, QPixmap, QCursor, QMovie
 from PyQt5.QtWidgets import (QLabel, QRadioButton, QCheckBox, QHBoxLayout, QPushButton, QWidget, QSizePolicy,
                              QFormLayout, QLineEdit,
                              QComboBox, QProgressBar, QToolButton, QVBoxLayout, QListWidgetItem)
-
 # views
 from views.image_viewer import QImageViewer
 from views.logger import Logger
-
 # utils
 from globals import PALETTE_OPS, MAX_DIRS_PRUNE
 from typings import Unit, Workflow, DataObj, OutputOptions, WorkflowObj
 from typing import List, Tuple
 from utils import Progress, create_color_pal, enum_to_unit, to_coord_list, pixels_conversion
-
 # workflows
 from workflows.clust import run_clust, draw_clust
 from workflows.gold_rippler import run_rippler, draw_rippler
-from workflows.nnd import run_nnd, draw_length
 from workflows.nnd_clust import run_nnd_clust, draw_nnd_clust
 from workflows.random_coords import gen_random_coordinates
 from workflows.starfish import run_starfish, draw_starfish
+from workflows.nnd import run_nnd, draw_length
 
 
 class AnalysisWorker(QObject):
@@ -45,22 +41,21 @@ class AnalysisWorker(QObject):
     def run(self, wf: WorkflowObj, vals: List[str], coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]] = None, img_path: str = "", mask_path: str = ""):
         try:
             real_df1 = real_df2 = rand_df1 = rand_df2 = pd.DataFrame()
-            
             if wf['type'] == Workflow.NND:
-                real_df1, rand_df1 = run_nnd(real_coords=coords, rand_coords=rand_coords, )
+                real_df1, rand_df1 = run_nnd(
+                    real_coords=coords, rand_coords=rand_coords, pb=self.progress)
             elif wf['type'] == Workflow.CLUST:
                 real_df1, rand_df1, real_df2, rand_df2 = run_clust(
                     real_coords=coords, rand_coords=rand_coords, img_path=img_path, distance_threshold=vals[0], n_clusters=vals[1], pb=self.progress)
             elif wf['type'] == Workflow.NND_CLUST:
-                real_df2, rand_df2, real_df1, rand_df1 = run_nnd_clust(real_coords=coords, rand_coords=rand_coords,  distance_threshold=vals[0],  n_clusters=vals[1], min_clust_size=vals[2])
+                real_df2, rand_df2, real_df1, rand_df1 = run_nnd_clust(
+                    real_coords=coords, rand_coords=rand_coords,  distance_threshold=vals[0],  n_clusters=vals[1], min_clust_size=vals[2], pb=self.progress)
             elif wf['type'] == Workflow.RIPPLER:
-                real_df1, rand_df1 = run_rippler(real_coords=coords, alt_coords=alt_coords, rand_coords=rand_coords,
+                real_df1, rand_df1 = run_rippler(real_coords=coords, alt_coords=alt_coords, rand_coords=rand_coords, pb=self.progress,
                                                img_path=img_path, mask_path=mask_path, max_steps=vals[0], step_size=vals[1])
             elif wf['type'] == Workflow.STARFISH:
-                real_df1, rand_df1 = run_starfish(real_coords=coords, rand_coords=rand_coords, alt_coords=alt_coords)
-
+                real_df1, rand_df1 = run_starfish(real_coords=coords, rand_coords=rand_coords, alt_coords=alt_coords, pb=self.progress)
             self.output_data = DataObj(real_df1, real_df2, rand_df1, rand_df2)
-            # self.progress.emit(self.)
             self.finished.emit(self.output_data)
         except Exception as e:
             self.dlg = Logger()
@@ -102,10 +97,7 @@ class WorkflowPage(QWidget):
         self.data: DataObj
         self.wf = wf
         self.pg = pg
-        # self.coords = coords
-        # self.alt_coords = alt_coords
         self.output_ops = output_ops
-        # create popup error logger
         self.dlg = log
         # init layout
         layout = QFormLayout()
@@ -307,7 +299,6 @@ class WorkflowPage(QWidget):
         return [self.cstm_props[i].text() if self.cstm_props[i].text() else self.wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
 
     def download(self, output_ops: OutputOptions, wf: WorkflowObj):
-        print('download')
         self.dl_thread = QThread()
         self.dl_worker = DownloadWorker()
         self.dl_worker.moveToThread(self.dl_thread)
@@ -325,13 +316,12 @@ class WorkflowPage(QWidget):
             prog_wrapper.prog.connect(self.update_progress)
 
             self.rand_coords = gen_random_coordinates(img_path=self.img_drop.currentText(), mask_path=self.mask_drop.currentText(), count=int(self.n_coord_ip.text()) if self.n_coord_ip.text() else len(coords))
-
+            # obtain custom props
             vals = self.get_custom_values()
-
+            # generate thread
             self.thread = QThread()
             self.worker = AnalysisWorker()
             self.worker.moveToThread(self.thread)
-            # self.thread.started.connect(partial(self.worker.run, wf, vals, prog_wrapper, coords, self.rand_coords, self.img_drop.currentText(), self.mask_drop.currentText(), alt_coords))
             self.thread.started.connect(partial(self.worker.run, wf, vals, coords, self.rand_coords, alt_coords, self.img_drop.currentText(), self.mask_drop.currentText(), ))
             self.worker.progress.connect(self.update_progress)
             self.worker.finished.connect(self.on_receive_data)
@@ -345,10 +335,9 @@ class WorkflowPage(QWidget):
     def on_receive_data(self, output_data: DataObj):
         try:
             self.data = output_data
-            # TODO: handle this better 
             # create ui scheme
             self.create_visuals(wf=self.wf, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), output_ops=self.output_ops)
-            # # download files automatically
+            # download files automatically
             self.download(output_ops=self.output_ops, wf=self.wf)
             self.download_btn.setStyleSheet(
                 "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
@@ -363,16 +352,16 @@ class WorkflowPage(QWidget):
 
     def create_visuals(self, wf: WorkflowObj, n_bins, output_ops: OutputOptions, n: List[int] = np.zeros(11)):
         """ CREATE DATA VISUALIZATIONS """
+        # TODO: potentially move some drawing functions to seperate threads? 
         try:
             if self.gen_real_cb.isChecked() or self.gen_rand_cb.isChecked() and len(self.real_coords) > 0:
-                print("generating visualizations")
+                print(f'{wf['name']}: generating visualizations')
                 plt.close('all')
                 graph_df = pd.DataFrame([])
                 cm = plt.cm.get_cmap('crest')
                 fig = plt.figure()
                 canvas = FigureCanvas(fig)
                 ax = fig.add_subplot(111)
-
                 # fix csv index not matching id
                 self.data.real_df1.sort_values(wf["graph"]["x_type"], inplace=True)
                 self.data.real_df1 = self.data.real_df1.reset_index(drop=True)
@@ -382,7 +371,6 @@ class WorkflowPage(QWidget):
                     self.data.rand_df1 = self.data.rand_df1.reset_index(drop=True)
                 if not self.data.rand_df1.empty:
                     self.data.final_rand = pixels_conversion(data=self.data.rand_df1, unit=output_ops.output_unit, scalar=output_ops.output_scalar)
-
                 # convert back to proper size
                 if wf["graph"]["type"] == "hist":
                     # create histogram
@@ -476,7 +464,7 @@ class WorkflowPage(QWidget):
                 ax.set_xlabel(f'{wf["graph"]["x_label"]} ({enum_to_unit(output_ops.output_unit)})')
                 ax.set_ylabel(wf["graph"]["y_label"])
                 ax.set_ylim(ymin=0)
-                print("generated graphs")
+                print(f'{wf['name']}: generated graphs')
                 # generate palette
                 palette = create_color_pal(n_bins=int(len(n)), palette_type=self.pal_type.currentText())
                 r_palette = create_color_pal(n_bins=int(len(n)), palette_type=self.r_pal_type.currentText())
@@ -489,7 +477,6 @@ class WorkflowPage(QWidget):
                 self.graph = QImage(canvas.buffer_rgba(), width, height, QImage.Format_ARGB32)
                 # load in image
                 drawn_img = cv2.imread(self.img_drop.currentText())
-                print("loaded img")
                 # display img
                 pixmap = QPixmap.fromImage(self.graph)
                 smaller_pixmap = pixmap.scaled(300, 250, Qt.KeepAspectRatio, Qt.FastTransformation)
@@ -534,15 +521,11 @@ class WorkflowPage(QWidget):
                 bytesPerLine = 3 * width
                 cv2.cvtColor(drawn_img, cv2.COLOR_BGR2RGB, drawn_img)
                 self.display_img = QImage(drawn_img.data, width, height, bytesPerLine, QImage.Format_RGB888)
-                print("drew display imgs")
                 # resize to fit on gui
                 pixmap = QPixmap.fromImage(self.display_img)
-                print("drew pixmap")
                 smaller_pixmap = pixmap.scaled(200, 200, Qt.KeepAspectRatio, Qt.FastTransformation)
-                print("scale pixmap")
                 self.image_frame.setPixmap(smaller_pixmap)
-                print("finished generating visuals")
-
+                print(f'{wf['name']}: finished generating visuals')
         except Exception as e:
             self.error_gif = QMovie("./images/caterror.gif")
             self.image_frame.setMovie(self.error_gif)
@@ -582,7 +565,7 @@ class DownloadWorker(QObject):
                             f'{o_dir}/{f}') for f in os.listdir(o_dir)], key=os.path.getctime)[0]
                     print("pruning ", oldest_dir)
                     shutil.rmtree(oldest_dir)
-                print("pruned old output")
+                print(f'{wf['name']}: pruned old output')
         except Exception as e:
             self.dlg = Logger()
             self.dlg.show()
@@ -591,7 +574,7 @@ class DownloadWorker(QObject):
           
         # download files
         try:
-            print("prepare to download output")
+            print(f'{wf['name']}: prepare to download output')
             img_name = os.path.splitext(
                 os.path.basename(img))[0]
             out_dir = f'{out_start}/{wf["name"].lower()}/{img_name}-{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
@@ -605,7 +588,7 @@ class DownloadWorker(QObject):
                     f'{out_dir}/drawn_{wf["name"].lower()}_img.tif')
             else:
                 print(
-                    'no display image generated. An error likely occurred running workflow.')
+                    'No display image generated. An error likely occurred when running workflow.')
             graph.save(f'{out_dir}/{wf["name"].lower()}_graph.jpg')
             # if workflow fills full dfs, output those two
             if not data.real_df2.empty and not data.rand_df2.empty:
@@ -619,7 +602,7 @@ class DownloadWorker(QObject):
                 data.rand_df2.to_csv(
                     f'{out_dir}/detailed_rand_{wf["name"].lower()}_output_{enum_to_unit(output_ops.output_unit)}.csv', index=False,
                     header=True)
-            print("downloaded output")
+            print(f'{wf['name']}: downloaded output')
         except Exception as e:
             self.dlg = Logger()
             self.dlg.show()

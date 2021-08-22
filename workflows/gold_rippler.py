@@ -55,7 +55,7 @@ def run_rippler(real_coords, rand_coords, alt_coords, img_path, mask_path, pb, m
 
     # perm_scale_mask = np.zeros((img_size[0], img_size[1], 3), np.uint8)
     original_copy = img_og.copy()
-    pb.update_progress(30)
+    pb.emit(30)
 
     step = 0
     rippler_out = []
@@ -114,7 +114,7 @@ def run_rippler(real_coords, rand_coords, alt_coords, img_path, mask_path, pb, m
             pface_covered.append(percent_area)
             total_gp.append(len(coord_list))
             rad += int(step_size)
-            pb.update_progress(rad)
+            pb.emit(rad)
 
         # generate new df and return
         new_df = pd.DataFrame(
