@@ -3,7 +3,7 @@ import logging
 import traceback
 import pandas as pd
 
-from confetti import SuccessGif
+# from confetti import SuccessGif
 from globals import WORKFLOWS, NAV_ICON, DEFAULT_OUTPUT_DIR
 from views.home import HomePage
 from typings import Unit, OutputOptions
