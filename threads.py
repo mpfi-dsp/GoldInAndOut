@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QSize, QByteArray
 from PyQt5.QtGui import QImage
-from utils import pixels_conversion
+from utils import pixels_conversion, enum_to_unit
 from globals import MAX_DIRS_PRUNE
 import os
 import shutil
@@ -16,6 +16,7 @@ from workflows.nnd_clust import run_nnd_clust
 from workflows.starfish import run_starfish
 from workflows.nnd import run_nnd
 import numpy as np
+import datetime
 import pandas as pd
 
 class AnalysisWorker(QObject):
