@@ -34,10 +34,8 @@ class GoldInAndOut(QWidget):
         iconp = current_directory + '/logo.ico'
         self.setWindowIcon(QIcon(iconp))
         self.setMinimumSize(QSize(800, 1000))
-        # self.setMaximumSize(QSize(800, 1100))
         # set max threads
         numexpr.set_num_threads(numexpr.detect_number_of_cores())
-
         # layout with list on left and stacked widget on right
         layout = QHBoxLayout(self, spacing=0)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -62,13 +60,12 @@ class GoldInAndOut(QWidget):
             NAV_ICON, str("MAIN"), self.nav_list)
         item.setSizeHint(QSize(60, 60))
         item.setTextAlignment(Qt.AlignCenter)
-
         # add each page to parent window stack
         self.page_stack.addWidget(self.home_page)
         # select first page by default
         self.nav_list.item(0).setSelected(True)
         self.home_page.show_logs.clicked.connect(self.open_logger)
-
+        # init logger
         self.dlg = Logger()
 
 
@@ -77,15 +74,6 @@ class GoldInAndOut(QWidget):
         self.home_page.start_btn.setText("Run Again")
         self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #E89C12")
         self.home_page.progress.setValue(100)
-
-        # self.w = QMainWindow()
-        # self.w.setWindowTitle('Success!')
-        # self.w.setWindowIcon(QIcon('./images/logo.png'))
-        # self.w.setMinimumSize(QSize(500, 500))
-        # self.w.setMaximumSize(QSize(500, 500))
-        # self.sg = SuccessGif()
-        # self.sg.mainUI(self.w)
-        # self.w.show()
 
     def open_logger(self):
         if self.home_page.show_logs.isChecked():
@@ -102,12 +90,6 @@ class GoldInAndOut(QWidget):
             self.load_data()
             self.home_page.progress.setValue(0)
 
-            # item2 = QListWidgetItem(
-            #     NAV_ICON, str("Workflows"), self.nav_list)
-            # item2.setSizeHint(QSize(60, 60))
-            # item2.setTextAlignment(Qt.AlignCenter)
-            # item2.setFlags(Qt.NoItemFlags)
-
             # TODO: remove when no longer using for testing
             img_path: str = self.home_page.img_le.text() if len(self.home_page.img_le.text()) > 0 else "./input/example_image.tif"
             mask_path: str = self.home_page.mask_le.text() if len(self.home_page.mask_le.text()) > 0 else "./input/example_mask.tif"
@@ -121,11 +103,13 @@ class GoldInAndOut(QWidget):
             o_dir: str = self.home_page.output_dir_le.text() if len(self.home_page.output_dir_le.text()) > 0 else DEFAULT_OUTPUT_DIR
             output_ops: OutputOptions = OutputOptions(output_unit=ou, output_dir=o_dir, output_scalar=s_o, delete_old=dod)
 
+            # determine workflow pages
             wf_td = 0
             for wf_cb in self.home_page.workflow_cbs:
                 if wf_cb.isChecked():
                     wf_td += 1
-
+            
+            # generate workflow pages
             z = 0
             for i in range(len(WORKFLOWS)):
                 if self.home_page.workflow_cbs[i].isChecked():
@@ -134,7 +118,6 @@ class GoldInAndOut(QWidget):
                             NAV_ICON, str(WORKFLOWS[i]['name']), self.nav_list)
                     item.setSizeHint(QSize(60, 60))
                     item.setTextAlignment(Qt.AlignCenter)
-                    # generate workflow page
                     print(WORKFLOWS[i]['name'])
                     self.page_stack.addWidget(
                         WorkflowPage(coords=self.COORDS,
@@ -153,7 +136,6 @@ class GoldInAndOut(QWidget):
 
     def load_data(self):
         """ LOAD AND SCALE DATA """
-
         path = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else "./input/example_csv.csv"
         unit = unit_to_enum(self.home_page.ip_scalar_type.currentText()) if self.home_page.ip_scalar_type.currentText() else Unit.PIXEL
         scalar = float(self.home_page.csvs_ip_i.text() if len(self.home_page.csvs_ip_i.text()) > 0 else 1)
@@ -168,6 +150,7 @@ class GoldInAndOut(QWidget):
                 data = pd.read_csv(self.home_page.csv2_le.text(), sep=",")
                 self.ALT_COORDS = to_coord_list(pixels_conversion(data=data, unit=unit, scalar=scalar))
             else:
+                # TODO: update for production
                 img = self.home_page.img_le.text() if len(self.home_page.img_le.text()) > 0 else "./input/example_image.tif"
                 mask = self.home_page.mask_le.text() if len(self.home_page.mask_le.text()) > 0 else "./input/example_mask.tif"
                 self.ALT_COORDS = gen_random_coordinates(img, mask, count=len(self.COORDS))
