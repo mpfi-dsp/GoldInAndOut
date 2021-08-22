@@ -63,7 +63,7 @@ def run_nnd_clust(pb, real_coords, rand_coords, min_clust_size=3, distance_thres
         hc = AgglomerativeClustering(n_clusters=n_clust, distance_threshold=d_threshold*2, affinity=affinity, linkage=linkage)
         clust = hc.fit_predict(real_coords)
         # append cluster ids to df
-        df = to_df(coords)
+        df = to_df(real_coords)
         df['cluster_id'] = clust
         # setup random coords
         pb.update_progress(70)

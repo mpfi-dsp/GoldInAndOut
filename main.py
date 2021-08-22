@@ -69,6 +69,8 @@ class GoldInAndOut(QWidget):
         self.nav_list.item(0).setSelected(True)
         self.home_page.show_logs.clicked.connect(self.open_logger)
 
+        self.dlg = Logger()
+
 
     def on_run_complete(self):
         self.home_page.start_btn.setEnabled(True)
@@ -87,10 +89,9 @@ class GoldInAndOut(QWidget):
 
     def open_logger(self):
         if self.home_page.show_logs.isChecked():
-            self.dlg = Logger()
             self.dlg.show()
         else:
-            self.dlg.destroy()
+            self.dlg.hide()
 
     def init_workflows(self):
         try:
@@ -144,7 +145,8 @@ class GoldInAndOut(QWidget):
                                      csv=csv_path,
                                      csv2=csv2_path,
                                      output_ops=output_ops,
-                                     pg=partial(self.update_main_progress, (int((z / wf_td * 100))))
+                                     pg=partial(self.update_main_progress, (int((z / wf_td * 100)))),
+                                     log=self.dlg
                                      ))
         except Exception as e:
             print(e, traceback.format_exc())

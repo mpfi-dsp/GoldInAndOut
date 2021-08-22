@@ -94,7 +94,7 @@ class QImageViewer(QMainWindow):
         super(QImageViewer, self).__init__()
 
         self.setWindowTitle("EM Image Viewer")
-        self.setWindowIcon(QIcon('./images/logo.ico'))
+        self.setWindowIcon(QIcon('./logo.ico'))
         # self.resize(800, 800)
         self.printer = QPrinter()
 

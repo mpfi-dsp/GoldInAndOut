@@ -39,34 +39,35 @@ from workflows.starfish import run_starfish, draw_starfish
 
 
 class AnalysisWorker(QObject):
-    finished = pyqtSignal()
-    progress = pyqtSignal(object)
+    finished = pyqtSignal(object)
+    progress = pyqtSignal(int)
     
-    def run(self, wf: WorkflowObj, vals: List[str], prog_wrapper: Progress, coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]] = None, img_path: str = "", mask_path: str = ""):
+    def run(self, wf: WorkflowObj, vals: List[str], coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]] = None, img_path: str = "", mask_path: str = ""):
         try:
             real_df1 = real_df2 = rand_df1 = rand_df2 = pd.DataFrame()
             
             if wf['type'] == Workflow.NND:
-                real_df1, rand_df1 = run_nnd(real_coords=coords, rand_coords=rand_coords, pb=prog_wrapper)
+                real_df1, rand_df1 = run_nnd(real_coords=coords, rand_coords=rand_coords, )
             elif wf['type'] == Workflow.CLUST:
-                real_df1, rand_df1, real_df2, rand_df2 = run_clust(real_coords=coords, rand_coords=rand_coords, img_path=img_path, pb=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1])
+                real_df1, rand_df1, real_df2, rand_df2 = run_clust(
+                    real_coords=coords, rand_coords=rand_coords, img_path=img_path, distance_threshold=vals[0], n_clusters=vals[1], pb=self.progress)
             elif wf['type'] == Workflow.NND_CLUST:
-                real_df2, rand_df2, real_df1, rand_df1 = run_nnd_clust(pb=prog_wrapper, real_coords=coords, rand_coords=rand_coords,  distance_threshold=vals[0],  n_clusters=vals[1], min_clust_size=vals[2])
+                real_df2, rand_df2, real_df1, rand_df1 = run_nnd_clust(real_coords=coords, rand_coords=rand_coords,  distance_threshold=vals[0],  n_clusters=vals[1], min_clust_size=vals[2])
             elif wf['type'] == Workflow.RIPPLER:
                 real_df1, rand_df1 = run_rippler(real_coords=coords, alt_coords=alt_coords, rand_coords=rand_coords,
-                                                 pb=prog_wrapper, img_path=img_path, mask_path=mask_path, max_steps=vals[0], step_size=vals[1])
+                                               img_path=img_path, mask_path=mask_path, max_steps=vals[0], step_size=vals[1])
             elif wf['type'] == Workflow.STARFISH:
-                real_df1, rand_df1 = run_starfish(real_coords=coords, rand_coords=rand_coords, alt_coords=alt_coords, pb=prog_wrapper)
+                real_df1, rand_df1 = run_starfish(real_coords=coords, rand_coords=rand_coords, alt_coords=alt_coords)
 
             self.output_data = DataObj(real_df1, real_df2, rand_df1, rand_df2)
-            self.progress.emit(self.output_data)
-            self.finished.emit()
+            # self.progress.emit(self.)
+            self.finished.emit(self.output_data)
         except Exception as e:
             self.dlg = Logger()
             self.dlg.show()
             print(traceback.format_exc())
             logging.error(traceback.format_exc())
-            self.finished.emit()
+            self.finished.emit({})
 
 
 class WorkflowPage(QWidget):
@@ -94,7 +95,7 @@ class WorkflowPage(QWidget):
     @pg: primary loading/progress bar ref
     """
 
-    def __init__(self, wf: WorkflowObj, coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]] = None, output_ops: OutputOptions = None, img: str = "", mask: str = "", csv: str = "", csv2: str = "", pg: Progress = None):
+    def __init__(self, wf: WorkflowObj, coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]] = None, output_ops: OutputOptions = None, img: str = "", mask: str = "", csv: str = "", csv2: str = "", pg: Progress = None, log: Logger = None):
         super().__init__()
         # init class vars: allow referencing within functions without passing explicitly
         self.is_init = False
@@ -105,7 +106,7 @@ class WorkflowPage(QWidget):
         # self.alt_coords = alt_coords
         self.output_ops = output_ops
         # create popup error logger
-        self.dlg = Logger()
+        self.dlg = log
         # init layout
         layout = QFormLayout()
         # header
@@ -285,7 +286,7 @@ class WorkflowPage(QWidget):
         # run on init
         self.run(wf, coords, alt_coords)
 
-    def update_progress(self, value):
+    def update_progress(self, value: int):
         """ UPDATE PROGRESS BAR """
         self.progress.setValue(value)
 
@@ -305,20 +306,19 @@ class WorkflowPage(QWidget):
     def get_custom_values(self):
         return [self.cstm_props[i].text() if self.cstm_props[i].text() else self.wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
 
-    def download(self, output_ops, wf):
+    def download(self, output_ops: OutputOptions, wf: WorkflowObj):
         print('download')
-        # self.dl_thread = QThread()
-        # self.dl_worker = AnalysisWorker()
-        # self.worker.moveToThread(self.dl_thread)
-        # self.dl_thread.started.connect(partial(self.dl_worker.run, wf, df, vals, prog_wrapper, self.real_coords,
-        #                                        self.rand_coords, self.img_drop.currentText(), self.mask_drop.currentText(), self.alt_coords))
-        # self.dl_worker.finished.connect(self.dl_thread.quit)
-        # self.dl_worker.finished.connect(self.dl_worker.deleteLater)
-        # self.dl_thread.finished.connect(self.dl_thread.deleteLater)
+        self.dl_thread = QThread()
+        self.dl_worker = DownloadWorker()
+        self.dl_worker.moveToThread(self.dl_thread)
+        self.dl_thread.started.connect(partial(self.dl_worker.run, wf, self.data, output_ops, self.img_drop.currentText(), self.display_img, self.graph))
+        self.dl_worker.finished.connect(self.dl_thread.quit)
+        self.dl_worker.finished.connect(self.dl_worker.deleteLater)
+        self.dl_thread.finished.connect(self.dl_thread.deleteLater)
         # self.dl_worker.progress.connect(self.on_receive_data)
-        # self.dl_thread.start()
+        self.dl_thread.start()
 
-    def run(self, wf, coords, alt_coords):
+    def run(self, wf: WorkflowObj, coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]]):
         """ RUN WORKFLOW """
         try:
             prog_wrapper = Progress()
@@ -331,21 +331,23 @@ class WorkflowPage(QWidget):
             self.thread = QThread()
             self.worker = AnalysisWorker()
             self.worker.moveToThread(self.thread)
-            self.thread.started.connect(partial(self.worker.run, wf, vals, prog_wrapper, coords, self.rand_coords, self.img_drop.currentText(), self.mask_drop.currentText(), alt_coords))
+            # self.thread.started.connect(partial(self.worker.run, wf, vals, prog_wrapper, coords, self.rand_coords, self.img_drop.currentText(), self.mask_drop.currentText(), alt_coords))
+            self.thread.started.connect(partial(self.worker.run, wf, vals, coords, self.rand_coords, alt_coords, self.img_drop.currentText(), self.mask_drop.currentText(), ))
+            self.worker.progress.connect(self.update_progress)
+            self.worker.finished.connect(self.on_receive_data)
             self.worker.finished.connect(self.thread.quit)
             self.worker.finished.connect(self.worker.deleteLater)
             self.thread.finished.connect(self.thread.deleteLater)
-            self.worker.progress.connect(self.on_receive_data)
             self.thread.start()
         except Exception as e:
             self.handle_except(traceback.format_exc())
 
-    def on_receive_data(self, output_data):
+    def on_receive_data(self, output_data: DataObj):
         try:
             self.data = output_data
             # TODO: handle this better 
             # create ui scheme
-            # self.create_visuals(wf=self.wf, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), output_ops.output_unit=self.output_ops.output_unit, output_ops.output_scalar=self.output_ops.output_scalar)
+            self.create_visuals(wf=self.wf, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), output_ops=self.output_ops)
             # # download files automatically
             self.download(output_ops=self.output_ops, wf=self.wf)
             self.download_btn.setStyleSheet(
@@ -359,7 +361,7 @@ class WorkflowPage(QWidget):
             self.handle_except(traceback.format_exc())
 
 
-    def create_visuals(self, wf, n_bins, output_ops, n=np.zeros(11)):
+    def create_visuals(self, wf: WorkflowObj, n_bins, output_ops: OutputOptions, n: List[int] = np.zeros(11)):
         """ CREATE DATA VISUALIZATIONS """
         try:
             if self.gen_real_cb.isChecked() or self.gen_rand_cb.isChecked() and len(self.real_coords) > 0:
@@ -547,7 +549,7 @@ class WorkflowPage(QWidget):
             self.error_gif.start()
             self.handle_except(traceback.format_exc())
 
-    def open_large(self, event, img):
+    def open_large(self, event, img: QImage):
         """ OPEN IMAGE IN VIEWER """
         try:
             self.image_viewer = QImageViewer(img)
@@ -566,7 +568,8 @@ class DownloadWorker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(object)
     # TODO: actually use otuput dir
-    def run(self, wf, data, output_ops, img_drop, display_img, graph):
+
+    def run(self, wf: WorkflowObj, data: DataObj, output_ops: OutputOptions, img: str, display_img: QImage, graph: QImage):
         """ DOWNLOAD FILES """
         try:
             out_start = output_ops.output_dir if output_ops.output_dir is not None else './output'
@@ -590,7 +593,7 @@ class DownloadWorker(QObject):
         try:
             print("prepare to download output")
             img_name = os.path.splitext(
-                os.path.basename(img_drop.currentText()))[0]
+                os.path.basename(img))[0]
             out_dir = f'{out_start}/{wf["name"].lower()}/{img_name}-{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
             os.makedirs(out_dir, exist_ok=True)
             data.final_real.to_csv(f'{out_dir}/real_{wf["name"].lower()}_output_{enum_to_unit(output_ops.output_unit)}.csv',

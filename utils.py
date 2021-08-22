@@ -127,7 +127,8 @@ def to_df(coords: List[Tuple[float, float]]) -> pd.DataFrame:
     for coord in coords:
         x_coords.append(coord[1])
         y_coords.append(coord[0])
-    return pd.DataFrame([x_coords, y_coords], columns=['X', 'Y'])
+    df = pd.DataFrame(data={'X': x_coords, 'Y': y_coords})
+    return df
 
 # """ TURN ENUM INTO WORKFLOW NAME """
 # def enum_to_workflow(val):

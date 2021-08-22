@@ -3,7 +3,7 @@ import pandas as pd
 import math
 import cv2
 
-def run_nnd(real_coords, rand_coords, pb):
+def run_nnd(real_coords, rand_coords):
     """
     NEAREST NEIGHBOR DISTANCE
     _______________________________
@@ -16,7 +16,7 @@ def run_nnd(real_coords, rand_coords, pb):
         def distance_to_closest_particle(coord_list):
             nnd_list = []
             for z in range(len(coord_list)):
-                pb.update_progress(z)
+                # pb.update_progress(z)
                 closest_d = 10000000000000000000
                 # og coord (x, y), closest coord (x, y), distance
                 nnd_obj = [(0, 0), (0, 0), 0]

@@ -4,9 +4,10 @@ from sklearn.cluster import AgglomerativeClustering
 import numpy as np
 import cv2
 from utils import create_color_pal, to_df
+from PyQt5.QtCore import pyqtSignal
 
 
-def run_clust(pb, real_coords, rand_coords, img_path, distance_threshold=120, n_clusters=None, affinity='euclidean',
+def run_clust(pb: pyqtSignal, real_coords, rand_coords, img_path, distance_threshold=120, n_clusters=None, affinity='euclidean',
               linkage='ward'):
     """
     WARD HIERARCHICAL CLUSTERING
@@ -24,7 +25,7 @@ def run_clust(pb, real_coords, rand_coords, img_path, distance_threshold=120, n_
     @rand_coords: list of randomly generated coordinates
     """
     logging.info("clustering")
-    pb.update_progress(30)
+    pb.emit(30)
     # handle ugly pyqt5 props
     if n_clusters != "None":
         distance_threshold = None
@@ -36,10 +37,10 @@ def run_clust(pb, real_coords, rand_coords, img_path, distance_threshold=120, n_
     hc = AgglomerativeClustering(n_clusters=n_clusters, distance_threshold=distance_threshold*2, affinity=affinity, linkage=linkage)
     cluster = hc.fit_predict(real_coords)
 
-    df = to_df(coords)
+    df = to_df(real_coords)
     df['cluster_id'] = cluster
     # random coords
-    pb.update_progress(70)
+    pb.emit(50)
     rand_coordinates = np.array(rand_coords)
     rand_cluster = hc.fit_predict(rand_coordinates)
     rand_df = pd.DataFrame(rand_coordinates, columns=["X", "Y"])
@@ -50,6 +51,8 @@ def run_clust(pb, real_coords, rand_coords, img_path, distance_threshold=120, n_
     upper_bound = np.array([40, 255, 40])
     clust_details_dfs = []
     # iterate through clusters and find cluster area
+    pb.emit(60)
+
     for data in [df, rand_df]:
         clust_objs = []
         for _id in set(data['cluster_id']):
@@ -73,6 +76,7 @@ def run_clust(pb, real_coords, rand_coords, img_path, distance_threshold=120, n_
         new_df = pd.DataFrame(clust_objs, columns=["cluster_id", "cluster_size", "cluster_area"])
         new_df = new_df.reset_index(drop=True)
         clust_details_dfs.append(new_df)
+    pb.emit(80)
         # cv2.imwrite('test.tif', og_img)
     return df, rand_df, clust_details_dfs[0], clust_details_dfs[1]
 
