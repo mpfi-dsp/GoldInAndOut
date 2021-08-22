@@ -52,7 +52,7 @@ def pixels_conversion(data, unit=Unit.PIXEL, scalar=1, r=5):
     i = 0
     for col in data.drop(index=data.index[0], columns=data.columns[0]):
         i += 1
-        print(data.columns[i])
+        # print(data.columns[i])
         if data.columns[i] not in ignored_cols:
             # print(data[col].head())
             if type(data[col][0]) == tuple:

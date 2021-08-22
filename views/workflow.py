@@ -42,8 +42,7 @@ class AnalysisWorker(QObject):
         try:
             real_df1 = real_df2 = rand_df1 = rand_df2 = pd.DataFrame()
             if wf['type'] == Workflow.NND:
-                real_df1, rand_df1 = run_nnd(
-                    real_coords=coords, rand_coords=rand_coords, pb=self.progress)
+                real_df1, rand_df1 = run_nnd( real_coords=coords, rand_coords=rand_coords, pb=self.progress)
             elif wf['type'] == Workflow.CLUST:
                 real_df1, rand_df1, real_df2, rand_df2 = run_clust(
                     real_coords=coords, rand_coords=rand_coords, img_path=img_path, distance_threshold=vals[0], n_clusters=vals[1], pb=self.progress)
@@ -355,7 +354,7 @@ class WorkflowPage(QWidget):
         # TODO: potentially move some drawing functions to seperate threads? 
         try:
             if self.gen_real_cb.isChecked() or self.gen_rand_cb.isChecked() and len(self.real_coords) > 0:
-                print(f'{wf['name']}: generating visualizations')
+                print(f'{wf["name"]}: generating visualizations')
                 plt.close('all')
                 graph_df = pd.DataFrame([])
                 cm = plt.cm.get_cmap('crest')
@@ -464,7 +463,7 @@ class WorkflowPage(QWidget):
                 ax.set_xlabel(f'{wf["graph"]["x_label"]} ({enum_to_unit(output_ops.output_unit)})')
                 ax.set_ylabel(wf["graph"]["y_label"])
                 ax.set_ylim(ymin=0)
-                print(f'{wf['name']}: generated graphs')
+                print(f'{wf["name"]}: generated graphs')
                 # generate palette
                 palette = create_color_pal(n_bins=int(len(n)), palette_type=self.pal_type.currentText())
                 r_palette = create_color_pal(n_bins=int(len(n)), palette_type=self.r_pal_type.currentText())
@@ -525,7 +524,7 @@ class WorkflowPage(QWidget):
                 pixmap = QPixmap.fromImage(self.display_img)
                 smaller_pixmap = pixmap.scaled(200, 200, Qt.KeepAspectRatio, Qt.FastTransformation)
                 self.image_frame.setPixmap(smaller_pixmap)
-                print(f'{wf['name']}: finished generating visuals')
+                print(f'{wf["name"]}: finished generating visuals')
         except Exception as e:
             self.error_gif = QMovie("./images/caterror.gif")
             self.image_frame.setMovie(self.error_gif)
@@ -565,7 +564,7 @@ class DownloadWorker(QObject):
                             f'{o_dir}/{f}') for f in os.listdir(o_dir)], key=os.path.getctime)[0]
                     print("pruning ", oldest_dir)
                     shutil.rmtree(oldest_dir)
-                print(f'{wf['name']}: pruned old output')
+                print(f'{wf["name"]}: pruned old output')
         except Exception as e:
             self.dlg = Logger()
             self.dlg.show()
@@ -574,7 +573,7 @@ class DownloadWorker(QObject):
           
         # download files
         try:
-            print(f'{wf['name']}: prepare to download output')
+            print(f'{wf["name"]}: prepare to download output')
             img_name = os.path.splitext(
                 os.path.basename(img))[0]
             out_dir = f'{out_start}/{wf["name"].lower()}/{img_name}-{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
@@ -602,7 +601,7 @@ class DownloadWorker(QObject):
                 data.rand_df2.to_csv(
                     f'{out_dir}/detailed_rand_{wf["name"].lower()}_output_{enum_to_unit(output_ops.output_unit)}.csv', index=False,
                     header=True)
-            print(f'{wf['name']}: downloaded output')
+            print(f'{wf["name"]}: downloaded output')
         except Exception as e:
             self.dlg = Logger()
             self.dlg.show()

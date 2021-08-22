@@ -1,10 +1,9 @@
 import logging
-
-import cv2
 import numpy as np
 import random
+import cv2
 
-def gen_random_coordinates(img_path, mask_path, count=0):
+def gen_random_coordinates(img_path: str, mask_path: str, count: int = 0):
     """
     RANDOM COORDS GENERATOR
     _______________________________
@@ -12,7 +11,7 @@ def gen_random_coordinates(img_path, mask_path, count=0):
     @mask_path: path to mask we are finding the n nearest distance of (only needed if gen_rand is True)
     @count: number of random particles to generate
     """
-    def generate_random_points(boundary, quantity, mask):
+    def generate_random_points(boundary: list, quantity: int, mask: list):
         # generate faux particles within the pface
         coords = []
         num = 0
@@ -41,6 +40,6 @@ def gen_random_coordinates(img_path, mask_path, count=0):
     # grab contours of pface
     lower_bound = np.array([239, 174, 0])
     upper_bound = np.array([254, 254, 254])
-    pface_mask = cv2.inRange(img_pface, lower_bound, upper_bound)
+    pface_mask: list = cv2.inRange(img_pface, lower_bound, upper_bound)
     logging.info("Generated random particles")
     return generate_random_points(pface_mask.shape, count, pface_mask)
