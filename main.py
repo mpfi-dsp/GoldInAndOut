@@ -136,7 +136,7 @@ class GoldInAndOut(QWidget):
                     # generate workflow page
                     print(WORKFLOWS[i]['name'])
                     self.page_stack.addWidget(
-                        WorkflowPage(df=self.SCALED_DF,
+                        WorkflowPage(coords=self.COORDS,
                                      alt_coords=self.ALT_COORDS,
                                      wf=WORKFLOWS[i],
                                      img=img_path,
@@ -157,7 +157,8 @@ class GoldInAndOut(QWidget):
         scalar = float(self.home_page.csvs_ip_i.text() if len(self.home_page.csvs_ip_i.text()) > 0 else 1)
         try:
             data = pd.read_csv(path, sep=",")
-            self.SCALED_DF = pixels_conversion(data=data, unit=unit, scalar=scalar)
+            scaled_df = pixels_conversion(data=data, unit=unit, scalar=scalar)
+            self.COORDS = to_coord_list(scaled_df)
         except Exception as e:
             print(e, traceback.format_exc())
         try:
@@ -167,7 +168,7 @@ class GoldInAndOut(QWidget):
             else:
                 img = self.home_page.img_le.text() if len(self.home_page.img_le.text()) > 0 else "./input/example_image.tif"
                 mask = self.home_page.mask_le.text() if len(self.home_page.mask_le.text()) > 0 else "./input/example_mask.tif"
-                self.ALT_COORDS = gen_random_coordinates(img, mask, count=len(self.SCALED_DF.index))
+                self.ALT_COORDS = gen_random_coordinates(img, mask, count=len(self.COORDS))
         except Exception as e:
             print(e, traceback.format_exc())
 

@@ -1,9 +1,10 @@
-import numpy as np
 from PyQt5.QtCore import QThread, pyqtSignal
-import pandas as pd
 from PIL import Image
-import seaborn as sns
 from typings import Unit, Workflow
+from typing import List, Tuple
+import seaborn as sns
+import numpy as np
+import pandas as pd
 import io
 
 class Progress(QThread):
@@ -109,14 +110,24 @@ def enum_to_unit(val):
         return 'undefined'
 
 
-def to_coord_list(df):
-    # turn into coordinate list
+def to_coord_list(df: pd.DataFrame) -> List[Tuple[float, float]]:
+    # turn df into coordinate list
     x_coordinates = np.array(df['X'])
     y_coordinates = np.array(df['Y'])
     coords = []
     for i in range(len(x_coordinates)):
         coords.append([float(y_coordinates[i]), float(x_coordinates[i])])
     return coords
+
+
+def to_df(coords: List[Tuple[float, float]]) -> pd.DataFrame:
+    # turn coordinate list into df
+    x_coords = []
+    y_coords = []
+    for coord in coords:
+        x_coords.append(coord[1])
+        y_coords.append(coord[0])
+    return pd.DataFrame([x_coords, y_coords], columns=['X', 'Y'])
 
 # """ TURN ENUM INTO WORKFLOW NAME """
 # def enum_to_workflow(val):

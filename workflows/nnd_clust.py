@@ -8,11 +8,10 @@ from collections import Counter
 import math
 import cv2
 
-def run_nnd_clust(df, pb, real_coords, rand_coords, min_clust_size=3, distance_threshold=120, n_clusters=None, affinity='euclidean', linkage='ward'):
+def run_nnd_clust(pb, real_coords, rand_coords, min_clust_size=3, distance_threshold=120, n_clusters=None, affinity='euclidean', linkage='ward'):
     """
     NEAREST NEIGHBOR DISTANCE OF WARD HIERARCHICAL CLUSTERING
     _______________________________
-    @df: dataframe with coordinates scaled to whatever format desired
     @pb: progress bar wrapper element, allows us to track how much time is left in process
     @real_coords: list of real coordinates
     @rand_coords: list of randomly generated coordinates
@@ -51,7 +50,7 @@ def run_nnd_clust(df, pb, real_coords, rand_coords, min_clust_size=3, distance_t
         return centroids, centroid_ids
 
     # cluster data
-    def cluster(data, n_clust, d_threshold, min_size):
+    def cluster(coords, n_clust, d_threshold, min_size):
         # TODO: come up with a better way of handling this
         # translate string var props to their real value (unfortunately necessary because of text inputs)
         if n_clust != "None":
@@ -64,7 +63,8 @@ def run_nnd_clust(df, pb, real_coords, rand_coords, min_clust_size=3, distance_t
         hc = AgglomerativeClustering(n_clusters=n_clust, distance_threshold=d_threshold*2, affinity=affinity, linkage=linkage)
         clust = hc.fit_predict(real_coords)
         # append cluster ids to df
-        data['cluster_id'] = clust
+        df = to_df(coords)
+        df['cluster_id'] = clust
         # setup random coords
         pb.update_progress(70)
         rand_coordinates = np.array(rand_coords)
@@ -73,7 +73,7 @@ def run_nnd_clust(df, pb, real_coords, rand_coords, min_clust_size=3, distance_t
         rand_df = pd.DataFrame(rand_coordinates, columns=["X", "Y"])
         rand_df['cluster_id'] = rand_cluster
         # print("generated clusters")
-        return data, rand_df, minify_list(clust, float(min_size)), minify_list(rand_cluster, float(min_size))
+        return df, rand_df, minify_list(clust, float(min_size)), minify_list(rand_cluster, float(min_size))
 
     def nnd(coordinate_list, random_coordinate_list):
         # finds nnd between centroids
@@ -114,7 +114,7 @@ def run_nnd_clust(df, pb, real_coords, rand_coords, min_clust_size=3, distance_t
     logging.info("running nearest neighbor distance between clusters")
     pb.update_progress(30)
     # cluster
-    full_real_df, full_rand_df, cluster, rand_cluster = cluster(df, n_clusters, distance_threshold, min_clust_size)
+    full_real_df, full_rand_df, cluster, rand_cluster = cluster(coords, n_clusters, distance_threshold, min_clust_size)
     # generate centroids of clusters
     real_centroids, real_clust_ids = find_centroids(full_real_df, cluster)
     rand_centroids, rand_clust_ids = find_centroids(full_rand_df, rand_cluster)

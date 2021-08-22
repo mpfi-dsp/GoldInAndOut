@@ -1,64 +1,62 @@
-# pyQT5
+# general
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import matplotlib.pyplot as plt
+from functools import partial
+import seaborn as sns
+import numpy as np
+import pandas as pd
 import datetime
 import logging
 import os
 import shutil
+import traceback
+import cv2
 
-import numpy as np
-import pandas as pd
+# pyQT5
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QSize, QByteArray
 from PyQt5.QtGui import QImage, QPixmap, QCursor, QMovie
 from PyQt5.QtWidgets import (QLabel, QRadioButton, QCheckBox, QHBoxLayout, QPushButton, QWidget, QSizePolicy,
                              QFormLayout, QLineEdit,
                              QComboBox, QProgressBar, QToolButton, QVBoxLayout, QListWidgetItem)
-# general
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-import matplotlib.pyplot as plt
+
+# views
 from views.image_viewer import QImageViewer
-from functools import partial
-import seaborn as sns
-import cv2
+from views.logger import Logger
+
 # utils
 from globals import PALETTE_OPS, MAX_DIRS_PRUNE
-from typings import Unit, Workflow, DataObj, OutputOptions
+from typings import Unit, Workflow, DataObj, OutputOptions, WorkflowObj
+from typing import List, Tuple
 from utils import Progress, create_color_pal, enum_to_unit, to_coord_list, pixels_conversion
-from views.logger import Logger
+
+# workflows
 from workflows.clust import run_clust, draw_clust
 from workflows.gold_rippler import run_rippler, draw_rippler
 from workflows.nnd import run_nnd, draw_length
 from workflows.nnd_clust import run_nnd_clust, draw_nnd_clust
 from workflows.random_coords import gen_random_coordinates
-import traceback
 from workflows.starfish import run_starfish, draw_starfish
+
 
 class AnalysisWorker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(object)
     
-
-    def run(self, wf, df, vals, prog_wrapper, real_coords, rand_coords, img_path, mask_path=None, alt_coords=None):
+    def run(self, wf: WorkflowObj, vals: List[str], prog_wrapper: Progress, coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]] = None, img_path: str = "", mask_path: str = ""):
         try:
             real_df1 = real_df2 = rand_df1 = rand_df2 = pd.DataFrame()
             
             if wf['type'] == Workflow.NND:
-                real_df1, rand_df1 = run_nnd(real_coords=real_coords, rand_coords=rand_coords, pb=prog_wrapper)
+                real_df1, rand_df1 = run_nnd(real_coords=coords, rand_coords=rand_coords, pb=prog_wrapper)
             elif wf['type'] == Workflow.CLUST:
-                real_df1, rand_df1, real_df2, rand_df2 = run_clust(df=df, real_coords=real_coords, rand_coords=rand_coords, img_path=img_path, pb=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1])
+                real_df1, rand_df1, real_df2, rand_df2 = run_clust(real_coords=coords, rand_coords=rand_coords, img_path=img_path, pb=prog_wrapper, distance_threshold=vals[0], n_clusters=vals[1])
             elif wf['type'] == Workflow.NND_CLUST:
-                real_df2, rand_df2, real_df1, rand_df1 = run_nnd_clust(df=df, pb=prog_wrapper,
-                                                                                           real_coords=real_coords,
-                                                                                           rand_coords=rand_coords,
-                                                                                           distance_threshold=vals[0],
-                                                                                           n_clusters=vals[1],
-                                                                                           min_clust_size=vals[2])
+                real_df2, rand_df2, real_df1, rand_df1 = run_nnd_clust(pb=prog_wrapper, real_coords=coords, rand_coords=rand_coords,  distance_threshold=vals[0],  n_clusters=vals[1], min_clust_size=vals[2])
             elif wf['type'] == Workflow.RIPPLER:
-                real_df1, rand_df1 = run_rippler(real_coords=real_coords, alt_coords=alt_coords, rand_coords=rand_coords,
-                                                           pb=prog_wrapper, img_path=img_path,
-                                                           mask_path=mask_path, max_steps=vals[0],
-                                                           step_size=vals[1],
-                                                           )
+                real_df1, rand_df1 = run_rippler(real_coords=coords, alt_coords=alt_coords, rand_coords=rand_coords,
+                                                 pb=prog_wrapper, img_path=img_path, mask_path=mask_path, max_steps=vals[0], step_size=vals[1])
             elif wf['type'] == Workflow.STARFISH:
-                real_df1, rand_df1 = run_starfish(real_coords=real_coords, rand_coords=rand_coords, alt_coords=alt_coords, pb=prog_wrapper)
+                real_df1, rand_df1 = run_starfish(real_coords=coords, rand_coords=rand_coords, alt_coords=alt_coords, pb=prog_wrapper)
 
             self.output_data = DataObj(real_df1, real_df2, rand_df1, rand_df2)
             self.progress.emit(self.output_data)
@@ -75,8 +73,8 @@ class WorkflowPage(QWidget):
     """
     WORKFLOW PAGE
     __________________
-    @df: dataframe containing csv coordinate data of gold particles scaled via scalar to proper unit
-    @alt_coords: dataframe containing csv coordinate data of gold particles as lighthouse population
+    @coords: list containing csv coordinate data of gold particles scaled via scalar to proper unit
+    @alt_coords: list containing csv coordinate data of gold particles as lighthouse population
     @wf: selected workflow, JSON object containing the following data:
         @type: ENUM type of Workflow
         @header: string displayed as "header"
@@ -96,20 +94,18 @@ class WorkflowPage(QWidget):
     @pg: primary loading/progress bar ref
     """
 
-    def __init__(self, df, output_ops: OutputOptions, alt_coords=None, wf=None, img="", mask="", csv="", csv2="", pg=None):
+    def __init__(self, wf: WorkflowObj, coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]] = None, output_ops: OutputOptions = None, img: str = "", mask: str = "", csv: str = "", csv2: str = "", pg: Progress = None):
         super().__init__()
-        # init class vars
+        # init class vars: allow referencing within functions without passing explicitly
         self.is_init = False
         self.data: DataObj
-        # allow referencing within functions without passing explicitly
         self.wf = wf
         self.pg = pg
+        # self.coords = coords
+        # self.alt_coords = alt_coords
         self.output_ops = output_ops
-        self.alt_coords = alt_coords
-
         # create popup error logger
         self.dlg = Logger()
-
         # init layout
         layout = QFormLayout()
         # header
@@ -274,7 +270,7 @@ class WorkflowPage(QWidget):
         self.run_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #E89C12; color: white; border-radius: 7px; ")
         self.run_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.run_btn.clicked.connect(partial(self.run, wf, df))
+        self.run_btn.clicked.connect(partial(self.run, wf, coords))
         self.download_btn = QPushButton('Download Again', self)
         self.download_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #ccc; color: white; border-radius: 7px; ")
@@ -287,8 +283,7 @@ class WorkflowPage(QWidget):
         # assign layout
         self.setLayout(layout)
         # run on init
-        # TODO: handle this better
-        self.run(wf, df)
+        self.run(wf, coords, alt_coords)
 
     def update_progress(self, value):
         """ UPDATE PROGRESS BAR """
@@ -323,26 +318,20 @@ class WorkflowPage(QWidget):
         # self.dl_worker.progress.connect(self.on_receive_data)
         # self.dl_thread.start()
 
-    def run(self, wf, df):
+    def run(self, wf, coords, alt_coords):
         """ RUN WORKFLOW """
         try:
             prog_wrapper = Progress()
             prog_wrapper.prog.connect(self.update_progress)
-            # real coords
-            self.real_coords = to_coord_list(df)
-            # generate random coords
-            self.rand_coords = gen_random_coordinates(
-                img_path=self.img_drop.currentText(),
-                mask_path=self.mask_drop.currentText(),
-                count=int(self.n_coord_ip.text()) if self.n_coord_ip.text() else len(df.index))
 
-            # TODO: ADD NEW WORKFLOW FUNCTION CALLS HERE
+            self.rand_coords = gen_random_coordinates(img_path=self.img_drop.currentText(), mask_path=self.mask_drop.currentText(), count=int(self.n_coord_ip.text()) if self.n_coord_ip.text() else len(coords))
+
             vals = self.get_custom_values()
 
             self.thread = QThread()
             self.worker = AnalysisWorker()
             self.worker.moveToThread(self.thread)
-            self.thread.started.connect(partial(self.worker.run, wf, df, vals, prog_wrapper, self.real_coords, self.rand_coords, self.img_drop.currentText(), self.mask_drop.currentText(), self.alt_coords))
+            self.thread.started.connect(partial(self.worker.run, wf, vals, prog_wrapper, coords, self.rand_coords, self.img_drop.currentText(), self.mask_drop.currentText(), alt_coords))
             self.worker.finished.connect(self.thread.quit)
             self.worker.finished.connect(self.worker.deleteLater)
             self.thread.finished.connect(self.thread.deleteLater)

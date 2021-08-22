@@ -3,15 +3,14 @@ import pandas as pd
 from sklearn.cluster import AgglomerativeClustering
 import numpy as np
 import cv2
-from utils import create_color_pal
+from utils import create_color_pal, to_df
 
 
-def run_clust(df, pb, real_coords, rand_coords, img_path, distance_threshold=120, n_clusters=None, affinity='euclidean',
+def run_clust(pb, real_coords, rand_coords, img_path, distance_threshold=120, n_clusters=None, affinity='euclidean',
               linkage='ward'):
     """
     WARD HIERARCHICAL CLUSTERING
     _______________________________
-    @df: dataframe with coordinates scaled to whatever format desired
     @prog: progress bar wrapper element, allows us to track how much time is left in process
     @distance_threshold: using a distance threshold to automatically cluster particles
     @n_clusters: set number of clusters to use
@@ -36,6 +35,8 @@ def run_clust(df, pb, real_coords, rand_coords, img_path, distance_threshold=120
     # cluster
     hc = AgglomerativeClustering(n_clusters=n_clusters, distance_threshold=distance_threshold*2, affinity=affinity, linkage=linkage)
     cluster = hc.fit_predict(real_coords)
+
+    df = to_df(coords)
     df['cluster_id'] = cluster
     # random coords
     pb.update_progress(70)
