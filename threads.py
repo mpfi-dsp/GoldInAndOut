@@ -3,7 +3,6 @@ from PyQt5.QtGui import QImage
 from utils import pixels_conversion, enum_to_unit
 from globals import MAX_DIRS_PRUNE
 import os
-import shutil
 import traceback
 import logging
 from views.logger import Logger
@@ -18,6 +17,7 @@ from workflows.nnd import run_nnd
 import numpy as np
 import datetime
 import pandas as pd
+import shutil
 
 class AnalysisWorker(QObject):
     finished = pyqtSignal(object)

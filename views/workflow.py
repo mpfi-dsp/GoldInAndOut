@@ -306,6 +306,11 @@ class WorkflowPage(QWidget):
             self.data = output_data
             # create ui scheme
             self.create_visuals(wf=self.wf, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), output_ops=self.output_ops)
+        except Exception as e:
+            self.handle_except(traceback.format_exc())
+
+    def on_finish_visuals(self):
+        try:
             # download files automatically
             self.download(output_ops=self.output_ops, wf=self.wf)
             self.download_btn.setStyleSheet(
@@ -318,12 +323,14 @@ class WorkflowPage(QWidget):
         except Exception as e:
             self.handle_except(traceback.format_exc())
 
+         
+
 
     def create_visuals(self, wf: WorkflowObj, n_bins, output_ops: OutputOptions, n: List[int] = np.zeros(11)):
         """ CREATE DATA VISUALIZATIONS """
         # TODO: potentially move some drawing functions to seperate threads? 
         try:
-            if self.gen_real_cb.isChecked() or self.gen_rand_cb.isChecked() and len(self.real_coords) > 0:
+            if self.gen_real_cb.isChecked() or self.gen_rand_cb.isChecked() and len(self.coords) > 0:
                 print(f'{wf["name"]}: generating visualizations')
                 plt.close('all')
                 graph_df = pd.DataFrame([])
@@ -450,6 +457,10 @@ class WorkflowPage(QWidget):
                 pixmap = QPixmap.fromImage(self.graph)
                 smaller_pixmap = pixmap.scaled(300, 250, Qt.KeepAspectRatio, Qt.FastTransformation)
                 self.graph_frame.setPixmap(smaller_pixmap)
+                print(f'{wf["name"]}: generated graph')
+                # save image
+                # cv2.imwrite(f'{self.img_drop.currentText()}', self.graph)
+                # print(f'{wf["name"]}: saved graph')
                 # TODO: ADD NEW GRAPHS HERE
                 if wf["type"] == Workflow.NND:
                     # if real coords selected, annotate them on img with lines indicating length
@@ -474,7 +485,7 @@ class WorkflowPage(QWidget):
                 elif wf["type"] == Workflow.RIPPLER:
                     vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
                     if self.gen_real_cb.isChecked():
-                        drawn_img = draw_rippler(coords=self.real_coords, alt_coords=self.alt_coords, mask_path=self.mask_drop.currentText(), img=drawn_img, palette=palette, circle_c=(18, 156, 232), max_steps=vals[0], step_size=vals[1])
+                        drawn_img = draw_rippler(coords=self.coords, alt_coords=self.alt_coords, mask_path=self.mask_drop.currentText(), img=drawn_img, palette=palette, circle_c=(18, 156, 232), max_steps=vals[0], step_size=vals[1])
                     if self.gen_rand_cb.isChecked():
                         drawn_img = draw_rippler(coords=self.rand_coords, alt_coords=self.alt_coords, mask_path=self.mask_drop.currentText(), img=drawn_img, palette=r_palette, circle_c=(103, 114, 0), max_steps=vals[0], step_size=vals[1])
                 elif wf["type"] == Workflow.STARFISH:
@@ -495,6 +506,8 @@ class WorkflowPage(QWidget):
                 smaller_pixmap = pixmap.scaled(200, 200, Qt.KeepAspectRatio, Qt.FastTransformation)
                 self.image_frame.setPixmap(smaller_pixmap)
                 print(f'{wf["name"]}: finished generating visuals')
+
+                self.on_finish_visuals()
         except Exception as e:
             self.error_gif = QMovie("./images/caterror.gif")
             self.image_frame.setMovie(self.error_gif)
