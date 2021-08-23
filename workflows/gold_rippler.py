@@ -23,7 +23,7 @@ def run_rippler(real_coords, rand_coords, alt_coords, img_path, mask_path, pb, m
     _______________________________
     @real_coords: centroids coordinates scaled to whatever format desired
     @rand_coords: random centroids coordinates scaled to whatever format desired
-    @spine_coords: 2nd csv coordinates being measured against scaled to whatever format desired
+    @alt_coords: 2nd csv coordinates being measured against scaled to whatever format desired
     @img_path: path to img
     @mask_path: path to pface mask
     @pb: progress bar wrapper element, allows us to track how much time is left in process
@@ -34,7 +34,9 @@ def run_rippler(real_coords, rand_coords, alt_coords, img_path, mask_path, pb, m
     # find Spine Correlated Particles Per P-face Area (SC3PA)
     img_og = cv2.imread(img_path)
     img_pface = cv2.imread(mask_path)
-    # print("load imgs and find pface area")
+    print("load imgs and find pface area")
+    print(len(real_coords), len(alt_coords))
+
     lower_bound = np.array([239, 174, 0])
     upper_bound = np.array([254, 254, 254])
     pface_mask = cv2.inRange(img_pface, lower_bound, upper_bound)
@@ -118,8 +120,7 @@ def run_rippler(real_coords, rand_coords, alt_coords, img_path, mask_path, pb, m
 
         # generate new df and return
         new_df = pd.DataFrame(
-            data={'radius': radius, '%_gp_captured': gp_captured, '%_pface_covered': pface_covered, 'SC3PA': SC3PA,
-                  'total_gp': total_gp})
+            data={'radius': radius, '%_gp_captured': gp_captured, '%_pface_covered': pface_covered, 'SC3PA': SC3PA, 'total_gp': total_gp})
         # print(new_df.head())
         rippler_out.append(new_df)
         # cv2.imwrite("test_img.jpg", output_img)
