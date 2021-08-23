@@ -258,8 +258,7 @@ class VisualizationsWorker(QObject):
                 height, width, bytesPerComponent = drawn_img.shape
                 bytesPerLine = 3 * width
                 cv2.cvtColor(drawn_img, cv2.COLOR_BGR2RGB, drawn_img)
-                self.display_img = QImage(
-                    drawn_img.data, width, height, bytesPerLine, QImage.Format_RGB888)
+                self.display_img = QImage(drawn_img.data, width, height, bytesPerLine, QImage.Format_RGB888)
 
                 print(f'{wf["name"]}: finished generating visuals')
                 self.finished.emit(self.display_img)
