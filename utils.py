@@ -68,7 +68,7 @@ def pixels_conversion(data, unit=Unit.PIXEL, scalar=1, r=5):
                     data[col] = round((data[col] * scalar), r)
                 else:
                     data[col] = round(data[col].div(scalar), r)
-
+    print(data.head())
 
     return data
 

@@ -18,6 +18,7 @@ from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal, QThread
 from PyQt5.QtGui import QIcon, QCursor
 from PyQt5.QtWidgets import (QWidget, QListWidget, QStackedWidget, QHBoxLayout, QListWidgetItem, QApplication,
                              QMainWindow)
+import pandas._libs.tslibs.base
 # general
 import sys
 from functools import partial
@@ -157,7 +158,7 @@ class GoldInAndOut(QWidget):
         except Exception as e:
             print(e, traceback.format_exc())
 
-    def update_main_progress(self, value):
+    def update_main_progress(self, value: int):
         """ UPDATE PROGRESS BAR """
         if self.home_page.progress.value() != 100:
             self.home_page.progress.setValue(value)

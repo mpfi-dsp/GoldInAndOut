@@ -24,12 +24,10 @@ class HomePage(QWidget):
     ________________
     @start: begins running selected workflows and display all subpages
     """
-    def __init__(self, start):
+    def __init__(self, start: partial):
         super().__init__()
         # init layout
         layout = QFormLayout()
-
-
         # header
         header = QLabel(HEADER)
         header.setStyleSheet("font-size: 24px; font-weight: bold; padding-top: 8px; ")
@@ -129,7 +127,7 @@ class HomePage(QWidget):
         self.op_scalar_type.addItems(UNIT_OPS)
         self.op_scalar_type.currentTextChanged.connect(self.on_output_changed)
         # scalar IP to PX
-        self.csvs_lb_i = QLabel("input to px ratio")
+        self.csvs_lb_i = QLabel("1px = __mu")  # QLabel("input to px ratio")
         self.csvs_lb_i.setStyleSheet("font-size: 17px; font-weight: 400; margin-left: 15px; ")
         self.csvs_ip_i = QLineEdit()
         self.csvs_ip_i.setStyleSheet(
@@ -137,7 +135,7 @@ class HomePage(QWidget):
         self.csvs_ip_i.setPlaceholderText("1")
 
         # scalar PX to Output
-        self.csvs_lb_o = QLabel("px to output ratio")
+        self.csvs_lb_o =  QLabel("1px = __mu") # QLabel("px to output ratio")
         self.csvs_lb_o.setStyleSheet("font-size: 17px; font-weight: 400; margin-left: 15px; ")
         self.csvs_ip_o = QLineEdit()
         self.csvs_ip_o.setStyleSheet("font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 150px; ")
@@ -166,17 +164,17 @@ class HomePage(QWidget):
         self.start_btn.setCursor(QCursor(Qt.PointingHandCursor))
         layout.addRow(self.start_btn)
 
-
         # assign layout
         self.setLayout(layout)
 
-    def on_input_changed(self, value):
+    def on_input_changed(self, value: str):
         if value == "px":
             self.csvs_lb_i.setHidden(True)
             self.csvs_ip_i.setHidden(True)
         else:
             self.csvs_lb_i.setHidden(False)
             self.csvs_ip_i.setHidden(False)
+        self.csvs_lb_i.setText(f"1px=__{value}")
         self.csvs_ip_i.setText(str(UNIT_PX_SCALARS[value]))
 
     def on_output_changed(self, value):
@@ -186,12 +184,13 @@ class HomePage(QWidget):
         else:
             self.csvs_lb_o.setHidden(False)
             self.csvs_ip_o.setHidden(False)
+        self.csvs_lb_o.setText(f"1px=__{value}")
         self.csvs_ip_o.setText(str(UNIT_PX_SCALARS[value]))
 
     def open_folder_picker(self):
-        self.output_dir_le = QFileDialog.getExistingDirectory(self, 'Select Output Folder')
+        self.output_dir_le.setText(QFileDialog.getExistingDirectory(self, 'Select Output Folder'))
 
-    def open_file_picker(self, btn_type):
+    def open_file_picker(self, btn_type: FileType):
         """ OPEN FILE PICKER """
         try:
             path = str(Path.home())

@@ -66,7 +66,8 @@ def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coord
                 x, y = int(row['X']), int(row['Y'])
                 new_img = cv2.circle(new_img, (x, y), radius=distance_threshold, color=(0, 255, 0), thickness=-1)  # thickness =  -1 for filled circle
                 img_mask = cv2.inRange(new_img, lower_bound, upper_bound)
-                clust_cnts, clust_hierarchy = cv2.findContours(img_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+                clust_cnts, clust_hierarchy = cv2.findContours(
+                    img_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[-2:]
                 for cnt in clust_cnts:
                     area = cv2.contourArea(cnt)
                     clust_obj[2] += area

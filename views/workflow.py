@@ -284,6 +284,9 @@ class WorkflowPage(QWidget):
             prog_wrapper = Progress()
             prog_wrapper.prog.connect(self.update_progress)
 
+            # set coords
+            self.coords = coords
+            self.alt_coords = alt_coords
             self.rand_coords = gen_random_coordinates(img_path=self.img_drop.currentText(), mask_path=self.mask_drop.currentText(), count=int(self.n_coord_ip.text()) if self.n_coord_ip.text() else len(coords))
             # obtain custom props
             vals = self.get_custom_values()

@@ -15,7 +15,7 @@ def gen_random_coordinates(img_path: str, mask_path: str, count: int = 0):
         # generate faux particles within the pface
         coords = []
         num = 0
-        while num <= quantity:
+        while num < quantity:
             x = random.randint(1, boundary[0] - 1)
             y = random.randint(1, boundary[1] - 1)
             if mask[x, y] != 0:
