@@ -36,8 +36,8 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
     # find Spine Correlated Particles Per P-face Area (SC3PA)
     img_og = cv2.imread(img_path)
     img_pface = cv2.imread(mask_path)
-    print("load imgs and find pface area")
-    print(len(real_coords), len(alt_coords))
+    # print("load imgs and find pface area")
+    # print(len(real_coords), len(alt_coords))
     # print("load imgs and find pface area")
     lower_bound = np.array([239, 174, 0])
     upper_bound = np.array([254, 254, 254])
@@ -58,9 +58,7 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
 
     difference = (pface_area_tree - pface_area_external)
     pface_area = pface_area_external - difference
-
-    print('Area', pface_area)
-
+    # print('Area', pface_area)
     # perm_scale_mask = np.zeros((img_size[0], img_size[1], 3), np.uint8)
     original_copy = img_og.copy()
     pb.emit(30)
@@ -75,33 +73,29 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
             total_captured_particles = 0
             scale_mask = np.zeros(pface_mask.shape, np.uint8)
             color_step = step % 11
-            print('started rip')
+            # print('started rip')
             # draw ripples
             for s in alt_coords:
                 x, y = int(s[0]), int(s[1])
                 cv2.circle(scale_mask, (y, x), rad, 255, -1)
                 cv2.circle(original_copy, (y, x), rad, COLORS[color_step], 5)
-            
             step += 1
-            print('find gp')
-            # display particles based on  
+            # print('find gp')
             for c in coord_list:
                 print(rad, c)
-                x, y = int(c[1]), int(c[0])
-                print('scale_mask', scale_mask, pface_mask.shape, y, x)
-                print('scale_maskx', scale_mask[y])
-
+                x, y = int(c[0]), int(c[1])
+                # print('scale_mask', pface_mask.shape, y, x)
+                # print('scale_maskx', scale_mask[y])
                 if rad == max:
-                    if scale_mask[y, x] != 0:
+                    if scale_mask[x, y] != 0:
                         cv2.circle(original_copy, (y, x), 8, (0, 0, 255), -1)
                         total_captured_particles += 1
                         print('was in mask')
                     else:
-                        # pink particles
                         cv2.circle(original_copy, (y, x), 8, (255, 0, 255), -1)
                         print('nope')
                 else:
-                    if scale_mask[y, x] != 0:
+                    if scale_mask[x, y] != 0:
                         total_captured_particles += 1
                         cv2.circle(original_copy, (y, x), 8, (0, 0, 255), -1)
                         print('was in mask but not max')
@@ -118,16 +112,15 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
             scale_area_external = 0
             scale_area_tree = 0
             # find cts
-            print('find cnts')
+            # print('find cnts')
             for cnt in mask_cnts2:
                 area = cv2.contourArea(cnt)
                 scale_area_external += area
-            print('scale_area_external', scale_area_external)
+            # print('scale_area_external', scale_area_external)
             for cnt in mask_cnts:
                 area = cv2.contourArea(cnt)
                 scale_area_tree += area
-            print('scale_area_tree', scale_area_tree)
-
+            # print('scale_area_tree', scale_area_tree)
             # find stats
             difference = (scale_area_tree - scale_area_external)
             scale_area = scale_area_external - difference
@@ -144,19 +137,18 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
             pb.emit(rad)
             print('it ', scaled_SC3PA)
 
-
         # generate new df and return
         new_df = pd.DataFrame(
             data={'radius': radius, '%_gp_captured': gp_captured, '%_pface_covered': pface_covered, 'SC3PA': SC3PA,
                   'total_gp': total_gp})
-        print(new_df.head())
+        # print(new_df.head())
         rippler_out.append(new_df)
         # cv2.imwrite("test_img.jpg", output_img)
     # print(rippler_out)
     return rippler_out
 
 
-def draw_rippler(coords, alt_coords, img, mask_path, palette="rocket_r", max_steps=10, step_size=60, circle_c=(0, 0, 255)):
+def draw_rippler(coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]], img, mask_path: str, palette="rocket_r", max_steps: int =10, step_size: int =60, circle_c=(0, 0, 255)):
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
@@ -183,22 +175,16 @@ def draw_rippler(coords, alt_coords, img, mask_path, palette="rocket_r", max_ste
             # cv2.circle(scale_mask, (y, x), rad, 255, -1)
             # cv2.circle(output_img, (y, x), rad, sea_to_rgb(pal[color_step]), 5)
             if rad == max:
-                if scale_mask[y, x] != 0:
+                if scale_mask[x, y] != 0:
                     #  orange particles
                     cv2.circle(output_img, (y, x), 8, circle_c, -1)
                 else:
                     #  pink particles
                     cv2.circle(output_img, (y, x), 8, (255, 0, 255), -1)
             else:
-                if scale_mask[y, x] != 0:
+                if scale_mask[x, y] != 0:
                     #  orange particles
                     cv2.circle(output_img, (y, x), 8, circle_c, -1)
-        # for c in coords:
-        #     x, y = int(c[1]), int(c[0])
-        #     output_img = cv2.circle(output_img, (y, x), 8, circle_c, -1)
-        #     output_img = cv2.circle(output_img, (y, x), rad, 255, -1)
-        #     output_img = cv2.circle(output_img, (y, x), rad, sea_to_rgb(pal[color_step]), 5)
         rad += int(step_size)
         step += 1
-    # print("done drawing")
     return output_img
