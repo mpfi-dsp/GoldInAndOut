@@ -98,9 +98,9 @@ class DownloadWorker(QObject):
             # if workflow fills full dfs, output those two
             if not data.real_df2.empty and not data.rand_df2.empty:
                 data.real_df2 = pixels_conversion(
-                    data=data.real_df2, unit=output_ops.output_unit, scalar=output_ops.output_scalar)
+                    data=data.real_df2, unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
                 data.rand_df2 = pixels_conversion(
-                    data=data.rand_df2, unit=output_ops.output_unit, scalar=output_ops.output_scalar)
+                    data=data.rand_df2, unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
                 data.real_df2.to_csv(
                     f'{out_dir}/detailed_real_{wf["name"].lower()}_output_{enum_to_unit(output_ops.output_unit)}.csv', index=False,
                     header=True)

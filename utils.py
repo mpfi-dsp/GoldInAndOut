@@ -46,31 +46,34 @@ def figure_to_img(fig):
     return img
 
 
-def pixels_conversion(data, unit=Unit.PIXEL, scalar=1, r=5):
+def pixels_conversion(data: pd.DataFrame, unit: Unit = Unit.PIXEL, scalar: float = 1, r: int =3):
     """ UPLOAD CSV AND CONVERT DF FROM ONE METRIC UNIT TO ANOTHER """
     ignored_cols = ['cluster_id', 'cluster_size']
     i = 0
-    for col in data.drop(index=data.index[0], columns=data.columns[0]):
-        i += 1
-        # print(data.columns[i])
-        if data.columns[i] not in ignored_cols:
+    df = data.copy()
+    if df.columns[0] == '':
+        df.reset_index(drop=True, inplace=True)
+    for col in df:
+        print(df.columns[i])
+        if df.columns[i] not in ignored_cols:
             # print(data[col].head())
-            if type(data[col][0]) == tuple:
+            if type(df[col][0]) == tuple:
                 new_col = []
-                for tup in data[col]:
+                for tup in df[col]:
                     if unit == Unit.PIXEL:
                         new_col.append(tuple([round((x * scalar), r) for x in tup]))
                     else:
                         new_col.append(tuple([round((x / scalar), r) for x in tup]))
-                data[col] = new_col
+                df[col] = new_col
             else:
                 if unit == Unit.PIXEL:
-                    data[col] = round((data[col] * scalar), r)
+                    df[col] = round((df[col] * scalar), r)
                 else:
-                    data[col] = round(data[col].div(scalar), r)
-    print(data.head())
+                    df[col] = round(df[col].div(scalar), r)
+        i += 1
+    print('converted:', df.head())
 
-    return data
+    return df
 
 
 def pixels_conversion_w_distance(data, scalar=1):

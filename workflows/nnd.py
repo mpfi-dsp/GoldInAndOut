@@ -23,16 +23,16 @@ def run_nnd(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[floa
                 closest_d = 10000000000000000000
                 # og coord (x, y), closest coord (x, y), distance
                 nnd_obj = [(0, 0), (0, 0), 0]
-                p_if = (round(coord_list[z][1], 3), round(coord_list[z][0], 3))
+                p_if = (coord_list[z][1], coord_list[z][0])
                 p_if_y, p_if_x = p_if
                 nnd_obj[0] = p_if
                 for j in range(0, len(coord_list)):
-                    p_jf = (round(coord_list[j][1], 3), round(coord_list[j][0], 3))
+                    p_jf = (coord_list[j][1], coord_list[j][0])
                     if z is not j and p_if is not p_jf:
                         p_jf_y, p_jf_x = p_jf
                         dist = math.sqrt(((p_jf_y - p_if_y) ** 2) + ((p_jf_x - p_if_x) ** 2))
                         if dist < closest_d and dist != 0:
-                            closest_d = round(dist, 3)
+                            closest_d = dist
                             nnd_obj[1], nnd_obj[2] = p_jf, closest_d
                 nnd_list.append(nnd_obj)
             return nnd_list

@@ -17,16 +17,16 @@ def run_starfish(real_coords, rand_coords, alt_coords, pb):
             for p in coord_list:
                 pb.emit(p)
                 small_dist = 10000000000000000000
-                p1 = (round(p[1], 3), round(p[0], 3))
+                p1 = (p[1], p[0])
                 nnd_obj = [p1, (0,0), 0]
                 p_if_y, p_if_x = p1
                 for j in alt_list:
                     if p != j:
-                        p2 = (round(j[1], 3), round(j[0], 3))
+                        p2 = (j[1], j[0])
                         p_jf_y, p_jf_x = p2
                         dist = math.sqrt(((p_jf_y - p_if_y) ** 2) + ((p_jf_x - p_if_x) ** 2))
                         if dist < small_dist:
-                            small_dist = round(dist, 3)
+                            small_dist = dist
                             nnd_obj[1], nnd_obj[2] = p2, small_dist
                 nnd_list.append(nnd_obj)
             return nnd_list
@@ -35,16 +35,16 @@ def run_starfish(real_coords, rand_coords, alt_coords, pb):
         #     for z in range(len(coord_list)):
         #         pb.emit(z)
         #         d = 10000000000000000000
-        #         p1 = (round(coord_list[z][1], 3), round(coord_list[z][0], 3))
+        #         p1 = (coord_list[z][1], coord_list[z][0])
         #         nnd_obj = [p1, (0, 0), 0]
         #         p_if_y, p_if_x = p1
         #         for j in range(0, len(alt_list)):
         #             if z is not j:
-        #                 p2 = (round(coord_list[j][1], 3), round(coord_list[j][0], 3))
+        #                 p2 = (coord_list[j][1], coord_list[j][0])
         #                 p_jf_y, p_jf_x = p2
         #                 dist = math.sqrt(((p_jf_y - p_if_y) ** 2) + ((p_jf_x - p_if_x) ** 2))
         #                 if dist < d:
-        #                     d = round(dist, 3)
+        #                     d = dist
         #                     nnd_obj[1], nnd_obj[2] = p2, d
         #         nnd_list.append(nnd_obj)
         #     return nnd_list

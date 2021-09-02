@@ -47,7 +47,7 @@ def run_nnd_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_c
             if n > 0:
                 x /= n
                 y /= n
-                centroids.append((round(y, 3), round(x, 3)))
+                centroids.append((y, x))
                 centroid_ids.append(c)
         print("generated centroids")
         return centroids, centroid_ids
@@ -89,16 +89,16 @@ def run_nnd_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_c
                 small_dist = 10000000000000000000
                 # og coord (x, y), closest coord (x, y), distance
                 nnd_obj = [(0, 0), (0, 0), 0]
-                p_if = (round(coord_list[z][1], 3), round(coord_list[z][0], 3))
+                p_if = (coord_list[z][1], coord_list[z][0])
                 p_if_y, p_if_x = p_if
                 nnd_obj[0] = p_if
                 for j in range(0, len(coord_list)):
-                    p_jf = (round(coord_list[j][1], 3), round(coord_list[j][0], 3))
+                    p_jf = (coord_list[j][1], coord_list[j][0])
                     if z is not j and p_if is not p_jf:
                         p_jf_y, p_jf_x = p_jf
                         dist = math.sqrt(((p_jf_y - p_if_y) ** 2) + ((p_jf_x - p_if_x) ** 2))
                         if dist < small_dist and dist != 0:
-                            small_dist = round(dist, 3)
+                            small_dist = dist
                             nnd_obj[1], nnd_obj[2] = p_jf, small_dist
                 nnd_list.append(nnd_obj)
             # create new clean df

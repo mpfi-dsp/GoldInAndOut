@@ -344,12 +344,14 @@ class WorkflowPage(QWidget):
                 # fix csv index not matching id
                 self.data.real_df1.sort_values(wf["graph"]["x_type"], inplace=True)
                 self.data.real_df1 = self.data.real_df1.reset_index(drop=True)
-                self.data.final_real = pixels_conversion(data=self.data.real_df1, unit=output_ops.output_unit, scalar=output_ops.output_scalar)
+                self.data.final_real = pixels_conversion(
+                    data=self.data.real_df1, unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
                 if wf["graph"]["x_type"] in self.data.rand_df1.columns and len(self.data.rand_df1[wf["graph"]["x_type"]]) > 0:
                     self.data.rand_df1.sort_values(wf["graph"]["x_type"], inplace=True)
                     self.data.rand_df1 = self.data.rand_df1.reset_index(drop=True)
                 if not self.data.rand_df1.empty:
-                    self.data.final_rand = pixels_conversion(data=self.data.rand_df1, unit=output_ops.output_unit, scalar=output_ops.output_scalar)
+                    self.data.final_rand = pixels_conversion(
+                        data=self.data.rand_df1, unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
                 # convert back to proper size
                 if wf["graph"]["type"] == "hist":
                     # create histogram

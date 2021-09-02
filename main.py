@@ -149,7 +149,8 @@ class GoldInAndOut(QWidget):
         try:
             if len(self.home_page.csv2_le.text()) > 0:
                 data = pd.read_csv(self.home_page.csv2_le.text(), sep=",")
-                self.ALT_COORDS = to_coord_list(pixels_conversion(data=data, unit=unit, scalar=scalar))
+                self.ALT_COORDS = to_coord_list(
+                    pixels_conversion(data=data, unit=unit, scalar=scalar))
             else:
                 # TODO: update for production
                 img = self.home_page.img_le.text() if len(self.home_page.img_le.text()) > 0 else "./input/example_image.tif"
