@@ -316,15 +316,14 @@ class WorkflowPage(QWidget):
 
     def on_finish_visuals(self):
         try:
-            # download files automatically
-            self.download(output_ops=self.output_ops, wf=self.wf)
-            self.download_btn.setStyleSheet(
-                "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
             self.progress.setValue(100)
 
             if self.is_init is False:
                 self.pg()
                 self.is_init = True
+                # download files automatically
+                self.download(output_ops=self.output_ops, wf=self.wf)
+                self.download_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
         except Exception as e:
             self.handle_except(traceback.format_exc())
 
