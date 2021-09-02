@@ -116,12 +116,12 @@ class HomePage(QWidget):
         self.show_logs = QCheckBox('display logger (open in new window)')
         layout.addRow(self.show_logs)
         # input
-        ip_scalr_lb = QLabel("input")
+        ip_scalr_lb = QLabel("in")
         ip_scalr_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.ip_scalar_type = QComboBox()
         self.ip_scalar_type.addItems(UNIT_OPS)
         self.ip_scalar_type.currentTextChanged.connect(self.on_input_changed)
-        op_scalr_lb = QLabel("output")
+        op_scalr_lb = QLabel("out")
         op_scalr_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.op_scalar_type = QComboBox()
         self.op_scalar_type.addItems(UNIT_OPS)
@@ -174,8 +174,10 @@ class HomePage(QWidget):
         else:
             self.csvs_lb_i.setHidden(False)
             self.csvs_ip_i.setHidden(False)
-        self.csvs_lb_i.setText(f"1px=__{value}")
+        self.csvs_lb_i.setText(f"(in) 1px=__{value}")
         self.csvs_ip_i.setText(str(UNIT_PX_SCALARS[value]))
+        self.simplify_input(value)
+
 
     def on_output_changed(self, value):
         if value == "px":
@@ -184,9 +186,18 @@ class HomePage(QWidget):
         else:
             self.csvs_lb_o.setHidden(False)
             self.csvs_ip_o.setHidden(False)
-        self.csvs_lb_o.setText(f"1px=__{value}")
+        self.csvs_lb_o.setText(f"(out) 1px=__{value}")
         self.csvs_ip_o.setText(str(UNIT_PX_SCALARS[value]))
+        self.simplify_input(value)
 
+    def simplify_input(self, value):
+        if self.ip_scalar_type.currentText() == self.op_scalar_type.currentText():
+            self.csvs_lb_i.setText(f"(in&out) 1px=__{value}")
+            self.csvs_lb_o.setHidden(True)
+            self.csvs_ip_o.setHidden(True)
+        else:
+            self.csvs_lb_i.setText(
+                f"(in) 1px=__{self.ip_scalar_type.currentText()}")
     def open_folder_picker(self):
         self.output_dir_le.setText(QFileDialog.getExistingDirectory(self, 'Select Output Folder'))
 
