@@ -45,7 +45,7 @@ class HomePage(QWidget):
         img_btn.clicked.connect(partial(self.open_file_picker, FileType.IMAGE))
         # img input
         self.img_le = QLineEdit()
-        self.img_le.setPlaceholderText("None Selected")
+        self.img_le.setPlaceholderText("None Selected") 
         # add img row
         layout.addRow(img_btn, self.img_le)
         # mask btn

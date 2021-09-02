@@ -71,10 +71,11 @@ class GoldInAndOut(QWidget):
 
 
     def on_run_complete(self):
-        self.home_page.start_btn.setEnabled(True)
         self.home_page.start_btn.setText("Run Again")
         self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #E89C12")
         self.home_page.progress.setValue(100)
+        for prop in self.home_props:
+            prop.setEnabled(True)
 
     def open_logger(self):
         if self.home_page.show_logs.isChecked():
@@ -85,7 +86,10 @@ class GoldInAndOut(QWidget):
     def init_workflows(self):
         try:
             """ INITIALIZE CHILD WORKFLOW WINDOWS """
-            self.home_page.start_btn.setEnabled(False)
+            self.home_props = [self.home_page.start_btn,
+                               self.home_page.img_le,  self.home_page.mask_le, self.home_page.csv_le, self.home_page.csv2_le, self.home_page.ip_scalar_type, self.home_page.op_scalar_type, self.home_page.output_dir_le, self.home_page.dod_cb, self.home_page.csvs_lb_i, self.home_page.csvs_ip_o]
+            for prop in self.home_props:
+                prop.setEnabled(False)
             self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #ddd")
             self.empty_stack()
             self.load_data()
