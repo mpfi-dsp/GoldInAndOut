@@ -76,6 +76,7 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
             scale_mask = np.zeros(pface_mask.shape, np.uint8)
             color_step = step % 11
             print('started rip')
+            # draw ripples
             for s in alt_coords:
                 x, y = int(s[0]), int(s[1])
                 cv2.circle(scale_mask, (y, x), rad, 255, -1)
@@ -83,6 +84,7 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
             
             step += 1
             print('find gp')
+            # display particles based on  
             for c in coord_list:
                 print(rad, c)
                 x, y = int(c[1]), int(c[0])
@@ -95,6 +97,7 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
                         total_captured_particles += 1
                         print('was in mask')
                     else:
+                        # pink particles
                         cv2.circle(original_copy, (y, x), 8, (255, 0, 255), -1)
                         print('nope')
                 else:
@@ -170,21 +173,25 @@ def draw_rippler(coords, alt_coords, img, mask_path, palette="rocket_r", max_ste
     while rad <= max:
         color_step = step % 11
         scale_mask = np.zeros(pface_mask.shape, np.uint8)
+        # draw ripples
         for s in alt_coords:
             x, y = int(s[0]), int(s[1])
             cv2.circle(scale_mask, (y, x), rad, 255, -1)
             cv2.circle(output_img, (y, x), rad, sea_to_rgb(pal[color_step]), 5)
         for c in coords:
-            x, y = int(c[1]), int(c[0])
+            x, y = int(c[0]), int(c[1])
             # cv2.circle(scale_mask, (y, x), rad, 255, -1)
             # cv2.circle(output_img, (y, x), rad, sea_to_rgb(pal[color_step]), 5)
             if rad == max:
                 if scale_mask[y, x] != 0:
+                    #  orange particles
                     cv2.circle(output_img, (y, x), 8, circle_c, -1)
                 else:
+                    #  pink particles
                     cv2.circle(output_img, (y, x), 8, (255, 0, 255), -1)
             else:
                 if scale_mask[y, x] != 0:
+                    #  orange particles
                     cv2.circle(output_img, (y, x), 8, circle_c, -1)
         # for c in coords:
         #     x, y = int(c[1]), int(c[0])

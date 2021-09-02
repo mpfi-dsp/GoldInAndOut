@@ -103,8 +103,8 @@ class GoldInAndOut(QWidget):
 
             # output unit options
             ou: Unit = unit_to_enum(self.home_page.op_scalar_type.currentText() if self.home_page.op_scalar_type.currentText(
-            ) is not None else self.home_page.ip_scalar_type.currentText() if '(in&out)' in self.home_page.csvs_lb_i.text else 'px')
-            s_o: float = float(self.home_page.csvs_ip_o.text() if len(self.home_page.csvs_ip_o.text()) > 0 else self.home_page.csvs_ip_i.text() if '(in&out)' in self.home_page.csvs_lb_i.text else 1)
+            ) is not None else self.home_page.ip_scalar_type.currentText() if '(in&out)' in self.home_page.csvs_lb_i.text() else 'px')
+            s_o: float = float(self.home_page.csvs_ip_o.text() if len(self.home_page.csvs_ip_o.text()) > 0 else self.home_page.csvs_ip_i.text() if '(in&out)' in self.home_page.csvs_lb_i.text() else 1)
             dod: bool = self.home_page.dod_cb.isChecked()
             o_dir: str = self.home_page.output_dir_le.text() if len(self.home_page.output_dir_le.text()) > 0 else DEFAULT_OUTPUT_DIR
             output_ops: OutputOptions = OutputOptions(output_unit=ou, output_dir=o_dir, output_scalar=s_o, delete_old=dod)
