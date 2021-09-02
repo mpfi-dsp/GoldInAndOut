@@ -189,13 +189,13 @@ class WorkflowPage(QWidget):
         self.gen_real_lb = QLabel("display real coords")
         self.gen_real_lb.setStyleSheet("margin-left: 50px; font-size: 17px; font-weight: 400;")
         self.gen_real_cb = QCheckBox()
-        self.gen_real_cb.clicked.connect(partial(self.create_visuals, self.wf, (self.bars_ip.text() if self.bars_ip.text() else 'fd'), self.output_ops.output_unit, self.output_ops.output_scalar))
+        self.gen_real_cb.clicked.connect(partial(self.create_visuals, self.wf, (self.bars_ip.text() if self.bars_ip.text() else 'fd'), self.output_ops))
         self.gen_real_cb.setChecked(True)
         # rand
         self.gen_rand_lb = QLabel("display random coords")
         self.gen_rand_lb.setStyleSheet("margin-left: 50px; font-size: 17px; font-weight: 400;")
         self.gen_rand_cb = QCheckBox()
-        self.gen_rand_cb.clicked.connect(partial(self.create_visuals, self.wf, (self.bars_ip.text() if self.bars_ip.text() else 'fd'), self.output_ops.output_unit, self.output_ops.output_scalar))
+        self.gen_rand_cb.clicked.connect(partial(self.create_visuals, self.wf, (self.bars_ip.text() if self.bars_ip.text() else 'fd'), self.output_ops))
         # cb row
         cb_row = QHBoxLayout()
         cb_row.addWidget(self.gen_real_lb)
@@ -268,6 +268,7 @@ class WorkflowPage(QWidget):
         return [self.cstm_props[i].text() if self.cstm_props[i].text() else self.wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
 
     def download(self, output_ops: OutputOptions, wf: WorkflowObj):
+        print(f'{wf["name"]}: started downloading, opening thread')
         self.dl_thread = QThread()
         self.dl_worker = DownloadWorker()
         self.dl_worker.moveToThread(self.dl_thread)
@@ -275,7 +276,6 @@ class WorkflowPage(QWidget):
         self.dl_worker.finished.connect(self.dl_thread.quit)
         self.dl_worker.finished.connect(self.dl_worker.deleteLater)
         self.dl_thread.finished.connect(self.dl_thread.deleteLater)
-        # self.dl_worker.progress.connect(self.on_receive_data)
         self.dl_thread.start()
 
     def run(self, wf: WorkflowObj, coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]]):
@@ -290,6 +290,7 @@ class WorkflowPage(QWidget):
             self.rand_coords = gen_random_coordinates(img_path=self.img_drop.currentText(), mask_path=self.mask_drop.currentText(), count=int(self.n_coord_ip.text()) if self.n_coord_ip.text() else len(coords))
             # obtain custom props
             vals = self.get_custom_values()
+            print(f'{wf["name"]}: running analysis, opening thread')
             # generate thread
             self.thread = QThread()
             self.worker = AnalysisWorker()
@@ -306,6 +307,7 @@ class WorkflowPage(QWidget):
 
     def on_receive_data(self, output_data: DataObj):
         try:
+            print(f'{self.wf["name"]}: finished running analysis, closing thread')
             self.data = output_data
             # create ui scheme
             self.create_visuals(wf=self.wf, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), output_ops=self.output_ops)
@@ -326,8 +328,6 @@ class WorkflowPage(QWidget):
         except Exception as e:
             self.handle_except(traceback.format_exc())
 
-         
-
 
     def create_visuals(self, wf: WorkflowObj, n_bins, output_ops: OutputOptions, n: List[int] = np.zeros(11)):
         """ CREATE DATA VISUALIZATIONS """
@@ -344,6 +344,7 @@ class WorkflowPage(QWidget):
                 # fix csv index not matching id
                 self.data.real_df1.sort_values(wf["graph"]["x_type"], inplace=True)
                 self.data.real_df1 = self.data.real_df1.reset_index(drop=True)
+                print('output_ops', output_ops)
                 self.data.final_real = pixels_conversion(
                     data=self.data.real_df1, unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
                 if wf["graph"]["x_type"] in self.data.rand_df1.columns and len(self.data.rand_df1[wf["graph"]["x_type"]]) > 0:

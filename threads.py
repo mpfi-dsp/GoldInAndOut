@@ -54,11 +54,10 @@ class AnalysisWorker(QObject):
 
 class DownloadWorker(QObject):
     finished = pyqtSignal()
-    progress = pyqtSignal(object)
-    # TODO: actually use output dir
 
     def run(self, wf: WorkflowObj, data: DataObj, output_ops: OutputOptions, img: str, display_img: QImage, graph: QImage):
         """ DOWNLOAD FILES """
+        print(output_ops.delete_old, output_ops.output_dir, output_ops.output_scalar, output_ops.output_unit)
         try:
             out_start = output_ops.output_dir if output_ops.output_dir is not None else './output'
             # delete old files to make space if applicable
@@ -107,7 +106,7 @@ class DownloadWorker(QObject):
                 data.rand_df2.to_csv(
                     f'{out_dir}/detailed_rand_{wf["name"].lower()}_output_{enum_to_unit(output_ops.output_unit)}.csv', index=False,
                     header=True)
-            print(f'{wf["name"]}: downloaded output')
+            print(f'{wf["name"]}: downloaded output, closing thread')
         except Exception as e:
             self.dlg = Logger()
             self.dlg.show()
