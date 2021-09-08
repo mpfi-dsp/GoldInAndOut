@@ -269,14 +269,19 @@ class WorkflowPage(QWidget):
 
     def download(self, output_ops: OutputOptions, wf: WorkflowObj):
         print(f'{wf["name"]}: started downloading, opening thread')
+        self.download_btn.setDisabled(True)
         self.dl_thread = QThread()
         self.dl_worker = DownloadWorker()
         self.dl_worker.moveToThread(self.dl_thread)
         self.dl_thread.started.connect(partial(self.dl_worker.run, wf, self.data, output_ops, self.img_drop.currentText(), self.display_img, self.graph))
+        self.dl_worker.finished.connect(self.on_finish_download)
         self.dl_worker.finished.connect(self.dl_thread.quit)
         self.dl_worker.finished.connect(self.dl_worker.deleteLater)
         self.dl_thread.finished.connect(self.dl_thread.deleteLater)
         self.dl_thread.start()
+
+    def on_finish_download(self):
+        self.download_btn.setDisabled(True)
 
     def run(self, wf: WorkflowObj, coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]]):
         """ RUN WORKFLOW """

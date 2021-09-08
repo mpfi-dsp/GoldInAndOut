@@ -106,6 +106,7 @@ class DownloadWorker(QObject):
                 data.rand_df2.to_csv(
                     f'{out_dir}/detailed_rand_{wf["name"].lower()}_output_{enum_to_unit(output_ops.output_unit)}.csv', index=False,
                     header=True)
+            self.finished.emit()
             print(f'{wf["name"]}: downloaded output, closing thread')
         except Exception as e:
             self.dlg = Logger()
