@@ -300,8 +300,6 @@ class WorkflowPage(QWidget):
         print(f'{wf["name"]}: started downloading, opening thread')
         self.download_btn.setStyleSheet(
         "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #ddd; color: white; border-radius: 7px; ")
-        for prop in self.wf_props:
-            prop.setEnabled(True)
         self.download_btn.setDisabled(True)
         self.dl_thread = QThread()
         self.dl_worker = DownloadWorker()
@@ -361,7 +359,8 @@ class WorkflowPage(QWidget):
     def on_finish_visuals(self):
         try:
             self.progress.setValue(100)
-
+            for prop in self.wf_props:
+                prop.setEnabled(True)
             if self.is_init is False:
                 self.pg()
                 self.is_init = True
@@ -416,7 +415,8 @@ class WorkflowPage(QWidget):
                         for c, p in zip(col, patches):
                             p.set_facecolor(cm(c))
                     elif self.gen_real_cb.isChecked() and self.gen_rand_cb.isChecked():
-                        rand_graph = self.data.final_rand[wf["graph"]["x_type"]]
+                        if wf["graph"]["x_type"] in self.data.rand_df1.columns and len(self.data.rand_df1[wf["graph"]["x_type"]]) > 0:
+                            rand_graph = self.data.final_rand[wf["graph"]["x_type"]]
                         real_graph = self.data.final_real[wf["graph"]["x_type"]]
                         ax.hist(rand_graph, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), alpha=0.75, color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()), label='Rand')
                         n, bins, patches = ax.hist(real_graph, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), alpha=0.75, color=create_color_pal(n_bins=1, palette_type=self.pal_type.currentText()), label='Real')

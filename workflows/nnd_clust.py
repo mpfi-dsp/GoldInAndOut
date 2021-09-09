@@ -144,7 +144,7 @@ def draw_nnd_clust(nnd_df, clust_df, img, bin_counts, palette="rocket_r", circle
     for idx, entry in clust_df.iterrows():
         particle = tuple(int(x) for x in [entry['X'], entry['Y']])
         img = cv2.circle(img, particle, 10, sea_to_rgb(cl_palette[int(clust_df['cluster_id'][idx])]), -1)
-        if draw_clust_area:
+        if draw_clust_area and clust_df['cluster_id'][idx]:
             img = cv2.circle(img, particle, radius=int(distance_threshold), color=(0, 255, 0))
         # cv2.putText(img, str(clust_df['cluster_id'][idx]), org=particle, fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255, 255, 255), fontScale=1)
     # draw nnd
