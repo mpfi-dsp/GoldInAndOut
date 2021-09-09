@@ -56,8 +56,6 @@ class GoldInAndOut(QWidget):
         self.nav_list.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.nav_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.nav_list.setCursor(QCursor(Qt.PointingHandCursor))
-
-        # self.home_page.prog_anim.start()
         # add main page to nav
         item = QListWidgetItem(
             NAV_ICON, str("MAIN"), self.nav_list)
@@ -71,11 +69,12 @@ class GoldInAndOut(QWidget):
         # init logger
         self.dlg = Logger()
 
-
     def on_run_complete(self):
         self.home_page.start_btn.setText("Run Again")
         self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #E89C12")
         self.home_page.progress.setValue(100)
+        self.home_page.prog_animation.stop()
+        
         for prop in self.home_props:
             prop.setEnabled(True)
 
@@ -87,6 +86,10 @@ class GoldInAndOut(QWidget):
 
     def init_workflows(self):
         try:
+            # # start progress bar ani
+            # self.home_page.prog_animation.start()
+            # self.home_page.repaint()
+
             """ INITIALIZE CHILD WORKFLOW WINDOWS """
             self.home_props = [self.home_page.start_btn,
                                self.home_page.img_le,  self.home_page.mask_le, self.home_page.csv_le, self.home_page.csv2_le, self.home_page.ip_scalar_type, self.home_page.op_scalar_type, self.home_page.output_dir_le, self.home_page.dod_cb, self.home_page.csvs_lb_i, self.home_page.csvs_ip_o]

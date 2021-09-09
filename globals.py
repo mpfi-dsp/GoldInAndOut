@@ -1,4 +1,4 @@
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QColor
 from typings import Workflow, WorkflowObj
 from typing import List
 
@@ -161,3 +161,9 @@ MAX_DIRS_PRUNE: int = 5
 
 """ DEFAULT OUTPUT DIRECTORY """
 DEFAULT_OUTPUT_DIR: str = './output'
+
+
+""" PROGRESS BAR COLORS """
+
+PROG_COLOR_1 = QColor(95, 197, 138) # # 240, 53, 218) # QColor(221, 221, 221)  # ddd
+PROG_COLOR_2 = QColor(61, 217, 245)  # 233, 180, 33)  # 61, 217, 245) #QColor(233, 180, 33)  # e9b421

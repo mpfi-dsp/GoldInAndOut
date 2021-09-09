@@ -12,7 +12,7 @@ import shutil
 import traceback
 import cv2
 # pyQT5
-from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QSize, QByteArray
+from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QSize, QByteArray, QVariantAnimation, QAbstractAnimation
 from PyQt5.QtGui import QImage, QPixmap, QCursor, QMovie
 from PyQt5.QtWidgets import (QLabel, QRadioButton, QCheckBox, QHBoxLayout, QPushButton, QWidget, QSizePolicy,
                              QFormLayout, QLineEdit,
@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import (QLabel, QRadioButton, QCheckBox, QHBoxLayout, QPush
 from views.image_viewer import QImageViewer
 from views.logger import Logger
 # utils
-from globals import PALETTE_OPS
+from globals import PALETTE_OPS, PROG_COLOR_1, PROG_COLOR_2
 from typings import Unit, Workflow, DataObj, OutputOptions, WorkflowObj
 from typing import List, Tuple
 from utils import Progress, create_color_pal, enum_to_unit, to_coord_list, pixels_conversion
@@ -227,6 +227,17 @@ class WorkflowPage(QWidget):
         self.progress.setGeometry(0, 0, 300, 25)
         self.progress.setMaximum(100)
         layout.addRow(self.progress)
+        # progress bar animation
+        self.prog_animation = QVariantAnimation(  # QPropertyAnimation(
+            self,
+            valueChanged=self._animate_prog,
+            startValue=0.00001,
+            endValue=0.9999,
+            duration=2000
+        )
+        self.prog_animation.setDirection(QAbstractAnimation.Forward)
+        self.prog_animation.finished.connect(self.prog_animation.start if self.progress.value() < 100 else self.prog_animation.stop)
+        self.prog_animation.start()
         # run & download btns
         self.run_btn = QPushButton('Run Again', self)
         self.run_btn.setStyleSheet(
@@ -250,6 +261,21 @@ class WorkflowPage(QWidget):
     def update_progress(self, value: int):
         """ UPDATE PROGRESS BAR """
         self.progress.setValue(value)
+
+    def _animate_prog(self, value):
+        if self.progress.value() < 100:
+            qss = """
+                text-align: center;
+                border: solid grey;
+                border-radius: 7px;
+                color: white;
+                font-size: 20px;
+            """
+            grad = "background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 {color1}, stop:{value} {color2}, stop: 1.0 {color1});".format(
+                color1=PROG_COLOR_1.name(), color2=PROG_COLOR_2.name(), value=value
+            )
+            qss += grad
+            self.progress.setStyleSheet(qss)
 
     def toggle_file_adv(self):
         """ TOGGLE GENERAL ADV OPTIONS """
@@ -292,6 +318,7 @@ class WorkflowPage(QWidget):
         try:
             prog_wrapper = Progress()
             prog_wrapper.prog.connect(self.update_progress)
+            self.prog_animation.start()
 
             # set coords
             self.coords = coords
@@ -330,6 +357,7 @@ class WorkflowPage(QWidget):
             if self.is_init is False:
                 self.pg()
                 self.is_init = True
+                self.prog_animation.stop()
                 # download files automatically
                 self.download(output_ops=self.output_ops, wf=self.wf)
                 self.download_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
