@@ -527,12 +527,13 @@ class WorkflowPage(QWidget):
                         drawn_img = draw_clust(clust_df=self.data.rand_df1, img=drawn_img, palette=r_palette,
                                                distance_threshold=vals[0], draw_clust_area=self.draw_clust_area)
                 elif wf["type"] == Workflow.NND_CLUST:
+                    vals = self.get_custom_values()
                     if self.gen_real_cb.isChecked():
                         drawn_img = draw_nnd_clust(nnd_df=self.data.real_df1, clust_df=self.data.real_df2, img=drawn_img,
-                                                   palette=palette, bin_counts=n, circle_c=(103, 114, 0), )
+                                                   palette=palette, bin_counts=n, circle_c=(103, 114, 0),  distance_threshold=vals[0], draw_clust_area=self.draw_clust_area)
                     if self.gen_rand_cb.isChecked():
                         drawn_img = draw_nnd_clust(nnd_df=self.data.rand_df1, clust_df=self.data.rand_df2, img=drawn_img,
-                                                   palette=r_palette, bin_counts=n, circle_c=(18, 156, 232), )
+                                                   palette=r_palette, bin_counts=n, circle_c=(18, 156, 232), distance_threshold=vals[0], draw_clust_area=self.draw_clust_area)
                 elif wf["type"] == Workflow.RIPPLER:
                     vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
                     if self.gen_real_cb.isChecked():

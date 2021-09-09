@@ -134,7 +134,7 @@ def run_nnd_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_c
     return full_real_df, full_rand_df, real_df, rand_df
 
 
-def draw_nnd_clust(nnd_df, clust_df, img, bin_counts, palette="rocket_r", circle_c=(0, 0, 255)):
+def draw_nnd_clust(nnd_df, clust_df, img, bin_counts, palette="rocket_r", circle_c=(0, 0, 255), distance_threshold: int = 34, draw_clust_area: bool = False):
     # color palette
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
@@ -144,6 +144,8 @@ def draw_nnd_clust(nnd_df, clust_df, img, bin_counts, palette="rocket_r", circle
     for idx, entry in clust_df.iterrows():
         particle = tuple(int(x) for x in [entry['X'], entry['Y']])
         img = cv2.circle(img, particle, 10, sea_to_rgb(cl_palette[int(clust_df['cluster_id'][idx])]), -1)
+        if draw_clust_area:
+            img = cv2.circle(img, particle, radius=int(distance_threshold), color=(0, 255, 0))
         # cv2.putText(img, str(clust_df['cluster_id'][idx]), org=particle, fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255, 255, 255), fontScale=1)
     # draw nnd
     count, bin_idx = 0, 0
@@ -157,6 +159,9 @@ def draw_nnd_clust(nnd_df, clust_df, img, bin_counts, palette="rocket_r", circle
         img = cv2.circle(img, particle_1, 10, circle_c, -1)
         img = cv2.line(img, particle_1, particle_2, sea_to_rgb(palette[bin_idx]), 5)
         cv2.putText(img, str(int(clust_df['cluster_id'][idx])), org=particle_1, fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255, 255, 255), fontScale=1)
+        # TODO: if desire centroid area
+        # if draw_clust_area:
+        #     img = cv2.circle(img, particle_1, radius=int(distance_threshold), color=(0, 255, 0))
     return img
 
 

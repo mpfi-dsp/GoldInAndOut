@@ -15,8 +15,8 @@ from globals import UNIT_OPS, WORKFLOWS, MAX_DIRS_PRUNE, UNIT_PX_SCALARS, DEFAUL
 from typings import FileType
 from utils import get_complimentary_color
 
-HEADER = "Gold Cluster Analysis For Freeze Fracture"
-DESC = "Simply upload the appropriate files, check the workflows you'd like to run, and click \"Start\"!"
+HEADER = "Automated Analysis Tool For Freeze Fracture"
+DESC = "Simply upload the appropriate files, check the workflows you'd like to run, select desired parameters, and click \"Start\"!"
 
 class HomePage(QWidget):
     """
