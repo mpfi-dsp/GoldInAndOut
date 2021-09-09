@@ -30,7 +30,6 @@ from workflows.random_coords import gen_random_coordinates
 from workflows.clust import draw_clust
 from workflows.gold_rippler import draw_rippler
 from workflows.nnd_clust import draw_nnd_clust
-from workflows.random_coords import gen_random_coordinates
 from workflows.starfish import draw_starfish
 from workflows.nnd import draw_length
 
@@ -248,8 +247,8 @@ class WorkflowPage(QWidget):
         self.download_btn = QPushButton('Download Again', self)
         self.download_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #ccc; color: white; border-radius: 7px; ")
-        self.download_btn.clicked.connect(partial(self.download, output_ops, wf))
         self.download_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.download_btn.clicked.connect(partial(self.download, output_ops, wf))
         btn_r = QHBoxLayout()
         btn_r.addWidget(self.run_btn)
         btn_r.addWidget(self.download_btn)
@@ -314,7 +313,7 @@ class WorkflowPage(QWidget):
     def on_finish_download(self):
         self.download_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
-        self.download_btn.setDisabled(True)
+        self.download_btn.setDisabled(False)
 
     def run(self, wf: WorkflowObj, coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]]):
         """ RUN WORKFLOW """

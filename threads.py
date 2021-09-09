@@ -84,6 +84,7 @@ class DownloadWorker(QObject):
                 os.path.basename(img))[0]
             out_dir = f'{out_start}/{wf["name"].lower()}/{img_name}-{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
             os.makedirs(out_dir, exist_ok=True)
+            print('attempting to save cleaned dfs')
             data.final_real.to_csv(f'{out_dir}/real_{wf["name"].lower()}_output_{enum_to_unit(output_ops.output_unit)}.csv',
                                    index=False, header=True)
             data.final_rand.to_csv(f'{out_dir}/rand_{wf["name"].lower()}_output_{enum_to_unit(output_ops.output_unit)}.csv',
@@ -96,6 +97,7 @@ class DownloadWorker(QObject):
                     'No display image generated. An error likely occurred when running workflow.')
             graph.save(f'{out_dir}/{wf["name"].lower()}_graph.jpg')
             # if workflow fills full dfs, output those two
+            print('attempting to save dfs')
             if not data.real_df2.empty and not data.rand_df2.empty:
                 data.real_df2 = pixels_conversion(
                     data=data.real_df2, unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
