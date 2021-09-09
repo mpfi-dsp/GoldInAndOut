@@ -11,7 +11,7 @@ from typing import List, Tuple
 
 def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], img_path: str, distance_threshold: int = 34, n_clusters: int = None, affinity: str = 'euclidean', linkage: str = 'single', clust_area: bool = False):
     """
-    WARD HIERARCHICAL CLUSTERING
+    HIERARCHICAL CLUSTERING
     _______________________________
     @prog: progress bar wrapper element, allows us to track how much time is left in process
     @distance_threshold: using a distance threshold to automatically cluster particles
