@@ -45,6 +45,7 @@ font-size: 20px;
 QProgressBar::chunk {
 background-color: #00ACB8;
 border-radius :7px;
+
 }      
 
 QPushButton {

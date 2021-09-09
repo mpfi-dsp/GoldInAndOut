@@ -56,6 +56,8 @@ class GoldInAndOut(QWidget):
         self.nav_list.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.nav_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.nav_list.setCursor(QCursor(Qt.PointingHandCursor))
+
+        # self.home_page.prog_anim.start()
         # add main page to nav
         item = QListWidgetItem(
             NAV_ICON, str("MAIN"), self.nav_list)

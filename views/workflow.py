@@ -269,6 +269,8 @@ class WorkflowPage(QWidget):
 
     def download(self, output_ops: OutputOptions, wf: WorkflowObj):
         print(f'{wf["name"]}: started downloading, opening thread')
+        self.download_btn.setStyleSheet(
+        "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #ddd; color: white; border-radius: 7px; ")
         self.download_btn.setDisabled(True)
         self.dl_thread = QThread()
         self.dl_worker = DownloadWorker()
@@ -281,6 +283,8 @@ class WorkflowPage(QWidget):
         self.dl_thread.start()
 
     def on_finish_download(self):
+        self.download_btn.setStyleSheet(
+            "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #007267; color: white; border-radius: 7px; ")
         self.download_btn.setDisabled(True)
 
     def run(self, wf: WorkflowObj, coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]]):

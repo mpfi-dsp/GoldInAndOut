@@ -3,10 +3,10 @@ import os
 import traceback
 
 import cv2
-from PyQt5.QtGui import QCursor, QMovie, QPixmap, QImage
+from PyQt5.QtGui import QCursor, QMovie, QPixmap, QImage, QColor, QPalette
 from PyQt5.QtWidgets import (QLabel, QFileDialog, QSpacerItem, QCheckBox, QHBoxLayout, QPushButton, QWidget,
                              QSizePolicy, QFormLayout, QLineEdit, QColorDialog, QComboBox, QProgressBar, QVBoxLayout)
-from PyQt5.QtCore import Qt, QByteArray
+from PyQt5.QtCore import Qt, QByteArray, QPropertyAnimation, QAbstractAnimation, QVariantAnimation
 # general
 from pathlib import Path
 from functools import partial
@@ -146,16 +146,48 @@ class HomePage(QWidget):
         # for glob in [op_scalr_lb, self.op_scalar_type, csvs_lb, self.csvs_ip]:
             glob_props.addWidget(glob)
         layout.addRow(glob_props)
-        self.csvs_lb_i.setHidden(True)
-        self.csvs_ip_i.setHidden(True)
-        self.csvs_lb_o.setHidden(True)
-        self.csvs_ip_o.setHidden(True)
+        # spacer
         layout.addItem(spacer)
         # homepage progress bar
         self.progress = QProgressBar(self)
         self.progress.setGeometry(0, 0, 300, 25)
         self.progress.setMaximum(100)
         layout.addRow(self.progress)
+        # # progress bar animation
+        # self.prog_anim = QPropertyAnimation(self.progress, b"styleSheet")
+        # self.prog_anim.setDuration(2500)
+        # self.prog_anim.setLoopCount(2)
+        # # pal_1 = QPalette()
+        # # pal_1.setColor(QPalette.Background, QColor(0, 0, 0))
+        # self.prog_anim.setStartValue('background: #bbb;')
+        # # pal_2 = QPalette()
+        # # pal_2.setColor(QPalette.Background, QColor(255, 255, 255))
+        # self.prog_anim.setEndValue('background: #ddd;')
+        # print(self.progress.styleSheet(), self.prog_anim.endValue(),
+        #       self.prog_anim.startValue())
+
+        # # self.prog_anim.on
+        # self.prog_anim.start()
+
+
+
+        # self.anim = QPropertyAnimation(self.progress, b"stylesheet")
+        # self.anim.setDuration(1000)
+        # self.anim.setStartValue(QStylesheet(150, 30, 100, 100))
+        # self.anim.setEndValue(QRect(150, 30, 200, 200))
+        # self.anim.start()
+
+        self._prog_animation = QVariantAnimation( #QPropertyAnimation(
+            self,
+            valueChanged=self._animate_prog,
+            startValue=0.00001,
+            endValue=0.9999,
+            duration=2000
+        )
+        self._prog_animation.setDirection(QAbstractAnimation.Forward)
+        # self._prog_animation.finished.connect(self._prog_animation.deleteLater)
+        self._prog_animation.finished.connect(self._prog_animation.start)
+        self._prog_animation.start()
         # start btn
         self.start_btn = QPushButton('Start', self)
         self.start_btn.setStyleSheet(
@@ -166,6 +198,20 @@ class HomePage(QWidget):
 
         # assign layout
         self.setLayout(layout)
+
+    def _animate_prog(self, value):
+        qss = """
+            text-align: center;
+            border: solid grey;
+            border-radius: 7px;
+            color: white;
+            font-size: 20px;
+        """
+        grad = "background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 {color1}, stop:{value} {color2}, stop: 1.0 {color1});".format(
+            color1=QColor(240, 53, 218).name(), color2=QColor(61, 217, 245).name(), value=value
+        )
+        qss += grad
+        self.progress.setStyleSheet(qss)
 
     def on_input_changed(self, value: str):
         if value == "px":
