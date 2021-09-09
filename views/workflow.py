@@ -59,7 +59,7 @@ class WorkflowPage(QWidget):
     @pg: primary loading/progress bar ref
     """
 
-    def __init__(self, wf: WorkflowObj, coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]] = None, output_ops: OutputOptions = None, img: str = "", mask: str = "", csv: str = "", csv2: str = "", pg: Progress = None, log: Logger = None):
+    def __init__(self, wf: WorkflowObj, coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]] = None, output_ops: OutputOptions = None, img: str = "", mask: str = "", csv: str = "", csv2: str = "", pg: Progress = None, clust_area: bool = False, log: Logger = None):
         super().__init__()
         # init class vars: allow referencing within functions without passing explicitly
         self.is_init = False
@@ -67,6 +67,7 @@ class WorkflowPage(QWidget):
         self.wf = wf
         self.pg = pg
         self.output_ops = output_ops
+        self.draw_clust_area = clust_area
         self.dlg = log
         # init layout
         layout = QFormLayout()
@@ -255,6 +256,8 @@ class WorkflowPage(QWidget):
         layout.addRow(btn_r)
         # assign layout
         self.setLayout(layout)
+        # props to enable and disable when running wf
+        self.wf_props = [self.run_btn, self.image_frame, self.graph_frame, self.gen_rand_cb, self.gen_real_cb]
         # run on init
         self.run(wf, coords, alt_coords)
 
@@ -297,6 +300,8 @@ class WorkflowPage(QWidget):
         print(f'{wf["name"]}: started downloading, opening thread')
         self.download_btn.setStyleSheet(
         "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #ddd; color: white; border-radius: 7px; ")
+        for prop in self.wf_props:
+            prop.setEnabled(True)
         self.download_btn.setDisabled(True)
         self.dl_thread = QThread()
         self.dl_worker = DownloadWorker()
@@ -320,6 +325,9 @@ class WorkflowPage(QWidget):
             prog_wrapper.prog.connect(self.update_progress)
             self.prog_animation.start()
 
+            for prop in self.wf_props:
+                prop.setEnabled(False)
+
             # set coords
             self.coords = coords
             self.alt_coords = alt_coords
@@ -331,7 +339,7 @@ class WorkflowPage(QWidget):
             self.thread = QThread()
             self.worker = AnalysisWorker()
             self.worker.moveToThread(self.thread)
-            self.thread.started.connect(partial(self.worker.run, wf, vals, coords, self.rand_coords, alt_coords, self.img_drop.currentText(), self.mask_drop.currentText(), ))
+            self.thread.started.connect(partial(self.worker.run, wf, vals, coords, self.rand_coords, alt_coords, self.img_drop.currentText(), self.mask_drop.currentText(), self.draw_clust_area))
             self.worker.progress.connect(self.update_progress)
             self.worker.finished.connect(self.on_receive_data)
             self.worker.finished.connect(self.thread.quit)
@@ -514,9 +522,10 @@ class WorkflowPage(QWidget):
                 elif wf["type"] == Workflow.CLUST:
                     vals = self.get_custom_values()
                     if self.gen_real_cb.isChecked():
-                        drawn_img = draw_clust(clust_df=self.data.real_df1, img=drawn_img, palette=palette, distance_threshold=vals[0], draw_clust_area=vals[2])
+                        drawn_img = draw_clust(clust_df=self.data.real_df1, img=drawn_img, palette=palette, distance_threshold=vals[0], draw_clust_area=self.draw_clust_area)
                     if self.gen_rand_cb.isChecked():
-                        drawn_img = draw_clust(clust_df=self.data.rand_df1, img=drawn_img, palette=r_palette, distance_threshold=vals[0], draw_clust_area=vals[2])
+                        drawn_img = draw_clust(clust_df=self.data.rand_df1, img=drawn_img, palette=r_palette,
+                                               distance_threshold=vals[0], draw_clust_area=self.draw_clust_area)
                 elif wf["type"] == Workflow.NND_CLUST:
                     if self.gen_real_cb.isChecked():
                         drawn_img = draw_nnd_clust(nnd_df=self.data.real_df1, clust_df=self.data.real_df2, img=drawn_img,

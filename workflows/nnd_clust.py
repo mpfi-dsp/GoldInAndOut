@@ -11,9 +11,9 @@ import math
 import cv2
 
 
-def run_nnd_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], min_clust_size: int =3, distance_threshold: int = 34, n_clusters: int = None, affinity: str ='euclidean', linkage: str ='ward'):
+def run_nnd_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], min_clust_size: int = 3, distance_threshold: int = 34, n_clusters: int = None, affinity: str = 'euclidean', linkage: str = 'single',  clust_area: bool = False):
     """
-    NEAREST NEIGHBOR DISTANCE OF WARD HIERARCHICAL CLUSTERING
+    NEAREST NEIGHBOR DISTANCE OF HIERARCHICAL CLUSTERING
     _______________________________
     @pb: progress bar wrapper element, allows us to track how much time is left in process
     @real_coords: list of real coordinates

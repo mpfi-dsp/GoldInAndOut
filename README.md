@@ -31,10 +31,10 @@ Below is a sample workflow using JSON structure.
 {
     "name": "CLUST",
     "type": Workflow.CLUST,
-    "header": "Ward Hierarchical Clustering",
+    "header": "Hierarchical Clustering",
     "desc": "Cluster gold particles into groups. Optionally generate random coordinates.",
     "hist": {
-            "title": "Ward Hierarchical Clusters",
+            "title": "Hierarchical Clusters",
             "x_label": "Cluster Value",
             "y_label": "Number of Entries",
             "x_type": "cluster"
@@ -46,10 +46,7 @@ Below is a sample workflow using JSON structure.
             },
             {"title": "n_clusters",
              "placeholder": "None"
-             },
-            {  "title": "linkage",
-              "placeholder": "ward"
-            }
+             }
         ]
 }
 ```

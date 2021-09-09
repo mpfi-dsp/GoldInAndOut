@@ -23,7 +23,7 @@ class AnalysisWorker(QObject):
     finished = pyqtSignal(object)
     progress = pyqtSignal(int)
 
-    def run(self, wf: WorkflowObj, vals: List[str], coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]] = None, img_path: str = "", mask_path: str = ""):
+    def run(self, wf: WorkflowObj, vals: List[str], coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]] = None, img_path: str = "", mask_path: str = "", clust_area: bool = False):
         try:
             real_df1 = real_df2 = rand_df1 = rand_df2 = pd.DataFrame()
             # ADD NEW WORKFLOWS HERE
@@ -32,10 +32,10 @@ class AnalysisWorker(QObject):
                     real_coords=coords, rand_coords=rand_coords, pb=self.progress)
             elif wf['type'] == Workflow.CLUST:
                 real_df1, rand_df1, real_df2, rand_df2 = run_clust(
-                    real_coords=coords, rand_coords=rand_coords, img_path=img_path, distance_threshold=vals[0], n_clusters=vals[1], pb=self.progress)
+                    real_coords=coords, rand_coords=rand_coords, img_path=img_path, distance_threshold=vals[0], n_clusters=vals[1], pb=self.progress, clust_area=clust_area)
             elif wf['type'] == Workflow.NND_CLUST:
                 real_df2, rand_df2, real_df1, rand_df1 = run_nnd_clust(
-                    real_coords=coords, rand_coords=rand_coords,  distance_threshold=vals[0],  n_clusters=vals[1], min_clust_size=vals[2], pb=self.progress)
+                    real_coords=coords, rand_coords=rand_coords,  distance_threshold=vals[0],  n_clusters=vals[1], min_clust_size=vals[2], pb=self.progress, clust_area=clust_area)
             elif wf['type'] == Workflow.RIPPLER:
                 real_df1, rand_df1 = run_rippler(real_coords=coords, alt_coords=alt_coords, rand_coords=rand_coords, pb=self.progress,
                                                  img_path=img_path, mask_path=mask_path, max_steps=vals[0], step_size=vals[1])
@@ -44,6 +44,7 @@ class AnalysisWorker(QObject):
                     real_coords=coords, rand_coords=rand_coords, alt_coords=alt_coords, pb=self.progress)
             self.output_data = DataObj(real_df1, real_df2, rand_df1, rand_df2)
             self.finished.emit(self.output_data)
+            print(f'finished {wf["name"]} analysis')
         except Exception as e:
             self.dlg = Logger()
             self.dlg.show()

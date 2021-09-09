@@ -75,7 +75,7 @@ class HomePage(QWidget):
         self.csv2_le.setPlaceholderText("None Selected")
         # add output
         layout.addRow(csv2_btn, self.csv2_le)
-        spacer = QSpacerItem(20, 10, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        spacer = QSpacerItem(15, 10, QSizePolicy.Minimum, QSizePolicy.Expanding)
         layout.addItem(spacer)
 
         # output folder header
@@ -115,6 +115,9 @@ class HomePage(QWidget):
         # show logs checkbox
         self.show_logs = QCheckBox('display logger (open in new window)')
         layout.addRow(self.show_logs)
+        # cluster area checkbox
+        self.clust_area = QCheckBox('find cluster area')
+        layout.addRow(self.clust_area)
         # input
         ip_scalr_lb = QLabel("in")
         ip_scalr_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
@@ -140,6 +143,11 @@ class HomePage(QWidget):
         self.csvs_ip_o = QLineEdit()
         self.csvs_ip_o.setStyleSheet("font-size: 16px; padding: 8px;  font-weight: 400; background: #ddd; border-radius: 7px;  margin-bottom: 5px; max-width: 150px; ")
         self.csvs_ip_o.setPlaceholderText("1")
+        # hide by default if px
+        self.csvs_lb_o.setHidden(True)
+        self.csvs_ip_o.setHidden(True)
+        self.csvs_lb_i.setHidden(True)
+        self.csvs_ip_i.setHidden(True)
         # global props
         glob_props = QHBoxLayout()
         for glob in [ip_scalr_lb, self.ip_scalar_type, op_scalr_lb, self.op_scalar_type, self.csvs_lb_i, self.csvs_ip_i, self.csvs_lb_o, self.csvs_ip_o]:

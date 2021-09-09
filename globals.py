@@ -42,12 +42,12 @@ WORKFLOWS: List[WorkflowObj] = [
     {
         "name": "CLUST",
         "type": Workflow.CLUST,
-        "header": "Ward Hierarchical Clustering",
+        "header": "Hierarchical Clustering",
         "desc": "Cluster gold particles into groups. Optionally generate random coordinates.",
         "checked": True,
         "graph": {
             "type": "bar",
-            "title": "Ward Hierarchical Clusters",
+            "title": "Hierarchical Clusters",
             "x_label": "# Particles In Cluster",
             "y_label": "# Of Clusters",
             "x_type": "cluster_id",
@@ -62,10 +62,10 @@ WORKFLOWS: List[WorkflowObj] = [
              "title": "n_clusters",
              "placeholder": "None"
              },
-            {
-             "title": "draw_clust_area",
-             "placeholder": "False"
-             },
+            # {
+            #  "title": "draw_clust_area",
+            #  "placeholder": "False"
+            #  },
         ]
     },
     {
@@ -165,5 +165,5 @@ DEFAULT_OUTPUT_DIR: str = './output'
 
 """ PROGRESS BAR COLORS """
 
-PROG_COLOR_1 = QColor(95, 197, 138) # # 240, 53, 218) # QColor(221, 221, 221)  # ddd
-PROG_COLOR_2 = QColor(61, 217, 245)  # 233, 180, 33)  # 61, 217, 245) #QColor(233, 180, 33)  # e9b421
+PROG_COLOR_1 = QColor(221, 221, 221) # 95, 197, 138) # # 240, 53, 218) # QColor(221, 221, 221)  # ddd
+PROG_COLOR_2 = QColor(95, 197, 138) # 61, 217, 245)  # 233, 180, 33)  # 61, 217, 245) #QColor(233, 180, 33)  # e9b421

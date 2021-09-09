@@ -92,7 +92,7 @@ class GoldInAndOut(QWidget):
 
             """ INITIALIZE CHILD WORKFLOW WINDOWS """
             self.home_props = [self.home_page.start_btn,
-                               self.home_page.img_le,  self.home_page.mask_le, self.home_page.csv_le, self.home_page.csv2_le, self.home_page.ip_scalar_type, self.home_page.op_scalar_type, self.home_page.output_dir_le, self.home_page.dod_cb, self.home_page.csvs_lb_i, self.home_page.csvs_ip_o]
+                               self.home_page.img_le,  self.home_page.mask_le, self.home_page.csv_le, self.home_page.csv2_le, self.home_page.ip_scalar_type, self.home_page.op_scalar_type, self.home_page.output_dir_le, self.home_page.dod_cb, self.home_page.csvs_lb_i, self.home_page.csvs_ip_o, self.home_page.clust_area, self.home_page.show_logs]
             for prop in self.home_props:
                 prop.setEnabled(False)
             self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #ddd")
@@ -113,6 +113,7 @@ class GoldInAndOut(QWidget):
             dod: bool = self.home_page.dod_cb.isChecked()
             o_dir: str = self.home_page.output_dir_le.text() if len(self.home_page.output_dir_le.text()) > 0 else DEFAULT_OUTPUT_DIR
             output_ops: OutputOptions = OutputOptions(output_unit=ou, output_dir=o_dir, output_scalar=s_o, delete_old=dod)
+            c_area = self.home_page.clust_area.isChecked()
 
             # determine workflow pages
             wf_td = 0
@@ -140,6 +141,7 @@ class GoldInAndOut(QWidget):
                                      csv2=csv2_path,
                                      output_ops=output_ops,
                                      pg=partial(self.update_main_progress, (int((z / wf_td * 100)))),
+                                     clust_area=c_area,
                                      log=self.dlg
                                      ))
         except Exception as e:
