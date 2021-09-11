@@ -29,7 +29,7 @@ from threads import AnalysisWorker, DownloadWorker
 from workflows.random_coords import gen_random_coordinates
 from workflows.clust import draw_clust
 from workflows.gold_rippler import draw_rippler
-from workflows.nnd_clust import draw_nnd_clust
+from workflows.separation import draw_separation
 from workflows.starfish import draw_starfish
 from workflows.nnd import draw_length
 
@@ -133,7 +133,7 @@ class WorkflowPage(QWidget):
         for prop in self.real_props:
             prop.setHidden(True)
         # RANDOM COORDS SECTION
-        theme_head = QLabel("Theme & Coords")
+        theme_head = QLabel("Theme & Distribution")
         theme_head.setStyleSheet(
             "font-size: 17px; font-weight: 500; padding-top: 0px; padding-bottom: 0px; margin-top: 0px; margin-bottom: 0px;")
         self.theme_cb = QToolButton()
@@ -186,13 +186,13 @@ class WorkflowPage(QWidget):
         self.out_desc.setWordWrap(True)
         layout.addRow(self.out_desc)
         # real
-        self.gen_real_lb = QLabel("display real coords")
+        self.gen_real_lb = QLabel("display real distribution")
         self.gen_real_lb.setStyleSheet("margin-left: 50px; font-size: 17px; font-weight: 400;")
         self.gen_real_cb = QCheckBox()
         self.gen_real_cb.clicked.connect(partial(self.create_visuals, self.wf, (self.bars_ip.text() if self.bars_ip.text() else 'fd'), self.output_ops))
         self.gen_real_cb.setChecked(True)
         # rand
-        self.gen_rand_lb = QLabel("display random coords")
+        self.gen_rand_lb = QLabel("display random distribution")
         self.gen_rand_lb.setStyleSheet("margin-left: 50px; font-size: 17px; font-weight: 400;")
         self.gen_rand_cb = QCheckBox()
         self.gen_rand_cb.clicked.connect(partial(self.create_visuals, self.wf, (self.bars_ip.text() if self.bars_ip.text() else 'fd'), self.output_ops))
@@ -525,13 +525,13 @@ class WorkflowPage(QWidget):
                     if self.gen_rand_cb.isChecked():
                         drawn_img = draw_clust(clust_df=self.data.rand_df1, img=drawn_img, palette=r_palette,
                                                distance_threshold=vals[0], draw_clust_area=self.draw_clust_area)
-                elif wf["type"] == Workflow.NND_CLUST:
+                elif wf["type"] == Workflow.SEPARATION:
                     vals = self.get_custom_values()
                     if self.gen_real_cb.isChecked():
-                        drawn_img = draw_nnd_clust(nnd_df=self.data.real_df1, clust_df=self.data.real_df2, img=drawn_img,
+                        drawn_img = draw_separation(nnd_df=self.data.real_df1, clust_df=self.data.real_df2, img=drawn_img,
                                                    palette=palette, bin_counts=n, circle_c=(103, 114, 0),  distance_threshold=vals[0], draw_clust_area=self.draw_clust_area)
                     if self.gen_rand_cb.isChecked():
-                        drawn_img = draw_nnd_clust(nnd_df=self.data.rand_df1, clust_df=self.data.rand_df2, img=drawn_img,
+                        drawn_img = draw_separation(nnd_df=self.data.rand_df1, clust_df=self.data.rand_df2, img=drawn_img,
                                                    palette=r_palette, bin_counts=n, circle_c=(18, 156, 232), distance_threshold=vals[0], draw_clust_area=self.draw_clust_area)
                 elif wf["type"] == Workflow.RIPPLER:
                     vals = [self.cstm_props[i].text() if self.cstm_props[i].text() else wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]

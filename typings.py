@@ -6,7 +6,7 @@ import pandas as pd
 class Workflow(Enum):
     NND = 1
     CLUST = 2
-    NND_CLUST = 3
+    SEPARATION = 3
     RIPPLER = 4
     STARFISH = 5
     # CLUST_AREA = 6

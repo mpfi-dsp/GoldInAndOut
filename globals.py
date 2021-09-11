@@ -27,14 +27,14 @@ WORKFLOWS: List[WorkflowObj] = [
     {
     "name": "NND",
     "type": Workflow.NND,
-    "header": "Nearest Neighbor Distance",
-    "desc": "Find the nearest neighbor distance between gold particles. Optionally generate random coordinates.",
+        "header": "Nearest Neighbor Distance of particles",
+    "desc": "Find the nearest neighbor distance (NND) between gold particles. Optionally generate random coordinates.",
     "checked": True,
     "graph": {
         "type": "hist",
-        "title": "Distances Between Nearest Neighbors",
-        "x_label": "Nearest Neighbor Distance",
-        "y_label": "Number of Entries",
+        "title": "NND of particles",
+        "x_label": "Distance",
+        "y_label": "Number of Particles",
         "x_type": "dist"
     },
     "props": []
@@ -42,41 +42,37 @@ WORKFLOWS: List[WorkflowObj] = [
     {
         "name": "CLUST",
         "type": Workflow.CLUST,
-        "header": "Hierarchical Clustering",
+        "header": "Hierarchical Clustering of particles",
         "desc": "Cluster gold particles into groups. Optionally generate random coordinates.",
         "checked": True,
         "graph": {
             "type": "bar",
-            "title": "Hierarchical Clusters",
-            "x_label": "# Particles In Cluster",
-            "y_label": "# Of Clusters",
+            "title": "Hierarchical Clustering of particles",
+            "x_label": "Number of Particles In Cluster",
+            "y_label": "Number Of Clusters",
             "x_type": "cluster_id",
             "y_type": "cluster_id"
         },
         "props": [
             {
                 "title": "distance_threshold (px)",
-                "placeholder": "34"
+                "placeholder": "27"
             },
             {
              "title": "n_clusters",
              "placeholder": "None"
-             },
-            # {
-            #  "title": "draw_clust_area",
-            #  "placeholder": "False"
-            #  },
+             }
         ]
     },
     {
-        "name": "NND-CLUST",
-        "type": Workflow.NND_CLUST,
-        "header": "Nearest Neighbor Distance Between Clusters",
-        "desc": "Find the nearest neighbor distance between clusters. Optionally generate random coordinates.",
+        "name": "SEPARATION",
+        "type": Workflow.SEPARATION,
+        "header": "Separation Between Clusters",
+        "desc": "Find the separation (NND) between clusters. Optionally generate random coordinates.",
         "checked": True,
         "graph": {
             "type": "hist",
-            "title": "Nearest Neighbor Distance for Ward Hierarchical Clusters",
+            "title": "Separation Between Clusters",
             "x_label": "Nearest Neighbor Distance",
             "y_label": "Number of Entries",
             "x_type": "dist",
@@ -85,7 +81,7 @@ WORKFLOWS: List[WorkflowObj] = [
         "props": [
             {
                 "title": "distance_threshold (px)",
-                "placeholder": "34"
+                "placeholder": "27"
             },
             {"title": "n_clusters",
              "placeholder": "None"
@@ -99,16 +95,16 @@ WORKFLOWS: List[WorkflowObj] = [
     {
         "name": "RIPPLER",
         "type": Workflow.RIPPLER,
-        "header": "Gold Rippler: Spine-Particle Correlation",
-        "desc": "Separate spine masks as individual components, grow components until they contain X gold particles, calculate Spine Correlated Particles Per P-face Area (SC3PA) (% of gold particles within spine masks) / (% of total area of p-face taken up by spine masks).  Requires lighthouse population.",
+        "header": "Gold Rippler: Landmark-Particle Correlation",
+        "desc": "Separate landmark masks as individual components, grow components until they contain X gold particles, calculate Landmark Correlated Particle Index (LCPI): (% of gold particles within landmark masks) / (% of total area of img taken up by landmark masks).  Requires lighthouse population.",
         "checked": False,
         "graph": {
             "type": "bar",
-            "title": "Spine Correlated Particles Per P-face Area By Radius",
+            "title": "Landmark Correlated Particle Index (LCPI) By Radius",
             "x_label": "radius",
-            "y_label": "SC3PA",
+            "y_label": "LCPI",
             "x_type": "radius",
-            "y_type": "SC3PA"
+            "y_type": "LCPI"
         },
         "props": [
             {
@@ -129,7 +125,7 @@ WORKFLOWS: List[WorkflowObj] = [
         "checked": False,
         "graph": {
             "type": "hist",
-            "title": "Nearest Neighbor Distances of Different Pops",
+            "title": "Starfish Nearest Neighbor Distance",
             "x_label": "Nearest Neighbor Distance",
             "y_label": "Number of Entries",
             "x_type": "dist"
@@ -140,7 +136,7 @@ WORKFLOWS: List[WorkflowObj] = [
 
 """ COLOR PALETTE OPTIONS """
 PALETTE_OPS: List[str] = ["rocket", "crest", "mako", "flare", "viridis", "magma", "cubehelix", "rocket_r", "mako_r", "crest_r",
-               "flare_r", "viridis_r", "magma_r", ]
+ "flare_r", "viridis_r", "magma_r", ]
 
 """ METRIC UNIT OPTIONS """
 UNIT_OPS: List[str] = ['px', 'nm', 'μm', 'metric']

@@ -11,7 +11,7 @@ from typing import List, Tuple
 # workflows
 from workflows.clust import run_clust
 from workflows.gold_rippler import run_rippler
-from workflows.nnd_clust import run_nnd_clust
+from workflows.separation import run_separation
 from workflows.starfish import run_starfish
 from workflows.nnd import run_nnd
 import numpy as np
@@ -33,8 +33,8 @@ class AnalysisWorker(QObject):
             elif wf['type'] == Workflow.CLUST:
                 real_df1, rand_df1, real_df2, rand_df2 = run_clust(
                     real_coords=coords, rand_coords=rand_coords, img_path=img_path, distance_threshold=vals[0], n_clusters=vals[1], pb=self.progress, clust_area=clust_area)
-            elif wf['type'] == Workflow.NND_CLUST:
-                real_df2, rand_df2, real_df1, rand_df1 = run_nnd_clust(
+            elif wf['type'] == Workflow.SEPARATION:
+                real_df2, rand_df2, real_df1, rand_df1 = run_separation(
                     real_coords=coords, rand_coords=rand_coords,  distance_threshold=vals[0],  n_clusters=vals[1], min_clust_size=vals[2], pb=self.progress, clust_area=clust_area)
             elif wf['type'] == Workflow.RIPPLER:
                 real_df1, rand_df1 = run_rippler(real_coords=coords, alt_coords=alt_coords, rand_coords=rand_coords, pb=self.progress,
