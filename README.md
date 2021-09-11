@@ -78,7 +78,7 @@ self.real_df1, self.rand_df1 = your_workflow_function_from_custom_file(df=scaled
 To compile to exe, enter the directory with the `main.py` file and run the following command:
 
 ```
-pyinstaller.exe --onefile --windowed main.py
+pyinstaller.exe --onefile --windowed --icon=logo.ico main.py
 ```
 
 The exe file will be found in the `/dist` directory

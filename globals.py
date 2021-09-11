@@ -27,12 +27,12 @@ WORKFLOWS: List[WorkflowObj] = [
     {
     "name": "NND",
     "type": Workflow.NND,
-        "header": "Nearest Neighbor Distance of particles",
+        "header": "Nearest Neighbor Distance of Particles",
     "desc": "Find the nearest neighbor distance (NND) between gold particles. Optionally generate random coordinates.",
     "checked": True,
     "graph": {
         "type": "hist",
-        "title": "NND of particles",
+        "title": "NND of Particles",
         "x_label": "Distance",
         "y_label": "Number of Particles",
         "x_type": "dist"
@@ -42,24 +42,24 @@ WORKFLOWS: List[WorkflowObj] = [
     {
         "name": "CLUST",
         "type": Workflow.CLUST,
-        "header": "Hierarchical Clustering of particles",
+        "header": "Hierarchical Clustering of Particles",
         "desc": "Cluster gold particles into groups. Optionally generate random coordinates.",
         "checked": True,
         "graph": {
             "type": "bar",
-            "title": "Hierarchical Clustering of particles",
+            "title": "Hierarchical Clustering of Particles",
             "x_label": "Number of Particles In Cluster",
-            "y_label": "Number Of Clusters",
+            "y_label": "Number of Clusters",
             "x_type": "cluster_id",
             "y_type": "cluster_id"
         },
         "props": [
             {
-                "title": "distance_threshold (px)",
+                "title": "distance threshold (px)",
                 "placeholder": "27"
             },
             {
-             "title": "n_clusters",
+             "title": "number of clusters",
              "placeholder": "None"
              }
         ]
@@ -80,14 +80,14 @@ WORKFLOWS: List[WorkflowObj] = [
         },
         "props": [
             {
-                "title": "distance_threshold (px)",
+                "title": "distance threshold (px)",
                 "placeholder": "27"
             },
-            {"title": "n_clusters",
+            {"title": "number of clusters",
              "placeholder": "None"
-             },
+            },
             {
-                "title": "min_cluster_size",
+                "title": "minimum clust size",
                 "placeholder": "3"
             },
         ]
@@ -108,11 +108,11 @@ WORKFLOWS: List[WorkflowObj] = [
         },
         "props": [
             {
-                "title": "max_steps",
+                "title": "maximum steps",
                 "placeholder": "10"
             },
             {
-                "title": "step_size (px)",
+                "title": "step size (px)",
                 "placeholder": "60"
             },
         ]
@@ -125,9 +125,9 @@ WORKFLOWS: List[WorkflowObj] = [
         "checked": False,
         "graph": {
             "type": "hist",
-            "title": "Starfish Nearest Neighbor Distance",
-            "x_label": "Nearest Neighbor Distance",
-            "y_label": "Number of Entries",
+            "title": "Starfish NND",
+            "x_label": "Distance",
+            "y_label": "Number of Particles",
             "x_type": "dist"
         },
         "props": []

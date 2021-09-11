@@ -186,13 +186,13 @@ class WorkflowPage(QWidget):
         self.out_desc.setWordWrap(True)
         layout.addRow(self.out_desc)
         # real
-        self.gen_real_lb = QLabel("display real distribution")
+        self.gen_real_lb = QLabel("show real distribution")
         self.gen_real_lb.setStyleSheet("margin-left: 50px; font-size: 17px; font-weight: 400;")
         self.gen_real_cb = QCheckBox()
         self.gen_real_cb.clicked.connect(partial(self.create_visuals, self.wf, (self.bars_ip.text() if self.bars_ip.text() else 'fd'), self.output_ops))
         self.gen_real_cb.setChecked(True)
         # rand
-        self.gen_rand_lb = QLabel("display random distribution")
+        self.gen_rand_lb = QLabel("show random distribution")
         self.gen_rand_lb.setStyleSheet("margin-left: 50px; font-size: 17px; font-weight: 400;")
         self.gen_rand_cb = QCheckBox()
         self.gen_rand_cb.clicked.connect(partial(self.create_visuals, self.wf, (self.bars_ip.text() if self.bars_ip.text() else 'fd'), self.output_ops))
