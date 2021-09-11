@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QSize, QByteArray
 from PyQt5.QtGui import QImage
-from utils import pixels_conversion, enum_to_unit
+from utils import pixels_conversion, enum_to_unit, to_coord_list
 from globals import MAX_DIRS_PRUNE
 import os
 import traceback
@@ -14,10 +14,39 @@ from workflows.gold_rippler import run_rippler
 from workflows.separation import run_separation
 from workflows.starfish import run_starfish
 from workflows.nnd import run_nnd
+from workflows.random_coords import gen_random_coordinates
 import numpy as np
 import datetime
 import pandas as pd
 import shutil
+
+
+class DataLoadWorker(QObject):
+    finished = pyqtSignal(list)
+
+    def run(self, img_path: str = "", mask_path: str = "",  csv_path: str = "", csv2_path: str = "", unit: Unit = Unit.PIXEL, scalar: float = 1.0,):
+        try:
+            data = pd.read_csv(csv_path, sep=",")
+            scaled_df = pixels_conversion(data=data, unit=unit, scalar=scalar)
+            COORDS = to_coord_list(scaled_df)
+    
+            if len(csv2_path) > 0:
+                data = pd.read_csv(csv2_path, sep=",")
+                ALT_COORDS = to_coord_list(
+                    pixels_conversion(data=data, unit=unit, scalar=scalar))
+            else:
+                ALT_COORDS = gen_random_coordinates(img_path, mask_path, count=len(COORDS))
+    
+            self.finished.emit([COORDS, ALT_COORDS])
+            logging.info("Finished loading in and converting data")
+            print(f'finished loading data')
+        except Exception as e:
+            self.dlg = Logger()
+            self.dlg.show()
+            print(traceback.format_exc())
+            logging.error(traceback.format_exc())
+            self.finished.emit([])
+
 
 class AnalysisWorker(QObject):
     finished = pyqtSignal(object)

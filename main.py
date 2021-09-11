@@ -23,7 +23,8 @@ import pandas._libs.tslibs.base
 import sys
 from functools import partial
 import numexpr
-from workflows.random_coords import gen_random_coordinates
+# from workflows.random_coords import gen_random_coordinates
+from threads import DataLoadWorker
 import pathlib
 
 class GoldInAndOut(QWidget):
@@ -86,19 +87,22 @@ class GoldInAndOut(QWidget):
 
     def init_workflows(self):
         try:
-            # # start progress bar ani
-            # self.home_page.prog_animation.start()
-            # self.home_page.repaint()
-
             """ INITIALIZE CHILD WORKFLOW WINDOWS """
+            # gui elements to disable when running
             self.home_props = [self.home_page.start_btn,
                                self.home_page.img_le,  self.home_page.mask_le, self.home_page.csv_le, self.home_page.csv2_le, self.home_page.ip_scalar_type, self.home_page.op_scalar_type, self.home_page.output_dir_le, self.home_page.dod_cb, self.home_page.csvs_lb_i, self.home_page.csvs_ip_o, self.home_page.clust_area, self.home_page.show_logs]
             for prop in self.home_props:
                 prop.setEnabled(False)
             self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #ddd")
             self.empty_stack()
-            self.load_data()
             self.home_page.progress.setValue(0)
+            self.load_data()
+        except Exception as e:
+            print(e, traceback.format_exc())
+
+    def on_loaded_data(self, loaded_data: list):
+        try:
+            self.COORDS, self.ALT_COORDS = loaded_data
 
             # TODO: remove when no longer using for testing
             img_path: str = self.home_page.img_le.text() if len(self.home_page.img_le.text()) > 0 else "./input/example_image.tif"
@@ -149,25 +153,24 @@ class GoldInAndOut(QWidget):
 
     def load_data(self):
         """ LOAD AND SCALE DATA """
-        path = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else "./input/example_csv.csv"
-        unit = unit_to_enum(self.home_page.ip_scalar_type.currentText()) if self.home_page.ip_scalar_type.currentText() else Unit.PIXEL
-        scalar = float(self.home_page.csvs_ip_i.text() if len(self.home_page.csvs_ip_i.text()) > 0 else 1)
         try:
-            data = pd.read_csv(path, sep=",")
-            scaled_df = pixels_conversion(data=data, unit=unit, scalar=scalar)
-            self.COORDS = to_coord_list(scaled_df)
-        except Exception as e:
-            print(e, traceback.format_exc())
-        try:
-            if len(self.home_page.csv2_le.text()) > 0:
-                data = pd.read_csv(self.home_page.csv2_le.text(), sep=",")
-                self.ALT_COORDS = to_coord_list(
-                    pixels_conversion(data=data, unit=unit, scalar=scalar))
-            else:
-                # TODO: update for production
-                img = self.home_page.img_le.text() if len(self.home_page.img_le.text()) > 0 else "./input/example_image.tif"
-                mask = self.home_page.mask_le.text() if len(self.home_page.mask_le.text()) > 0 else "./input/example_mask.tif"
-                self.ALT_COORDS = gen_random_coordinates(img, mask, count=len(self.COORDS))
+            img_path = self.home_page.img_le.text() if len(self.home_page.img_le.text()) > 0 else "./input/example_image.tif"
+            mask_path = self.home_page.mask_le.text() if len(self.home_page.mask_le.text()) > 0 else "./input/example_mask.tif"
+            csv_path = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else "./input/example_csv.csv"
+            csv2_path = self.home_page.csv2_le.text()
+            unit = unit_to_enum(self.home_page.ip_scalar_type.currentText()) if self.home_page.ip_scalar_type.currentText() else Unit.PIXEL
+            scalar = float(self.home_page.csvs_ip_i.text() if len(self.home_page.csvs_ip_i.text()) > 0 else 1)
+
+            self.load_thread = QThread()
+            self.load_worker = DataLoadWorker()
+            self.load_worker.moveToThread(self.load_thread)
+            self.load_thread.started.connect(partial(self.load_worker.run, img_path, mask_path, csv_path, csv2_path, unit, scalar))
+            self.load_worker.finished.connect(self.on_loaded_data)
+            self.load_worker.finished.connect(self.load_thread.quit)
+            self.load_worker.finished.connect(self.load_worker.deleteLater)
+            self.load_thread.finished.connect(self.load_thread.deleteLater)
+            self.load_thread.start()
+            
         except Exception as e:
             print(e, traceback.format_exc())
 
