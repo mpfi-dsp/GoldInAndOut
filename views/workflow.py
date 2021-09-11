@@ -471,10 +471,10 @@ class WorkflowPage(QWidget):
                                         ha='center', va='bottom', rotation=0)
 
                     elif self.gen_real_cb.isChecked() and self.gen_rand_cb.isChecked():
-                        real_graph_y = np.bincount(np.bincount(self.data.final_real[wf["graph"]["x_type"]]))[1:]
-                        real_graph_x = list(range(1, (len(set(real_graph_y)))+1))
-                        rand_graph_y = np.bincount(np.bincount(self.data.final_rand[wf["graph"]["x_type"]]))[1:]
-                        rand_graph_x = list(range(1, (len(set(rand_graph_y)))+1))
+                        real_graph_y = np.bincount(np.bincount(self.data.final_real[wf["graph"]["x_type"]]))[1:] or []
+                        real_graph_x = list(range(1, (len(set(real_graph_y)))+1)) or []
+                        rand_graph_y = np.bincount(np.bincount(self.data.final_rand[wf["graph"]["x_type"]]))[1:] or []
+                        rand_graph_x = list(range(1, (len(set(rand_graph_y)))+1)) or []
                         if wf['type'] == Workflow.RIPPLER:
                             ax.bar([el - 5 for el in np.array(self.data.final_rand[wf["graph"]["x_type"]])], np.array(self.data.final_rand[wf["graph"]["y_type"]]), width=20, alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()), label='Rand')
                             ax.bar([el + 5 for el in np.array(self.data.final_real[wf["graph"]["x_type"]])], np.array(self.data.final_real[wf["graph"]["y_type"]]), width=20, alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.pal_type.currentText()), label='Real')

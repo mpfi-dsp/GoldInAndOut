@@ -66,7 +66,7 @@ def pixels_conversion(data: pd.DataFrame, unit: Unit = Unit.PIXEL, scalar: float
                         new_col.append(tuple([round((x / scalar), r) for x in tup]))
                 df[col] = new_col
             else:
-                if unit == Unit.PIXEL:
+                if unit == Unit.PIXEL and str(df[col][0]).isnumeric():
                     df[col] = round((df[col] * scalar), r)
                 else:
                     df[col] = round(df[col].div(scalar), r)

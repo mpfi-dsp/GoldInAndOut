@@ -9,7 +9,7 @@ from PyQt5.QtGui import QImage
 from typing import List, Tuple
 
 
-def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], img_path: str, distance_threshold: int = 34, n_clusters: int = None, affinity: str = 'euclidean', linkage: str = 'single', clust_area: bool = False):
+def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], img_path: str, distance_threshold: int = 27, n_clusters: int = None, affinity: str = 'euclidean', linkage: str = 'single', clust_area: bool = False):
     """
     HIERARCHICAL CLUSTERING
     _______________________________
@@ -43,8 +43,9 @@ def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coord
     # random coords
     pb.emit(50)
     rand_coordinates = np.array(rand_coords)
+    rand_coordinates = np.flip(rand_coordinates, 1)
     rand_cluster = hc.fit_predict(rand_coordinates)
-    rand_df = pd.DataFrame(rand_coordinates, columns=["X", "Y"])
+    rand_df = pd.DataFrame(rand_coordinates, columns=["Y", "X"])
     rand_df['cluster_id'] = rand_cluster
 
     pb.emit(60)
@@ -91,12 +92,12 @@ def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coord
     return df, rand_df, clust_details_dfs[0], clust_details_dfs[1]
 
 
-def draw_clust(clust_df: pd.DataFrame, img: QImage , palette: str ="rocket_r", distance_threshold: int =30, draw_clust_area: bool =False):
+def draw_clust(clust_df: pd.DataFrame, img: QImage , palette: str ="rocket_r", distance_threshold: int = 27, draw_clust_area: bool = False):
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
 
-    if distance_threshold != 30 and draw_clust_area:
+    if distance_threshold != 27 and draw_clust_area:
         distance_threshold = int(distance_threshold)
     # make color pal
     palette = create_color_pal(n_bins=len(set(clust_df['cluster_id'])), palette_type=palette)
