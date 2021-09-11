@@ -4,7 +4,7 @@ import traceback
 import pandas as pd
 
 # from confetti import SuccessGif
-from globals import WORKFLOWS, NAV_ICON, DEFAULT_OUTPUT_DIR
+from globals import WORKFLOWS, NAV_ICON, DEFAULT_OUTPUT_DIR, VERSION_NUMBER
 from views.home import HomePage
 from typings import Unit, OutputOptions
 from utils import pixels_conversion, unit_to_enum, to_coord_list
@@ -31,13 +31,15 @@ class GoldInAndOut(QWidget):
     """ PARENT WINDOW INITIALIZATION """
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('GoldInAndOut')
+        self.setWindowTitle(f'GoldInAndOut {VERSION_NUMBER}')
         current_directory = str(pathlib.Path(__file__).parent.absolute())
         iconp = current_directory + '/logo.ico'
         self.setWindowIcon(QIcon(iconp))
         self.setMinimumSize(QSize(800, 1000))
+        logging.info("Booting up...")
         # set max threads
         numexpr.set_num_threads(numexpr.detect_number_of_cores())
+        logging.info("Detecting cores...")
         # layout with list on left and stacked widget on right
         layout = QHBoxLayout(self, spacing=0)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -47,11 +49,13 @@ class GoldInAndOut(QWidget):
         layout.addWidget(self.page_stack)
         # add main page
         self.home_page = HomePage(start=self.init_workflows)
+        logging.info("Building layout...")
         # init ui
         self.init_ui()
 
     def init_ui(self):
         """ INITIALIZE MAIN CHILD WINDOW """
+        logging.info("Initializing main window...")
         self.nav_list.currentRowChanged.connect(self.page_stack.setCurrentIndex)
         self.nav_list.setFrameShape(QListWidget.NoFrame)
         self.nav_list.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -154,13 +158,15 @@ class GoldInAndOut(QWidget):
     def load_data(self):
         """ LOAD AND SCALE DATA """
         try:
+            # edit in production
+            logging.info("Loading data...")
             img_path = self.home_page.img_le.text() if len(self.home_page.img_le.text()) > 0 else "./input/example_image.tif"
             mask_path = self.home_page.mask_le.text() if len(self.home_page.mask_le.text()) > 0 else "./input/example_mask.tif"
             csv_path = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else "./input/example_csv.csv"
             csv2_path = self.home_page.csv2_le.text()
             unit = unit_to_enum(self.home_page.ip_scalar_type.currentText()) if self.home_page.ip_scalar_type.currentText() else Unit.PIXEL
             scalar = float(self.home_page.csvs_ip_i.text() if len(self.home_page.csvs_ip_i.text()) > 0 else 1)
-
+            # load in data in thread
             self.load_thread = QThread()
             self.load_worker = DataLoadWorker()
             self.load_worker.moveToThread(self.load_thread)
@@ -170,7 +176,6 @@ class GoldInAndOut(QWidget):
             self.load_worker.finished.connect(self.load_worker.deleteLater)
             self.load_thread.finished.connect(self.load_thread.deleteLater)
             self.load_thread.start()
-            
         except Exception as e:
             print(e, traceback.format_exc())
 
@@ -184,6 +189,7 @@ class GoldInAndOut(QWidget):
     def empty_stack(self):
         """ CLEAR PAGE/NAV STACKS """
         try:
+            logging.info("Clearing old run pages"...")
             for i in range(self.page_stack.count()-1, 0, -1):
                 if i > 0:
                     self.nav_list.takeItem(i)

@@ -163,3 +163,7 @@ DEFAULT_OUTPUT_DIR: str = './output'
 
 PROG_COLOR_1 = QColor(221, 221, 221) # 95, 197, 138) # # 240, 53, 218) # QColor(221, 221, 221)  # ddd
 PROG_COLOR_2 = QColor(0, 190, 204) # greenish 95, 197, 138) # 61, 217, 245)  # 233, 180, 33)  # 61, 217, 245) #QColor(233, 180, 33)  # e9b421
+
+
+""" VERSION NUMBER """
+VERSION_NUMBER: str = '1.0.9'
