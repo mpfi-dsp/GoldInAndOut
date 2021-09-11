@@ -189,7 +189,7 @@ class GoldInAndOut(QWidget):
     def empty_stack(self):
         """ CLEAR PAGE/NAV STACKS """
         try:
-            logging.info("Clearing old run pages"...")
+            logging.info("Clearing old run pages...")
             for i in range(self.page_stack.count()-1, 0, -1):
                 if i > 0:
                     self.nav_list.takeItem(i)
