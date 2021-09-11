@@ -66,7 +66,7 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
     step = 0
     rippler_out = []
     for coord_list in [real_coords, rand_coords]:
-        SC3PA, radius, gp_captured, pface_covered, total_gp = [], [], [], [], []
+        LCPI, radius, gp_captured, img_covered, total_gp = [], [], [], [], []
         rad = 100
         max = (int(max_steps) * int(step_size)) + rad
         while rad <= max:
@@ -128,10 +128,10 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
             # calculate SC3PA
             scaled_SC3PA = gp_in_spine / percent_area
             # print(rad, scaled_SC3PA)
-            SC3PA.append(scaled_SC3PA)
+            LCPI.append(scaled_SC3PA)
             radius.append(rad)
             gp_captured.append(gp_in_spine)
-            pface_covered.append(percent_area)
+            img_covered.append(percent_area)
             total_gp.append(len(coord_list))
             rad += int(step_size)
             pb.emit(rad)
@@ -139,7 +139,7 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
 
         # generate new df and return
         new_df = pd.DataFrame(
-            data={'radius': radius, '%_gp_captured': gp_captured, '%_pface_covered': pface_covered, 'SC3PA': SC3PA,
+            data={'radius': radius, '%_gp_captured': gp_captured, '%_img_covered': img_covered, 'LCPI': LCPI,
                   'total_gp': total_gp})
         # print(new_df.head())
         rippler_out.append(new_df)

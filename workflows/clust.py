@@ -45,7 +45,7 @@ def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coord
     rand_coordinates = np.array(rand_coords)
     rand_coordinates = np.flip(rand_coordinates, 1)
     rand_cluster = hc.fit_predict(rand_coordinates)
-    rand_df = pd.DataFrame(rand_coordinates, columns=["Y", "X"])
+    rand_df = pd.DataFrame(rand_coordinates, columns=["X", "Y"])
     rand_df['cluster_id'] = rand_cluster
 
     pb.emit(60)

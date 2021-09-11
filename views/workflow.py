@@ -142,7 +142,8 @@ class WorkflowPage(QWidget):
         self.theme_cb.clicked.connect(self.toggle_theme_adv)
         layout.addRow(theme_head, self.theme_cb)
         # color palette
-        pal_lb = QLabel('<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">color palette</a>')
+        pal_lb = QLabel(
+            '<a href="https://seaborn.pydata.org/tutorial/color_palettes.html#perceptually-uniform-palettes">color palette</a>')
         pal_lb.setOpenExternalLinks(True)
         pal_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.pal_type = QComboBox()
@@ -150,7 +151,7 @@ class WorkflowPage(QWidget):
         layout.addRow(pal_lb, self.pal_type)
         # palette random
         r_pal_lb = QLabel(
-            '<a href="https://seaborn.pydata.org/tutorial/color_palettes.html">rand color palette</a>')
+            '<a href="https://seaborn.pydata.org/tutorial/color_palettes.html#perceptually-uniform-palettes">random color palette</a>')
         r_pal_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         r_pal_lb.setOpenExternalLinks(True)
         self.r_pal_type = QComboBox()
@@ -159,7 +160,7 @@ class WorkflowPage(QWidget):
         layout.addRow(r_pal_lb, self.r_pal_type)
         # num bins
         bars_lb = QLabel(
-            '<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.hist.html"># hist bins</a>')
+            '<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.hist.html">number of hist bins</a>')
         bars_lb.setOpenExternalLinks(True)
         bars_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
         self.bars_ip = QLineEdit()
