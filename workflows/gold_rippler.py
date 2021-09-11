@@ -90,18 +90,18 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
                     if scale_mask[x, y] != 0:
                         cv2.circle(original_copy, (y, x), 8, (0, 0, 255), -1)
                         total_captured_particles += 1
-                        print('was in mask')
+                        # print('was in mask')
                     else:
                         cv2.circle(original_copy, (y, x), 8, (255, 0, 255), -1)
-                        print('nope')
+                        # print('nope')
                 else:
                     if scale_mask[x, y] != 0:
                         total_captured_particles += 1
                         cv2.circle(original_copy, (y, x), 8, (0, 0, 255), -1)
-                        print('was in mask but not max')
+                        # print('was in mask but not max')
             gp_in_spine = total_captured_particles / len(coord_list)
 
-            print('gp_in_spine', gp_in_spine)
+            # print('gp_in_spine', gp_in_spine)
             # find spine contour area and pface contour area
             mask_combined = cv2.bitwise_and(scale_mask, pface_mask.copy())
             mask_cnts, mask_hierarchy = cv2.findContours(
@@ -135,7 +135,7 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
             total_gp.append(len(coord_list))
             rad += int(step_size)
             pb.emit(rad)
-            print('it ', scaled_SC3PA)
+            # print('it ', scaled_SC3PA)
 
         # generate new df and return
         new_df = pd.DataFrame(

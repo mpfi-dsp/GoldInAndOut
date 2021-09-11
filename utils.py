@@ -54,7 +54,7 @@ def pixels_conversion(data: pd.DataFrame, unit: Unit = Unit.PIXEL, scalar: float
     if df.columns[0] == '':
         df.reset_index(drop=True, inplace=True)
     for col in df:
-        print(df.columns[i])
+        # print(df.columns[i])
         if df.columns[i] not in ignored_cols:
             # print(data[col].head())
             if type(df[col][0]) == tuple:
@@ -71,7 +71,7 @@ def pixels_conversion(data: pd.DataFrame, unit: Unit = Unit.PIXEL, scalar: float
                 else:
                     df[col] = round(df[col].div(scalar), r)
         i += 1
-    print('converted:', df.head())
+    # print('converted:', df.head())
 
     return df
 

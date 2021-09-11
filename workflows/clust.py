@@ -88,7 +88,7 @@ def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coord
     # cv2.imwrite('test.tif', og_img)
     pb.emit(80)
 
-    print('returning ', df, rand_df, clust_details_dfs)
+    # print('returning ', df, rand_df, clust_details_dfs)
     return df, rand_df, clust_details_dfs[0], clust_details_dfs[1]
 
 

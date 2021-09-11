@@ -66,10 +66,10 @@ def run_separation(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_
         hc = AgglomerativeClustering(n_clusters=n_clust, distance_threshold=d_threshold*2, affinity=affinity, linkage=linkage)
         clust = hc.fit_predict(coords)
         # append cluster ids to df
-        print('before conversion')
+        # print('before conversion')
         df = to_df(coords)
         df['cluster_id'] = clust
-        print('after conversion')
+        # print('after conversion')
         # setup random coords
         rand_coordinates = np.array(r_coords)
         rand_coordinates = np.flip(rand_coordinates, 1)
@@ -78,7 +78,7 @@ def run_separation(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_
         # fill random df
         rand_df = pd.DataFrame(rand_coordinates, columns=["X", "Y"])
         rand_df['cluster_id'] = rand_cluster
-        print("generated clusters")
+        # print("generated clusters")
 
         return df, rand_df, minify_list(clust, float(min_size)), minify_list(rand_cluster, float(min_size))
 
@@ -110,12 +110,12 @@ def run_separation(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_
                 # clean up df
                 clean_df[['og_centroid', 'closest_centroid', 'dist']] = pd.DataFrame(
                     [x for x in data['NND'].tolist()])
-                print("generated nnd list")
+                # print("generated nnd list")
             return clean_df
         # find nnd
         cleaned_real_df = distance_to_closest_particle(coordinate_list)
         cleaned_rand_df = distance_to_closest_particle(random_coordinate_list)
-        print("found nnd")
+        # print("found nnd")
         return cleaned_real_df, cleaned_rand_df
 
     logging.info("running nearest neighbor distance between clusters")
@@ -131,7 +131,7 @@ def run_separation(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_
     real_df['cluster_id'] = real_clust_ids
     rand_df['cluster_id'] = rand_clust_ids
     # return dataframes with all elements, dataframe with only centroids and nnd
-    print(real_df.head(), rand_df.head())
+    # print(real_df.head(), rand_df.head())
     return full_real_df, full_rand_df, real_df, rand_df
 
 
