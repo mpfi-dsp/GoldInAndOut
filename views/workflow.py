@@ -476,17 +476,18 @@ class WorkflowPage(QWidget):
                         real_graph_x = list(range(1, (len(set(real_graph_y)))+1))
                         rand_graph_y = np.bincount(np.bincount(self.data.final_rand[wf["graph"]["x_type"]]))[1:]
                         rand_graph_x = list(range(1, (len(set(rand_graph_y)))+1))
-                        # print('rn', real_graph_x, rand_graph_x)
+                        # print('rn', real_graph_x, real_graph_y, rand_graph_x, rand_graph_y)
                         # print('rn', np.arrange(len(real_graph_x)))
+                        if wf['type'] == Workflow.CLUST:
+                            real_graph_x = list(range(1, (len(real_graph_y)+1)))
+                            rand_graph_x = list(range(1, (len(rand_graph_y)+1)))
         
                         if wf['type'] == Workflow.RIPPLER:
                             ax.bar([el - 5 for el in np.array(self.data.final_rand[wf["graph"]["x_type"]])], np.array(self.data.final_rand[wf["graph"]["y_type"]]), width=20, alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()), label='Random')
                             ax.bar([el + 5 for el in np.array(self.data.final_real[wf["graph"]["x_type"]])], np.array(self.data.final_real[wf["graph"]["y_type"]]), width=20, alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.pal_type.currentText()), label='Real')
                         else:
-                            ax.bar([el - 0.2 for el in rand_graph_x], rand_graph_y, 0.4, color=create_color_pal(n_bins=len(
-                                rand_graph_x), palette_type=self.r_pal_type.currentText()), alpha=0.7,  label='Random')
-                            ax.bar([el + 0.2 for el in real_graph_x], real_graph_y, 0.4, color=create_color_pal(n_bins=len(
-                                real_graph_x), palette_type=self.pal_type.currentText()),  alpha=0.7, label='Real')
+                            ax.bar([el - 0.2 for el in rand_graph_x], rand_graph_y, 0.4, color=create_color_pal(n_bins=len(rand_graph_x), palette_type=self.r_pal_type.currentText()), alpha=0.7,  label='Random')
+                            ax.bar([el + 0.2 for el in real_graph_x], real_graph_y, 0.4, color=create_color_pal(n_bins=len(real_graph_x), palette_type=self.pal_type.currentText()),  alpha=0.7, label='Real')
                         ax.set_title(f'{wf["graph"]["title"]} (Real & Random)')
                         ax.legend(loc='upper right')
                         n = rand_graph_x

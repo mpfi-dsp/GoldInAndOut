@@ -32,9 +32,7 @@ class GoldInAndOut(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle(f'GoldInAndOut {VERSION_NUMBER}')
-        current_directory = str(pathlib.Path(__file__).parent.absolute())
-        iconp = current_directory + '/logo.ico'
-        self.setWindowIcon(QIcon(iconp))
+        self.setWindowIcon(QIcon('./logo.png'))
         self.setMinimumSize(QSize(800, 1000))
         logging.info("Booting up...")
         # set max threads
