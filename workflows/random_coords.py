@@ -12,6 +12,7 @@ def gen_random_coordinates(img_path: str, mask_path: str, count: int = 0):
     @count: number of random particles to generate
     """
     def generate_random_points(boundary: list, quantity: int, mask: list):
+        print('bound', boundary)
         # generate faux particles within the pface
         coords = []
         num = 0
@@ -29,7 +30,7 @@ def gen_random_coordinates(img_path: str, mask_path: str, count: int = 0):
     # import img
     img_original = cv2.imread(img_path)
     crop = img_original.shape
-
+    # if no mask provided, use the entire image
     if len(mask_path) > 0:
         img_pface = cv2.imread(mask_path)
     else:
@@ -43,4 +44,5 @@ def gen_random_coordinates(img_path: str, mask_path: str, count: int = 0):
     pface_mask: list = cv2.inRange(img_pface, lower_bound, upper_bound)
     
     logging.info("Generated random particles")
+    print('mask', img_pface, lower_bound, upper_bound)
     return generate_random_points(pface_mask.shape, count, pface_mask)
