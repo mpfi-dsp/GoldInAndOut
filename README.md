@@ -80,5 +80,6 @@ To compile to exe, enter the directory with the `main.py` file and run the follo
 ```
 pyinstaller.exe --onefile --windowed --icon=logo.ico main.py
 ```
+<!-- https://www.pythonguis.com/tutorials/packaging-pyqt5-pyside2-applications-windows-pyinstaller/ -->
 
 The exe file will be found in the `/dist` directory

@@ -12,6 +12,8 @@ from views.logger import Logger
 from views.workflow import WorkflowPage
 # stylesheet
 from styles.stylesheet import styles
+# resources
+import resources
 # pyQT5
 import PyQt5
 from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal, QThread
@@ -20,19 +22,28 @@ from PyQt5.QtWidgets import (QWidget, QListWidget, QStackedWidget, QHBoxLayout, 
                              QMainWindow)
 import pandas._libs.tslibs.base
 # general
-import sys
+from threads import DataLoadWorker
 from functools import partial
 import numexpr
-# from workflows.random_coords import gen_random_coordinates
-from threads import DataLoadWorker
 import pathlib
+import sys
+
+try:
+    # necessary since also targeting Mac/Linux
+    from PyQt5.QtWinExtras import QtWin
+    appId = 'goldinguy.mpfi.goldinandout'
+    QtWin.setCurrentProcessExplicitAppUserModelID(appId)
+except ImportError:
+    pass
+
 
 class GoldInAndOut(QWidget):
     """ PARENT WINDOW INITIALIZATION """
     def __init__(self):
         super().__init__()
         self.setWindowTitle(f'GoldInAndOut {VERSION_NUMBER}')
-        self.setWindowIcon(QIcon('./logo.png'))
+        self.setWindowIcon(QIcon(':/icons/logo.ico'))
+        # self.setWindowIcon(QIcon('./logo.png'))
         self.setMinimumSize(QSize(800, 1000))
         logging.info("Booting up...")
         # set max threads
