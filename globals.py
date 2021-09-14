@@ -166,4 +166,4 @@ PROG_COLOR_2 = QColor(0, 190, 204) # greenish 95, 197, 138) # 61, 217, 245)  # 2
 
 
 """ VERSION NUMBER """
-VERSION_NUMBER: str = '1.0.9'
+VERSION_NUMBER: str = '1.10.0'

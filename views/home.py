@@ -42,6 +42,7 @@ class HomePage(QWidget):
         # img btn
         img_btn = QPushButton('Upload Image', self)
         img_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        img_btn.setToolTip('Image can be in TIF, PNG, JPG, or JPEG format')
         img_btn.clicked.connect(partial(self.open_file_picker, FileType.IMAGE))
         # img input
         self.img_le = QLineEdit()
@@ -51,6 +52,7 @@ class HomePage(QWidget):
         # mask btn
         mask_btn = QPushButton('Upload Mask', self)
         mask_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        mask_btn.setToolTip('Mask must be the color #2596be')
         mask_btn.clicked.connect(partial(self.open_file_picker,  FileType.MASK))
         # mask input
         self.mask_le = QLineEdit()
@@ -60,6 +62,7 @@ class HomePage(QWidget):
         # csv btn
         csv_btn = QPushButton('Upload CSV', self)
         csv_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        csv_btn.setToolTip('Landmark population. CSV must have X and Y columns.')
         csv_btn.clicked.connect(partial(self.open_file_picker, FileType.CSV))
         # csv input
         self.csv_le = QLineEdit()
@@ -69,6 +72,7 @@ class HomePage(QWidget):
         # csv2 btn
         csv2_btn = QPushButton('Upload CSV2', self)
         csv2_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        csv2_btn.setToolTip('Lighthouse population. CSV must have X and Y columns.')
         csv2_btn.clicked.connect(partial(self.open_file_picker, FileType.CSV2))
         # output_dir input
         self.csv2_le = QLineEdit()

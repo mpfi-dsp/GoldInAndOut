@@ -47,6 +47,11 @@ background-color: #00ACB8;
 border-radius :7px;
 }      
 
+QToolTip { 
+    background: #ddd;
+    border: #ddd solid 1px
+}
+
 QPushButton {
 font-size: 16px; 
 font-weight: 600; 

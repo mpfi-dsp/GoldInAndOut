@@ -15,7 +15,7 @@ class Progress(QThread):
         self.prog.emit(count)
 
 
-def create_color_pal(n_bins=10, palette_type="crest"):
+def create_color_pal(n_bins=10, palette_type="mako"):
     """ GENERATE COLOR PALETTE USING SEABORN """
     palette = sns.color_palette(palette_type, n_colors=n_bins)
     color_palette = []

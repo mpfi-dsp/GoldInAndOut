@@ -156,7 +156,7 @@ class WorkflowPage(QWidget):
         r_pal_lb.setOpenExternalLinks(True)
         self.r_pal_type = QComboBox()
         self.r_pal_type.addItems(PALETTE_OPS)
-        self.r_pal_type.setCurrentText('crest')
+        self.r_pal_type.setCurrentText("mako")
         layout.addRow(r_pal_lb, self.r_pal_type)
         # num bins
         bars_lb = QLabel(
@@ -380,7 +380,7 @@ class WorkflowPage(QWidget):
                 print(f'{wf["name"]}: generating visualizations')
                 plt.close('all')
                 graph_df = pd.DataFrame([])
-                cm = plt.cm.get_cmap('crest')
+                cm = plt.cm.get_cmap("mako")
                 fig = plt.figure()
                 canvas = FigureCanvas(fig)
                 ax = fig.add_subplot(111)
