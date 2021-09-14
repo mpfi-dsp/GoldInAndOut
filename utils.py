@@ -67,9 +67,9 @@ def pixels_conversion(data: pd.DataFrame, unit: Unit = Unit.PIXEL, scalar: float
                 df[col] = new_col
             elif len(str(df[col][0])) > 0:
                 if unit == Unit.PIXEL:
-                    # handle scalar to unit^2
+                    # handle scalar to unit^2 for cluster area
                     if df.columns[i] == 'cluster_area':
-                        df[col] = round((df[col] * (scalar * scalar)), r)
+                        df[col] = round((df[col] * (scalar * scalar)), 4)
                     else: 
                         df[col] = round((df[col] * scalar), r)
                 else:
