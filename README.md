@@ -1,10 +1,12 @@
 # GoldInAndOut
 
-🥇🧠🍔 Automated Gold Particle Analysis For Freeze Fracture Replica Electron Microscopy Images
+🔬🥇🧠🍔 Automated Gold Particle Analysis For Freeze Fracture Replica Electron Microscopy Images
 
 Read more about GoldInAndOut in the paper published [here](https://www.youtube.com/watch?v=dQw4w9WgXcQ)!
 
 *Note: The terms analysis `method` and `workflow` are used relatively interchangeably in this readme.*
+
+<img src="https://user-images.githubusercontent.com/47064842/133366931-875c5c01-fd15-4993-a656-0874e7f83b3b.png" width="500px">
 
 ## Design 
 
@@ -16,13 +18,15 @@ In general, programming design choices were made with the goals of creating read
 
 On a broad level, GoldInAndOut was designed to combine numerous analysis workflows and simplify the development process of adding additional methods. The code for GoldInAndOut is split among two parts, graphical interface elements and data science analysis. 
 
-#### Graphical Interface
+### Graphical Interface
 
 All of the graphical interface code is located in the `/views` directory. This includes the primary window interface as well as the powerful built-in image viewer and logger. 
 
 All code for the primary window is contained in two files, `home.py` and `workflow.py`. This allows us to dramatically reduce excess or repeated code by generating different variations of the same core workflow analysis view. The home view lets the user input their desired input and global parameters, and run analysis. This will then populate the navigation sidebar with all selected workflow pages, which the user can toggle between at will for further customization and analysis.
 
-#### Data Science Analysis
+
+
+### Data Science Analysis
 
 All data science analysis workflow files and related functions are contained in the `/workflows` directory. Each file is named after its respective workflow, and contains two functions: one that "runs" the workflow and outputs the resulting data, and one that takes that data and generates output visualizations. These are all run simultaneously using multithreading, speeding up each run of GoldInAndOut. Many of these workflow methods take custom parameters, which are passed from the external thread. They also emit updates to a progress bar at intermittent points throughout their run. 
 
@@ -34,6 +38,8 @@ There are five analysis methods included in the base version of GoldInAndOut:
 - Starfish Nearest Neighbor Distance
 
 To learn more about these workflows, check the [wiki](https://github.com/GoldinGuy/GoldInAndOut/wiki/Workflows)
+
+<img src="https://user-images.githubusercontent.com/47064842/133366862-ea835c80-f0b7-4b95-871b-91efd6194324.png" width="500px">
 
 ## Development
 
@@ -84,7 +90,7 @@ Your file should contain at minimum a "run" method that takes in the real and ra
 
 You should also include a method that takes in this data to create some form of visualization on the image, for example, for nearest neighbor distance a function that draws the coordinates and lines connecting their nearest distances on the image using opencv.
 
-![image](https://user-images.githubusercontent.com/47064842/133363622-485776be-f0a7-4e09-9b6b-79b6546066e0.png)
+<img src="https://user-images.githubusercontent.com/47064842/133363622-485776be-f0a7-4e09-9b6b-79b6546066e0.png" width="500px">
 
 
 3) Add it to globals
@@ -150,6 +156,11 @@ If your workflow requires custom parameters/props, use custom values in the form
         return [self.cstm_props[i].text() if self.cstm_props[i].text() else self.wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
 ```
 
+Graphs will be automically generated based on your input in the globals file. An example is below:
+
+<img src="https://user-images.githubusercontent.com/47064842/133366982-91610e29-51d2-4166-a2f1-94fde45258bf.png" width="500px">
+
+
 If you want to use your custom visualization method, you will also need to add that to the `workflow.py` file under `ADD NEW VISUALIZATIONS HERE` in the same vein by adding an elif statement with your workflow. For example, for the "seperation between clusters" analysis method:
 
 ```python
@@ -162,6 +173,9 @@ If you want to use your custom visualization method, you will also need to add t
         drawn_img = draw_separation(nnd_df=self.data.rand_df1, clust_df=self.data.rand_df2, img=drawn_img,
                                     palette=r_palette, bin_counts=n, circle_c=(18, 156, 232), distance_threshold=vals[0], draw_clust_area=self.draw_clust_area)
 ```
+
+<img src="https://user-images.githubusercontent.com/47064842/133366777-51f3ea03-4c66-4e5a-a18f-b6e62c334588.png" width="500px">
+
 
 ### Testing GoldInAndOut
 
