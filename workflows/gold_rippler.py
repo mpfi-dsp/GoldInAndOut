@@ -82,7 +82,7 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
             step += 1
             # print('find gp')
             for c in coord_list:
-                print(rad, c)
+                # print(rad, c)
                 x, y = int(c[0]), int(c[1])
                 # print('scale_mask', pface_mask.shape, y, x)
                 # print('scale_maskx', scale_mask[y])

@@ -517,7 +517,7 @@ class WorkflowPage(QWidget):
                 # save image
                 # cv2.imwrite(f'{self.img_drop.currentText()}', self.graph)
                 # print(f'{wf["name"]}: saved graph')
-                # TODO: ADD NEW GRAPHS HERE
+                """ ADD NEW VISUALIZATIONS HERE """
                 if wf["type"] == Workflow.NND:
                     # if real coords selected, annotate them on img with lines indicating length
                     if self.gen_real_cb.isChecked():
