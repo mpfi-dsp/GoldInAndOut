@@ -4,7 +4,8 @@ from PyQt5.QtPrintSupport import QPrintDialog, QPrinter
 from PyQt5.QtWidgets import QLabel, QSizePolicy, QScrollArea, QMessageBox, QMainWindow, QMenu, QAction, \
     qApp, QFileDialog, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QToolButton, QLineEdit, QWidget, QVBoxLayout, \
     QHBoxLayout, QFrame, QToolBar, QPushButton
-
+# resources
+import resources
 
 class QPhotoViewer(QGraphicsView):
     photoClicked = pyqtSignal(QPoint)
@@ -94,7 +95,7 @@ class QImageViewer(QMainWindow):
         super(QImageViewer, self).__init__()
 
         self.setWindowTitle("EM Image Viewer")
-        self.setWindowIcon(QIcon('./logo.ico'))
+        self.setWindowIcon(QIcon(':/icons/logo.ico'))
         # self.resize(800, 800)
         self.printer = QPrinter()
 

@@ -1,9 +1,9 @@
 import logging
-
 from PyQt5.QtCore import QSize
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QPlainTextEdit, QDialog, QVBoxLayout
-
+# resources
+import resources
 
 # logging.basicConfig(level=logging.DEBUG, format=' %(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
@@ -24,7 +24,7 @@ class Logger(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle('GoldInAndOut Logger')
-        self.setWindowIcon(QIcon('./logo.ico'))
+        self.setWindowIcon(QIcon(':/icons/logo.ico'))
         self.setMinimumSize(QSize(600, 300))
 
         self.log_text_box = QPlainTextEditLogger(self)
