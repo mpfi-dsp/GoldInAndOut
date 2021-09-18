@@ -128,14 +128,14 @@ class DownloadWorker(QObject):
             # if workflow fills full dfs, output those two
             print('attempting to save dfs')
             if not data.real_df2.empty and not data.rand_df2.empty:
-                data.real_df2 = pixels_conversion(
+                real_df2 = pixels_conversion(
                     data=data.real_df2, unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
-                data.rand_df2 = pixels_conversion(
+                rand_df2 = pixels_conversion(
                     data=data.rand_df2, unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
-                data.real_df2.to_csv(
+                real_df2.to_csv(
                     f'{out_dir}/detailed_real_{wf["name"].lower()}_output_{enum_to_unit(output_ops.output_unit)}.csv', index=False,
                     header=True)
-                data.rand_df2.to_csv(
+                rand_df2.to_csv(
                     f'{out_dir}/detailed_rand_{wf["name"].lower()}_output_{enum_to_unit(output_ops.output_unit)}.csv', index=False,
                     header=True)
             self.finished.emit()
