@@ -237,6 +237,10 @@ class HomePage(QWidget):
         else:
             self.csvs_lb_i.setText(
                 f"(in) 1px=__{self.ip_scalar_type.currentText()}")
+            if self.op_scalar_type.currentText() != "px":
+                self.csvs_lb_o.setHidden(False)
+                self.csvs_ip_o.setHidden(False)
+
     def open_folder_picker(self):
         self.output_dir_le.setText(QFileDialog.getExistingDirectory(self, 'Select Output Folder'))
 

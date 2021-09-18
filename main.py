@@ -2,7 +2,6 @@
 import logging
 import traceback
 import pandas as pd
-
 # from confetti import SuccessGif
 from globals import WORKFLOWS, NAV_ICON, DEFAULT_OUTPUT_DIR, VERSION_NUMBER
 from views.home import HomePage
