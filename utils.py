@@ -70,15 +70,13 @@ def pixels_conversion(data: pd.DataFrame, unit: Unit = Unit.PIXEL, scalar: float
             elif unit == Unit.PIXEL:
                 # handle scalar to unit^2 for cluster area
                 if df.columns[i] == 'cluster_area':
-                    print("SCALAR", scalar)
-                    print('converting ca to microns', df.head(), scalar * scalar, unit, df[col][0], df.columns[i]), 
                     df[col] = round((df[col] * (scalar * scalar)), 4)
                 else: 
                     df[col] = round((df[col] * scalar), r)
             else:
                 df[col] = round(df[col].div(scalar), r)
         i += 1
-    print('converted:', df.head())
+    # print('converted:', df.head())
 
     return df
 
