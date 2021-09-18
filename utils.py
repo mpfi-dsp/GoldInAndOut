@@ -51,7 +51,7 @@ def pixels_conversion(data: pd.DataFrame, unit: Unit = Unit.PIXEL, scalar: float
     ignored_cols = ['cluster_id', 'cluster_size', '%_gp_captured', '%_img_covered', 'LCPI',  'total_gp']
     i = 0
     df = data.copy()
-    if df.columns[0] == '':
+    if df.columns[0] == '' or df.columns[0] == ' ' or df.columns[0] == 'ID' or df.columns[0] == 'id':
         df.reset_index(drop=True, inplace=True)
     # drop empty rows
     df = df.dropna()
@@ -67,15 +67,16 @@ def pixels_conversion(data: pd.DataFrame, unit: Unit = Unit.PIXEL, scalar: float
                     else:
                         new_col.append(tuple([round((x / scalar), r) for x in tup]))
                 df[col] = new_col
-            elif len(str(df[col][0])) > 0:
-                if unit == Unit.PIXEL:
-                    # handle scalar to unit^2 for cluster area
-                    if df.columns[i] == 'cluster_area':
-                        df[col] = round((df[col] * (scalar * scalar)), 4)
-                    else: 
-                        df[col] = round((df[col] * scalar), r)
-                else:
-                    df[col] = round(df[col].div(scalar), r)
+            elif unit == Unit.PIXEL:
+                # handle scalar to unit^2 for cluster area
+                if df.columns[i] == 'cluster_area':
+                    print("SCALAR", scalar)
+                    print('converting ca to microns', df.head(), scalar * scalar, unit, df[col][0], df.columns[i]), 
+                    df[col] = round((df[col] * (scalar * scalar)), 4)
+                else: 
+                    df[col] = round((df[col] * scalar), r)
+            else:
+                df[col] = round(df[col].div(scalar), r)
         i += 1
     print('converted:', df.head())
 
