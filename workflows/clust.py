@@ -26,7 +26,7 @@ def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coord
     @rand_coords: list of randomly generated coordinates
     """
     logging.info("clustering")
-    pb.emit(30)
+    pb.emit(10)
     # handle ugly pyqt5 props
     if n_clusters != "None":
         distance_threshold = None
@@ -41,14 +41,14 @@ def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coord
     df = to_df(real_coords)
     df['cluster_id'] = cluster
     # random coords
-    pb.emit(50)
+    pb.emit(30)
     rand_coordinates = np.array(rand_coords)
     rand_coordinates = np.flip(rand_coordinates, 1)
     rand_cluster = hc.fit_predict(rand_coordinates)
     rand_df = pd.DataFrame(rand_coordinates, columns=["X", "Y"])
     rand_df['cluster_id'] = rand_cluster
 
-    pb.emit(60)
+    pb.emit(50)
     clust_details_dfs = []
     # print('clust_area', clust_area)
     if clust_area:
@@ -57,10 +57,13 @@ def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coord
         lower_bound = np.array([0, 250, 0])
         upper_bound = np.array([40, 255, 40])
         # iterate through clusters and find cluster area
-
+        prog_e = 0
         for data in [df, rand_df]:
             clust_objs = []
-            for _id in set(data['cluster_id']):
+            unique_ids = set(data['cluster_id'])
+            for _id in unique_ids:
+                prog_e += 20 / len(unique_ids)
+                pb.emit(50 + prog_e)
                 count = np.count_nonzero(np.array(data['cluster_id']) == _id)
                 clust_obj = [_id, count, 0]  # id, size, area
                 # create new blank image to perform calculations on
@@ -68,14 +71,21 @@ def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coord
                 new_img.fill(255)
                 # for each coordinate in cluster, draw circle and find countours to determine cluster area
                 for index, row in data[data['cluster_id'] == _id].iterrows():
-                    x, y = int(row['X']), int(row['Y'])
-                    new_img = cv2.circle(new_img, (x, y), radius=distance_threshold, color=(0, 255, 0), thickness=-1)  # thickness =  -1 for filled circle
-                    img_mask = cv2.inRange(new_img, lower_bound, upper_bound)
-                    clust_cnts, clust_hierarchy = cv2.findContours(
-                        img_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[-2:]
-                    for cnt in clust_cnts:
-                        area = cv2.contourArea(cnt)
-                        clust_obj[2] += area
+                    # x, y = int(row['X']), int(row['Y'])
+                    particle = tuple(int(x) for x in [row['X'], row['Y']])
+                    new_img = cv2.circle(new_img, particle, radius=distance_threshold, color=(0, 255, 0), thickness=-1)  # thickness =  -1 for filled circle
+                img_mask = cv2.inRange(new_img, lower_bound, upper_bound)
+                clust_cnts, clust_hierarchy = cv2.findContours(
+                    img_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[-2:]
+
+                # if count > 0:
+                #     cv2.drawContours(new_img, clust_cnts, -1, (0, 255, 0), 3)
+                #     cv2.imwrite('test.tif', new_img)
+
+                for cnt in clust_cnts:
+                    area = cv2.contourArea(cnt)
+                    # print("CTR AREA", area)
+                    clust_obj[2] += area
                 # print(_id, clust_obj[2])
                 clust_objs.append(clust_obj)
 
@@ -86,7 +96,7 @@ def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coord
         emp_df = pd.DataFrame()
         clust_details_dfs = [emp_df, emp_df]
     # cv2.imwrite('test.tif', og_img)
-    pb.emit(80)
+    pb.emit(90)
 
     # print('returning ', df, rand_df, clust_details_dfs)
     return df, rand_df, clust_details_dfs[0], clust_details_dfs[1]
