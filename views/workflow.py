@@ -297,7 +297,7 @@ class WorkflowPage(QWidget):
         return [self.cstm_props[i].text() if self.cstm_props[i].text() else self.wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
 
     def download(self, output_ops: OutputOptions, wf: WorkflowObj):
-        print(f'{wf["name"]}: started downloading, opening thread')
+        logging.info('%s: started downloading, opening thread',  wf['name'])
         self.download_btn.setStyleSheet(
         "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #ddd; color: white; border-radius: 7px; ")
         self.download_btn.setDisabled(True)
@@ -332,7 +332,7 @@ class WorkflowPage(QWidget):
             self.rand_coords = gen_random_coordinates(img_path=self.img_drop.currentText(), mask_path=self.mask_drop.currentText(), count=int(self.n_coord_ip.text()) if self.n_coord_ip.text() else len(coords))
             # obtain custom props
             vals = self.get_custom_values()
-            print(f'{wf["name"]}: running analysis, opening thread')
+            logging.info('%s: running analysis, opening thread', wf['name'])
             # generate thread
             self.thread = QThread()
             self.worker = AnalysisWorker()
@@ -349,7 +349,8 @@ class WorkflowPage(QWidget):
 
     def on_receive_data(self, output_data: DataObj):
         try:
-            print(f'{self.wf["name"]}: finished running analysis, closing thread')
+            logging.info(
+                '%s: finished running analysis, closing thread', self.wf['name'])
             self.data = output_data
             # create ui scheme
             self.create_visuals(wf=self.wf, n_bins=(self.bars_ip.text() if self.bars_ip.text() else 'fd'), output_ops=self.output_ops)
@@ -377,7 +378,8 @@ class WorkflowPage(QWidget):
         # TODO: potentially move some drawing functions to seperate threads? 
         try:
             if self.gen_real_cb.isChecked() or self.gen_rand_cb.isChecked() and len(self.coords) > 0:
-                print(f'{wf["name"]}: generating visualizations')
+                logging.info(
+                    '%s: generating visualizations', wf['name'])
                 plt.close('all')
                 graph_df = pd.DataFrame([])
                 cm = plt.cm.get_cmap("mako")
@@ -387,7 +389,7 @@ class WorkflowPage(QWidget):
                 # fix csv index not matching id
                 self.data.real_df1.sort_values(wf["graph"]["x_type"], inplace=True)
                 self.data.real_df1 = self.data.real_df1.reset_index(drop=True)
-                print('output_ops', output_ops)
+                # logging.info('output_ops', output_ops)
                 self.data.final_real = pixels_conversion(
                     data=self.data.real_df1, unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
                 if wf["graph"]["x_type"] in self.data.rand_df1.columns and len(self.data.rand_df1[wf["graph"]["x_type"]]) > 0:
@@ -440,7 +442,7 @@ class WorkflowPage(QWidget):
                         ax.set_title(f'{wf["graph"]["title"]} (Real)')
                         graph_y = self.data.final_rand[wf["graph"]["y_type"]],
                         graph_x = np.array(self.data.final_real[wf["graph"]["x_type"]])
-                        # print(self.real_df[wf["graph"]["y_type"]], np.array(self.real_df[wf["graph"]["y_type"]]))
+                        # logging.info(self.real_df[wf["graph"]["y_type"]], np.array(self.real_df[wf["graph"]["y_type"]]))
                         if wf['type'] == Workflow.CLUST:
                             graph_y = np.bincount(np.bincount(self.data.final_real[wf["graph"]["x_type"]]))[1:]
                             graph_x = list(range(1, (len(graph_y) + 1)))
@@ -460,10 +462,10 @@ class WorkflowPage(QWidget):
                         n = graph_x
                     if self.gen_real_cb.isChecked() and not self.gen_rand_cb.isChecked() or self.gen_rand_cb.isChecked() and not self.gen_real_cb.isChecked():
                         if wf['type'] == Workflow.RIPPLER:
-                            # print(graph_y[0].values)
+                            # logging.info(graph_y[0].values)
                             ax.bar(graph_x, graph_y[0].values, width=20, color=c)
                         else:
-                            # print('bar', graph_x, graph_y)
+                            # logging.info('bar', graph_x, graph_y)
                             bar_plot = ax.bar(graph_x, graph_y, color=c)
                             for idx, rect in enumerate(bar_plot):
                                 height = rect.get_height()
@@ -476,8 +478,8 @@ class WorkflowPage(QWidget):
                         real_graph_x = list(range(1, (len(set(real_graph_y)))+1))
                         rand_graph_y = np.bincount(np.bincount(self.data.final_rand[wf["graph"]["x_type"]]))[1:]
                         rand_graph_x = list(range(1, (len(set(rand_graph_y)))+1))
-                        # print('rn', real_graph_x, real_graph_y, rand_graph_x, rand_graph_y)
-                        # print('rn', np.arrange(len(real_graph_x)))
+                        # logging.info('rn', real_graph_x, real_graph_y, rand_graph_x, rand_graph_y)
+                        # logging.info('rn', np.arrange(len(real_graph_x)))
                         if wf['type'] == Workflow.CLUST:
                             real_graph_x = list(range(1, (len(real_graph_y)+1)))
                             rand_graph_x = list(range(1, (len(rand_graph_y)+1)))
@@ -496,7 +498,7 @@ class WorkflowPage(QWidget):
                 ax.set_xlabel(f'{wf["graph"]["x_label"]} ({enum_to_unit(output_ops.output_unit)})')
                 ax.set_ylabel(wf["graph"]["y_label"])
                 ax.set_ylim(ymin=0)
-                print(f'{wf["name"]}: generated graphs')
+                logging.info('%s: generated graphs', wf['name'])
                 # generate palette
                 palette = create_color_pal(n_bins=int(len(n)), palette_type=self.pal_type.currentText())
                 r_palette = create_color_pal(n_bins=int(len(n)), palette_type=self.r_pal_type.currentText())
@@ -513,10 +515,10 @@ class WorkflowPage(QWidget):
                 pixmap = QPixmap.fromImage(self.graph)
                 smaller_pixmap = pixmap.scaled(300, 250, Qt.KeepAspectRatio, Qt.FastTransformation)
                 self.graph_frame.setPixmap(smaller_pixmap)
-                print(f'{wf["name"]}: generated graph')
+                logging.info('%s: generated graph', wf['name'])
                 # save image
                 # cv2.imwrite(f'{self.img_drop.currentText()}', self.graph)
-                # print(f'{wf["name"]}: saved graph')
+                # logging.info(f'{wf["name"]}: saved graph')
                 """ ADD NEW VISUALIZATIONS HERE """
                 if wf["type"] == Workflow.NND:
                     # if real coords selected, annotate them on img with lines indicating length
@@ -563,8 +565,8 @@ class WorkflowPage(QWidget):
                 pixmap = QPixmap.fromImage(self.display_img)
                 smaller_pixmap = pixmap.scaled(200, 200, Qt.KeepAspectRatio, Qt.FastTransformation)
                 self.image_frame.setPixmap(smaller_pixmap)
-                print(f'{wf["name"]}: finished generating visuals')
-
+                logging.info('%s: finished generating visuals', wf['name'])
+    
                 self.on_finish_visuals()
         except Exception as e:
             self.error_gif = QMovie("./images/caterror.gif")
@@ -583,6 +585,5 @@ class WorkflowPage(QWidget):
     def handle_except(self, trace="An error occurred"):
         if not self.dlg.isVisible():
             self.dlg.show()
-        print(trace)
         logging.error(trace)
 

@@ -47,7 +47,8 @@ class GoldInAndOut(QWidget):
         logging.info("Booting up...")
         # set max threads
         numexpr.set_num_threads(numexpr.detect_number_of_cores())
-        logging.info("Detecting cores...")
+        logging.info("Detected %s cores...", str(
+            numexpr.detect_number_of_cores()))
         # layout with list on left and stacked widget on right
         layout = QHBoxLayout(self, spacing=0)
         layout.setContentsMargins(0, 0, 0, 0)

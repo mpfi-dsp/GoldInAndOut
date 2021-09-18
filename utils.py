@@ -46,13 +46,15 @@ def figure_to_img(fig):
     return img
 
 
-def pixels_conversion(data: pd.DataFrame, unit: Unit = Unit.PIXEL, scalar: float = 1, r: int =3):
+def pixels_conversion(data: pd.DataFrame, unit: Unit = Unit.PIXEL, scalar: float = 1, r: int = 3):
     """ UPLOAD CSV AND CONVERT DF FROM ONE METRIC UNIT TO ANOTHER """
     ignored_cols = ['cluster_id', 'cluster_size', '%_gp_captured', '%_img_covered', 'LCPI',  'total_gp']
     i = 0
     df = data.copy()
     if df.columns[0] == '':
         df.reset_index(drop=True, inplace=True)
+    # drop empty rows
+    df = df.dropna()
     for col in df:
         # print(df.columns[i])
         if df.columns[i] not in ignored_cols:
@@ -75,7 +77,7 @@ def pixels_conversion(data: pd.DataFrame, unit: Unit = Unit.PIXEL, scalar: float
                 else:
                     df[col] = round(df[col].div(scalar), r)
         i += 1
-    # print('converted:', df.head())
+    print('converted:', df.head())
 
     return df
 

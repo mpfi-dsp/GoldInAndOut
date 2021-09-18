@@ -39,11 +39,9 @@ class DataLoadWorker(QObject):
     
             self.finished.emit([COORDS, ALT_COORDS])
             logging.info("Finished loading in and converting data")
-            print(f'finished loading data')
         except Exception as e:
             self.dlg = Logger()
             self.dlg.show()
-            print(traceback.format_exc())
             logging.error(traceback.format_exc())
             self.finished.emit([])
 
@@ -73,11 +71,10 @@ class AnalysisWorker(QObject):
                     real_coords=coords, rand_coords=rand_coords, alt_coords=alt_coords, pb=self.progress)
             self.output_data = DataObj(real_df1, real_df2, rand_df1, rand_df2)
             self.finished.emit(self.output_data)
-            print(f'finished {wf["name"]} analysis')
+            logging.info('finished %s analysis', wf["name"])
         except Exception as e:
             self.dlg = Logger()
             self.dlg.show()
-            print(traceback.format_exc())
             logging.error(traceback.format_exc())
             self.finished.emit({})
 
@@ -87,7 +84,7 @@ class DownloadWorker(QObject):
 
     def run(self, wf: WorkflowObj, data: DataObj, output_ops: OutputOptions, img: str, display_img: QImage, graph: QImage):
         """ DOWNLOAD FILES """
-        print(output_ops.delete_old, output_ops.output_dir, output_ops.output_scalar, output_ops.output_unit)
+        # logging.info(output_ops.delete_old, output_ops.output_dir, output_ops.output_scalar, output_ops.output_unit)
         try:
             out_start = output_ops.output_dir if output_ops.output_dir is not None else './output'
             # delete old files to make space if applicable
@@ -97,9 +94,9 @@ class DownloadWorker(QObject):
                     oldest_dir = \
                         sorted([os.path.abspath(
                             f'{o_dir}/{f}') for f in os.listdir(o_dir)], key=os.path.getctime)[0]
-                    print("pruning ", oldest_dir)
+                    logging.info("pruning %s", oldest_dir)
                     shutil.rmtree(oldest_dir)
-                print(f'{wf["name"]}: pruned old output')
+                logging.info('%s: pruned old output', wf["name"])
         except Exception as e:
             self.dlg = Logger()
             self.dlg.show()
@@ -108,12 +105,13 @@ class DownloadWorker(QObject):
 
         # download files
         try:
-            print(f'{wf["name"]}: prepare to download output')
+            logging.info(
+                '%s: prepare to download output', wf["name"])
             img_name = os.path.splitext(
                 os.path.basename(img))[0]
             out_dir = f'{out_start}/{wf["name"].lower()}/{img_name}-{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
             os.makedirs(out_dir, exist_ok=True)
-            print('attempting to save cleaned dfs')
+            logging.info('attempting to save cleaned dfs')
             data.final_real.to_csv(f'{out_dir}/real_{wf["name"].lower()}_output_{enum_to_unit(output_ops.output_unit)}.csv',
                                    index=False, header=True)
             data.final_rand.to_csv(f'{out_dir}/rand_{wf["name"].lower()}_output_{enum_to_unit(output_ops.output_unit)}.csv',
@@ -122,11 +120,11 @@ class DownloadWorker(QObject):
                 display_img.save(
                     f'{out_dir}/drawn_{wf["name"].lower()}_img.tif')
             else:
-                print(
+                logging.info(
                     'No display image generated. An error likely occurred when running workflow.')
             graph.save(f'{out_dir}/{wf["name"].lower()}_graph.jpg')
             # if workflow fills full dfs, output those two
-            print('attempting to save dfs')
+            logging.info('attempting to save dfs')
             if not data.real_df2.empty and not data.rand_df2.empty:
                 real_df2 = pixels_conversion(
                     data=data.real_df2, unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
@@ -139,7 +137,7 @@ class DownloadWorker(QObject):
                     f'{out_dir}/detailed_rand_{wf["name"].lower()}_output_{enum_to_unit(output_ops.output_unit)}.csv', index=False,
                     header=True)
             self.finished.emit()
-            print(f'{wf["name"]}: downloaded output, closing thread')
+            logging.info("%s: downloaded output, closing thread", wf["name"])
         except Exception as e:
             self.dlg = Logger()
             self.dlg.show()
