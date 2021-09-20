@@ -440,7 +440,7 @@ class WorkflowPage(QWidget):
                     if self.gen_real_cb.isChecked():
                         c = 1
                         ax.set_title(f'{wf["graph"]["title"]} (Real)')
-                        graph_y = self.data.final_rand[wf["graph"]["y_type"]],
+                        graph_y = self.data.final_real[wf["graph"]["y_type"]],
                         graph_x = np.array(self.data.final_real[wf["graph"]["x_type"]])
                         # logging.info(self.real_df[wf["graph"]["y_type"]], np.array(self.real_df[wf["graph"]["y_type"]]))
                         if wf['type'] == Workflow.CLUST:
