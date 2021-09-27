@@ -21,7 +21,7 @@ COLORS = [(128, 0, 0),
 
 def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]], img_path: str, mask_path: str, pb: pyqtSignal, max_steps: int = 10, step_size: int = 60):
     """
-    GOLD RIPPLER (SC3PA)
+    GOLD RIPPLER (LCPI)
     _______________________________
     @real_coords: centroids coordinates scaled to whatever format desired
     @rand_coords: random centroids coordinates scaled to whatever format desired
@@ -31,9 +31,8 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
     @pb: progress bar wrapper element, allows us to track how much time is left in process
     @max_steps: maximum number of
     """
-    logging.info("running gold rippler (SC3PA)")
-    # print("running gold rippler (SC3PA)")
-    # find Spine Correlated Particles Per P-face Area (SC3PA)
+    logging.info("running gold rippler (LCPI)")
+    # find LCPI (Landmark correlated particle intensity)
     img_og = cv2.imread(img_path)
     img_pface = cv2.imread(mask_path)
     # print("load imgs and find pface area")

@@ -36,7 +36,22 @@ def gen_random_coordinates(img_path: str, mask_path: str, count: int = 0):
     else:
         img_pface = np.zeros(crop, dtype=np.uint8)
         img_pface.fill(245)
+    # crop to size of normal image
     img_pface = img_pface[:crop[0], :crop[1], :3]
+    # convert to grayscale
+    img_pface = cv2.cvtColor(img_pface, cv2.COLOR_BGR2GRAY)
+    cv2.imwrite('pface_contours1.png', img_pface)
+    # convert to binary
+    ret, binary = cv2.threshold(img_pface, 100, 255, cv2.THRESH_OTSU)
+    cv2.imwrite('pface_contours2.png', binary)
+    # invert
+    # img_pface = ~img_pface
+    # cv2.imwrite('pface_contours3.png', img_pface)
+    # get the boundary of the p-face
+    contours, hierarchy = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    with_contours = cv2.drawContours(
+        img_original, contours, -1, (255, 0, 255), 3)
+    cv2.imwrite('pface_contours4.png', with_contours)
 
     # grab contours of pface
     lower_bound = np.array([239, 174, 0])
