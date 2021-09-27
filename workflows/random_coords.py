@@ -39,24 +39,33 @@ def gen_random_coordinates(img_path: str, mask_path: str, count: int = 0):
     # crop to size of normal image
     img_pface = img_pface[:crop[0], :crop[1], :3]
     # convert to grayscale
-    img_pface = cv2.cvtColor(img_pface, cv2.COLOR_BGR2GRAY)
-    cv2.imwrite('pface_contours1.png', img_pface)
-    # convert to binary
-    ret, binary = cv2.threshold(img_pface, 100, 255, cv2.THRESH_OTSU)
-    cv2.imwrite('pface_contours2.png', binary)
-    # invert
-    # img_pface = ~img_pface
-    # cv2.imwrite('pface_contours3.png', img_pface)
-    # get the boundary of the p-face
-    contours, hierarchy = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    with_contours = cv2.drawContours(
-        img_original, contours, -1, (255, 0, 255), 3)
-    cv2.imwrite('pface_contours4.png', with_contours)
+    img_pface2 = cv2.cvtColor(img_pface, cv2.COLOR_BGR2GRAY)
+    # print(img_pface2.shape, img_pface2)
+    # # cv2.imwrite('pface_contours1.png', img_pface)
+    # # convert to binary
+    ret, binary = cv2.threshold(img_pface2, 100, 255, cv2.THRESH_OTSU)
+    # print('converted to binary')
+    # print(binary.shape, binary)
+    # cv2.imwrite('pface_contours2.png', binary)
+    # get border of pface mask
+    # contours, hierarchy = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    # with_contours = cv2.drawContours(
+    #     img_original, contours, -1, (255, 0, 255), 3)
+    # cv2.imwrite('pface_contours4.png', with_contours)
+    # print('converted to mask')
 
-    # grab contours of pface
-    lower_bound = np.array([239, 174, 0])
-    upper_bound = np.array([254, 254, 254])
-    pface_mask: list = cv2.inRange(img_pface, lower_bound, upper_bound)
+    # hsv = cv2.cvtColor(img_pface, cv2.COLOR_BGR2HSV)
+    # lower_bound = np.array([0, 0, 0])
+    # upper_bound = np.array([179, 100, 130])
+    # pface_mask: list = cv2.inRange(hsv, lower_bound, upper_bound)
+    # print('converted to mask 2')
+    pface_mask = ~binary
+
+    # # grab contours of pface
+    # lower_bound = np.array([239, 174, 0])
+    # upper_bound = np.array([254, 254, 254])
+    # pface_mask: list = cv2.inRange(img_pface, lower_bound, upper_bound)
+    # print(pface_mask.shape, pface_mask)
     
     logging.info("Generated random particles")
     # print('mask', img_pface, lower_bound, upper_bound)
