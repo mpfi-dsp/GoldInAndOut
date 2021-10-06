@@ -49,7 +49,7 @@ def figure_to_img(fig):
 def pixels_conversion(data: pd.DataFrame, unit: Unit = Unit.PIXEL, scalar: float = 1, r: int = 3):
     """ UPLOAD CSV AND CONVERT DF FROM ONE METRIC UNIT TO ANOTHER """
     ignored_cols = ['cluster_id', 'cluster_size', '%_gp_captured',
-                    '%_img_covered', 'LCPI', 'radius', 'total_gp']
+                    '%_img_covered', 'LCPI', 'total_gp']  # 'radius',
     i = 0
     df = data.copy()
     if df.columns[0] == '' or df.columns[0] == ' ' or df.columns[0] == 'ID' or df.columns[0] == 'id':

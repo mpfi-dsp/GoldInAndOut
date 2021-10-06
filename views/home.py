@@ -52,7 +52,7 @@ class HomePage(QWidget):
         # mask btn
         mask_btn = QPushButton('Upload Mask', self)
         mask_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        mask_btn.setToolTip('Mask must be the color #2596be')
+        mask_btn.setToolTip('Mask can be any color with white background')
         mask_btn.clicked.connect(partial(self.open_file_picker,  FileType.MASK))
         # mask input
         self.mask_le = QLineEdit()
@@ -62,7 +62,7 @@ class HomePage(QWidget):
         # csv btn
         csv_btn = QPushButton('Upload CSV', self)
         csv_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        csv_btn.setToolTip('Landmark population. CSV must have X and Y columns.')
+        csv_btn.setToolTip('Particle population. CSV must have X and Y columns.')
         csv_btn.clicked.connect(partial(self.open_file_picker, FileType.CSV))
         # csv input
         self.csv_le = QLineEdit()
@@ -72,7 +72,7 @@ class HomePage(QWidget):
         # csv2 btn
         csv2_btn = QPushButton('Upload CSV2', self)
         csv2_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        csv2_btn.setToolTip('Lighthouse population. CSV must have X and Y columns.')
+        csv2_btn.setToolTip('Landmark population. CSV must have X and Y columns.')
         csv2_btn.clicked.connect(partial(self.open_file_picker, FileType.CSV2))
         # output_dir input
         self.csv2_le = QLineEdit()
@@ -155,7 +155,6 @@ class HomePage(QWidget):
         # global props
         glob_props = QHBoxLayout()
         for glob in [ip_scalr_lb, self.ip_scalar_type, op_scalr_lb, self.op_scalar_type, self.csvs_lb_i, self.csvs_ip_i, self.csvs_lb_o, self.csvs_ip_o]:
-        # for glob in [op_scalr_lb, self.op_scalar_type, csvs_lb, self.csvs_ip]:
             glob_props.addWidget(glob)
         layout.addRow(glob_props)
         # spacer

@@ -35,12 +35,12 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
     # find LCPI (Landmark correlated particle intensity)
     img_og = cv2.imread(img_path)
     img_pface = cv2.imread(mask_path)
-    # print("load imgs and find pface area")
-    # print(len(real_coords), len(alt_coords))
-    # print("load imgs and find pface area")
-    lower_bound = np.array([239, 174, 0])
-    upper_bound = np.array([254, 254, 254])
-    pface_mask = cv2.inRange(img_pface, lower_bound, upper_bound)
+    # convert to grayscale
+    img_pface2 = cv2.cvtColor(img_pface, cv2.COLOR_BGR2GRAY)
+    # convert to binary
+    ret, binary = cv2.threshold(img_pface2, 100, 255, cv2.THRESH_OTSU)
+    pface_mask = ~binary
+
     # find pface area
     pface_cnts, pface_hierarchy = cv2.findContours(
         pface_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[-2:]
@@ -57,15 +57,13 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
 
     difference = (pface_area_tree - pface_area_external)
     pface_area = pface_area_external - difference
-    # print('Area', pface_area)
-    # perm_scale_mask = np.zeros((img_size[0], img_size[1], 3), np.uint8)
     original_copy = img_og.copy()
     pb.emit(30)
 
     step = 0
     rippler_out = []
     for coord_list in [real_coords, rand_coords]:
-        LCPI, radius, gp_captured, img_covered, total_gp = [], [], [], [], []
+        LCPI, radius, gp_captured, img_covered, total_gp = [[] for _ in range(5)]
         rad = 100
         max = (int(max_steps) * int(step_size)) + rad
         while rad <= max:
@@ -157,10 +155,11 @@ def draw_rippler(coords: List[Tuple[float, float]], alt_coords: List[Tuple[float
     max = (int(max_steps) * int(step_size)) + rad
     pal = create_color_pal(n_bins=11, palette_type=palette)
     img_pface = cv2.imread(mask_path)
-    # print("load imgs and find pface area")
-    lower_bound = np.array([239, 174, 0])
-    upper_bound = np.array([254, 254, 254])
-    pface_mask = cv2.inRange(img_pface, lower_bound, upper_bound)
+    # convert to grayscale
+    img_pface2 = cv2.cvtColor(img_pface, cv2.COLOR_BGR2GRAY)
+    # convert to binary
+    ret, binary = cv2.threshold(img_pface2, 100, 255, cv2.THRESH_OTSU)
+    pface_mask = ~binary
     while rad <= max:
         color_step = step % 11
         scale_mask = np.zeros(pface_mask.shape, np.uint8)
@@ -171,18 +170,16 @@ def draw_rippler(coords: List[Tuple[float, float]], alt_coords: List[Tuple[float
             cv2.circle(output_img, (y, x), rad, sea_to_rgb(pal[color_step]), 5)
         for c in coords:
             x, y = int(c[0]), int(c[1])
-            # cv2.circle(scale_mask, (y, x), rad, 255, -1)
-            # cv2.circle(output_img, (y, x), rad, sea_to_rgb(pal[color_step]), 5)
             if rad == max:
                 if scale_mask[x, y] != 0:
-                    #  orange particles
+                    #  orange particles: inside ripple
                     cv2.circle(output_img, (y, x), 8, circle_c, -1)
                 else:
-                    #  pink particles
+                    #  pink particles: outside ripple
                     cv2.circle(output_img, (y, x), 8, (255, 0, 255), -1)
             else:
                 if scale_mask[x, y] != 0:
-                    #  orange particles
+                    #  orange particles: inside ripple
                     cv2.circle(output_img, (y, x), 8, circle_c, -1)
         rad += int(step_size)
         step += 1

@@ -453,7 +453,7 @@ class WorkflowPage(QWidget):
                         ax.set_title(f'{wf["graph"]["title"]} (Random)')
                         c = 1
                         graph_y = self.data.final_rand[wf["graph"]["y_type"]],
-                        graph_x = np.array(self.data.final_real[wf["graph"]["x_type"]])
+                        graph_x = np.array(self.data.final_rand[wf["graph"]["x_type"]])
                         if wf['type'] == Workflow.CLUST:
                             graph_y = np.bincount(np.bincount(self.data.final_rand[wf["graph"]["x_type"]]))[1:]
                             graph_x = list(range(1, (len(graph_y)+1)))
@@ -463,7 +463,11 @@ class WorkflowPage(QWidget):
                     if self.gen_real_cb.isChecked() and not self.gen_rand_cb.isChecked() or self.gen_rand_cb.isChecked() and not self.gen_real_cb.isChecked():
                         if wf['type'] == Workflow.RIPPLER:
                             # logging.info(graph_y[0].values)
-                            ax.bar(graph_x, graph_y[0].values, width=20, color=c)
+                            # print('x', graph_x)
+                            # print('y', graph_y[0].values)
+                            ax.bar(graph_x, graph_y[0].values, width=(max(graph_x)/(len(graph_x) + 2)), color=c)
+                            # ax.set_xlim(xmin=min(graph_x))
+                            # ax.bar(graph_x, graph_y[0].values, width=20, color=c)
                         else:
                             # logging.info('bar', graph_x, graph_y)
                             bar_plot = ax.bar(graph_x, graph_y, color=c)
@@ -480,13 +484,19 @@ class WorkflowPage(QWidget):
                         rand_graph_x = list(range(1, (len(set(rand_graph_y)))+1))
                         # logging.info('rn', real_graph_x, real_graph_y, rand_graph_x, rand_graph_y)
                         # logging.info('rn', np.arrange(len(real_graph_x)))
+
                         if wf['type'] == Workflow.CLUST:
                             real_graph_x = list(range(1, (len(real_graph_y)+1)))
                             rand_graph_x = list(range(1, (len(rand_graph_y)+1)))
         
                         if wf['type'] == Workflow.RIPPLER:
-                            ax.bar([el - 5 for el in np.array(self.data.final_rand[wf["graph"]["x_type"]])], np.array(self.data.final_rand[wf["graph"]["y_type"]]), width=20, alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()), label='Random')
-                            ax.bar([el + 5 for el in np.array(self.data.final_real[wf["graph"]["x_type"]])], np.array(self.data.final_real[wf["graph"]["y_type"]]), width=20, alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.pal_type.currentText()), label='Real')
+                            ax.set_xlim(xmin=0)
+                            rand_x = np.array(self.data.final_rand[wf["graph"]["x_type"]])
+                            shift_rand_x = (max(rand_x)/(len(rand_x) + 2)) / 4
+                            ax.bar([el - shift_rand_x for el in rand_x], np.array(self.data.final_rand[wf["graph"]["y_type"]]), width=(max(rand_x)/(len(rand_x) + 2)),  alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()), label='Random')
+                            real_x = np.array(self.data.final_real[wf["graph"]["x_type"]])
+                            shift_real_x = (max(real_x)/(len(real_x) + 2)) / 4
+                            ax.bar([el + shift_real_x for el in real_x], np.array(self.data.final_real[wf["graph"]["y_type"]]), width=(max(real_x)/(len(real_x) + 2)),  alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.pal_type.currentText()), label='Real')
                         else:
                             ax.bar([el - 0.2 for el in rand_graph_x], rand_graph_y, 0.4, color=create_color_pal(n_bins=len(rand_graph_x), palette_type=self.r_pal_type.currentText()), alpha=0.7,  label='Random')
                             ax.bar([el + 0.2 for el in real_graph_x], real_graph_y, 0.4, color=create_color_pal(n_bins=len(real_graph_x), palette_type=self.pal_type.currentText()),  alpha=0.7, label='Real')

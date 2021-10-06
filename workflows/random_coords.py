@@ -40,25 +40,8 @@ def gen_random_coordinates(img_path: str, mask_path: str, count: int = 0):
     img_pface = img_pface[:crop[0], :crop[1], :3]
     # convert to grayscale
     img_pface2 = cv2.cvtColor(img_pface, cv2.COLOR_BGR2GRAY)
-    # print(img_pface2.shape, img_pface2)
-    # # cv2.imwrite('pface_contours1.png', img_pface)
     # # convert to binary
     ret, binary = cv2.threshold(img_pface2, 100, 255, cv2.THRESH_OTSU)
-    # print('converted to binary')
-    # print(binary.shape, binary)
-    # cv2.imwrite('pface_contours2.png', binary)
-    # get border of pface mask
-    # contours, hierarchy = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    # with_contours = cv2.drawContours(
-    #     img_original, contours, -1, (255, 0, 255), 3)
-    # cv2.imwrite('pface_contours4.png', with_contours)
-    # print('converted to mask')
-
-    # hsv = cv2.cvtColor(img_pface, cv2.COLOR_BGR2HSV)
-    # lower_bound = np.array([0, 0, 0])
-    # upper_bound = np.array([179, 100, 130])
-    # pface_mask: list = cv2.inRange(hsv, lower_bound, upper_bound)
-    # print('converted to mask 2')
     pface_mask = ~binary
 
     # # grab contours of pface
