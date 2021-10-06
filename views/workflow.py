@@ -478,31 +478,33 @@ class WorkflowPage(QWidget):
                                         ha='center', va='bottom', rotation=0)
 
                     elif self.gen_real_cb.isChecked() and self.gen_rand_cb.isChecked():
-                        real_graph_y = np.bincount(np.bincount(self.data.final_real[wf["graph"]["x_type"]]))[1:]
-                        real_graph_x = list(range(1, (len(set(real_graph_y)))+1))
-                        rand_graph_y = np.bincount(np.bincount(self.data.final_rand[wf["graph"]["x_type"]]))[1:]
-                        rand_graph_x = list(range(1, (len(set(rand_graph_y)))+1))
-                        # logging.info('rn', real_graph_x, real_graph_y, rand_graph_x, rand_graph_y)
-                        # logging.info('rn', np.arrange(len(real_graph_x)))
+                        if wf['type'] != Workflow.RIPPLER:
+                            real_graph_y = np.bincount(np.bincount(self.data.final_real[wf["graph"]["x_type"]]))[1:]
+                            real_graph_x = list(range(1, (len(set(real_graph_y)))+1))
+                            rand_graph_y = np.bincount(np.bincount(self.data.final_rand[wf["graph"]["x_type"]]))[1:]
+                            rand_graph_x = list(range(1, (len(set(rand_graph_y)))+1))
+                            # logging.info('rn', real_graph_x, real_graph_y, rand_graph_x, rand_graph_y)
+                            # logging.info('rn', np.arrange(len(real_graph_x)))
 
                         if wf['type'] == Workflow.CLUST:
                             real_graph_x = list(range(1, (len(real_graph_y)+1)))
                             rand_graph_x = list(range(1, (len(rand_graph_y)+1)))
         
                         if wf['type'] == Workflow.RIPPLER:
-                            ax.set_xlim(xmin=0)
                             rand_x = np.array(self.data.final_rand[wf["graph"]["x_type"]])
-                            shift_rand_x = (max(rand_x)/(len(rand_x) + 2)) / 4
+                            shift_rand_x = (max(rand_x)/(len(rand_x) + 2))/4
                             ax.bar([el - shift_rand_x for el in rand_x], np.array(self.data.final_rand[wf["graph"]["y_type"]]), width=(max(rand_x)/(len(rand_x) + 2)),  alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()), label='Random')
                             real_x = np.array(self.data.final_real[wf["graph"]["x_type"]])
                             shift_real_x = (max(real_x)/(len(real_x) + 2)) / 4
                             ax.bar([el + shift_real_x for el in real_x], np.array(self.data.final_real[wf["graph"]["y_type"]]), width=(max(real_x)/(len(real_x) + 2)),  alpha=0.7, color=create_color_pal(n_bins=1, palette_type=self.pal_type.currentText()), label='Real')
+                            ax.set_xlim(xmin=0, xmax=max(rand_x) * 1.3)
+                            n = rand_x
                         else:
                             ax.bar([el - 0.2 for el in rand_graph_x], rand_graph_y, 0.4, color=create_color_pal(n_bins=len(rand_graph_x), palette_type=self.r_pal_type.currentText()), alpha=0.7,  label='Random')
                             ax.bar([el + 0.2 for el in real_graph_x], real_graph_y, 0.4, color=create_color_pal(n_bins=len(real_graph_x), palette_type=self.pal_type.currentText()),  alpha=0.7, label='Real')
+                            n = rand_graph_x
                         ax.set_title(f'{wf["graph"]["title"]} (Real & Random)')
                         ax.legend(loc='upper right')
-                        n = rand_graph_x
 
                         # label graph
                 ax.set_xlabel(f'{wf["graph"]["x_label"]} ({enum_to_unit(output_ops.output_unit)})')
