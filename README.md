@@ -35,7 +35,7 @@ There are five analysis methods included in the base version of GoldInAndOut:
 - Hierarchical Clustering
 - Separation Between Clusters
 - Gold Rippler: Landmark-particle Analysis
-- Starfish Nearest Neighbor Distance
+- Gold Star Nearest Neighbor Distance
 
 To learn more about these workflows, check the [wiki](https://github.com/GoldinGuy/GoldInAndOut/wiki/Workflows)
 

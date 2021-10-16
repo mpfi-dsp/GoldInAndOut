@@ -12,7 +12,7 @@ from typing import List, Tuple
 from workflows.clust import run_clust
 from workflows.gold_rippler import run_rippler
 from workflows.separation import run_separation
-from workflows.starfish import run_starfish
+from workflows.goldstar import run_goldstar
 from workflows.nnd import run_nnd
 from workflows.random_coords import gen_random_coordinates
 import numpy as np
@@ -66,8 +66,8 @@ class AnalysisWorker(QObject):
             elif wf['type'] == Workflow.RIPPLER:
                 real_df1, rand_df1 = run_rippler(real_coords=coords, alt_coords=alt_coords, rand_coords=rand_coords, pb=self.progress,
                                                  img_path=img_path, mask_path=mask_path, max_steps=vals[0], step_size=vals[1])
-            elif wf['type'] == Workflow.STARFISH:
-                real_df1, rand_df1 = run_starfish(
+            elif wf['type'] == Workflow.GOLDSTAR:
+                real_df1, rand_df1 = run_goldstar(
                     real_coords=coords, rand_coords=rand_coords, alt_coords=alt_coords, pb=self.progress)
             self.output_data = DataObj(real_df1, real_df2, rand_df1, rand_df2)
             self.finished.emit(self.output_data)

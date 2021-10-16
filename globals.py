@@ -118,14 +118,14 @@ WORKFLOWS: List[WorkflowObj] = [
         ]
     },
     {
-        "name": "STARFISH",
-        "type": Workflow.STARFISH,
-        "header": "Starfish Nearest Neighbor Distance",
+        "name": "Gold Star",
+        "type": Workflow.GOLDSTAR,
+        "header": "Gold Star Nearest Neighbor Distance",
         "desc": "Find the nearest neighbor distance of two different populations. Requires lighthouse population.",
         "checked": False,
         "graph": {
             "type": "hist",
-            "title": "Starfish NND",
+            "title": "Gold Star NND",
             "x_label": "Distance",
             "y_label": "Number of Particles",
             "x_type": "dist"

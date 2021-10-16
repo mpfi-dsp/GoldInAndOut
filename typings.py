@@ -8,7 +8,7 @@ class Workflow(Enum):
     CLUST = 2
     SEPARATION = 3
     RIPPLER = 4
-    STARFISH = 5
+    GOLDSTAR = 5
     # CLUST_AREA = 6
 
 

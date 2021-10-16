@@ -30,7 +30,7 @@ from workflows.random_coords import gen_random_coordinates
 from workflows.clust import draw_clust
 from workflows.gold_rippler import draw_rippler
 from workflows.separation import draw_separation
-from workflows.starfish import draw_starfish
+from workflows.goldstar import draw_goldstar
 from workflows.nnd import draw_length
 
 class WorkflowPage(QWidget):
@@ -560,13 +560,13 @@ class WorkflowPage(QWidget):
                         drawn_img = draw_rippler(coords=self.coords, alt_coords=self.alt_coords, mask_path=self.mask_drop.currentText(), img=drawn_img, palette=palette, circle_c=(18, 156, 232), max_steps=vals[0], step_size=vals[1])
                     if self.gen_rand_cb.isChecked():
                         drawn_img = draw_rippler(coords=self.rand_coords, alt_coords=self.alt_coords, mask_path=self.mask_drop.currentText(), img=drawn_img, palette=r_palette, circle_c=(103, 114, 0), max_steps=vals[0], step_size=vals[1])
-                elif wf["type"] == Workflow.STARFISH:
+                elif wf["type"] == Workflow.GOLDSTAR:
                     # if real coords selected, annotate them on img with lines indicating length
                     if self.gen_real_cb.isChecked():
-                        drawn_img = draw_starfish(nnd_df=self.data.real_df1, bin_counts=n, img=drawn_img, palette=palette, circle_c=(103, 114, 0))
+                        drawn_img = draw_goldstar(nnd_df=self.data.real_df1, bin_counts=n, img=drawn_img, palette=palette, circle_c=(103, 114, 0))
                     # if rand coords selected, annotate them on img with lines indicating length
                     if self.gen_rand_cb.isChecked():
-                        drawn_img = draw_starfish(nnd_df=self.data.rand_df1, bin_counts=n, img=drawn_img, palette=r_palette, circle_c=(18, 156, 232))
+                        drawn_img = draw_goldstar(nnd_df=self.data.rand_df1, bin_counts=n, img=drawn_img, palette=r_palette, circle_c=(18, 156, 232))
                 # end graph display, set display img to annotated image
                 # https://stackoverflow.com/questions/33741920/convert-opencv-3-iplimage-to-pyqt5-qimage-qpixmap-in-python
                 height, width, bytesPerComponent = drawn_img.shape
