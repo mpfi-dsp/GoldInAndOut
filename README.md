@@ -39,7 +39,7 @@ There are five analysis methods included in the base version of GoldInAndOut:
 
 To learn more about these workflows, check the [wiki](https://github.com/GoldinGuy/GoldInAndOut/wiki/Workflows)
 
-<img src="https://user-images.githubusercontent.com/47064842/133366862-ea835c80-f0b7-4b95-871b-91efd6194324.png" width="500px">
+<img src="https://user-images.githubusercontent.com/47064842/137605418-3488526a-4b83-485a-a527-0162538c47e1.png" width="500px">
 
 ## Development
 
@@ -174,7 +174,7 @@ If you want to use your custom visualization method, you will also need to add t
                                     palette=r_palette, bin_counts=n, circle_c=(18, 156, 232), distance_threshold=vals[0], draw_clust_area=self.draw_clust_area)
 ```
 
-<img src="https://user-images.githubusercontent.com/47064842/133366777-51f3ea03-4c66-4e5a-a18f-b6e62c334588.png" width="500px">
+<img src="https://user-images.githubusercontent.com/47064842/137605445-66f459d0-90c4-4acb-b569-05f8ce1db838.png" width="500px">
 
 
 ### Testing GoldInAndOut

@@ -140,7 +140,10 @@ def draw_separation(nnd_df, clust_df, img, bin_counts, palette="rocket_r", circl
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
-        
+
+    if distance_threshold != 27 and draw_clust_area:
+        distance_threshold = int(distance_threshold)
+
     if draw_clust_area:
         new_img = np.zeros(img.shape, dtype=np.uint8)
         new_img.fill(255)
