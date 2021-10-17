@@ -107,6 +107,10 @@ def draw_clust(clust_df: pd.DataFrame, img: QImage , palette: str ="rocket_r", d
         color = [val * 255 for val in color]
         return color
 
+    if draw_clust_area:
+        new_img = np.zeros(img.shape, dtype=np.uint8)
+        new_img.fill(255)
+
     if distance_threshold != 27 and draw_clust_area:
         distance_threshold = int(distance_threshold)
     # make color pal
@@ -118,8 +122,15 @@ def draw_clust(clust_df: pd.DataFrame, img: QImage , palette: str ="rocket_r", d
         # TODO: remove int from this next line if able to stop from converting to float
         img = cv2.circle(img, particle, 10, sea_to_rgb(palette[int(clust_df['cluster_id'][idx])]), -1)
         if draw_clust_area:
-            img = cv2.circle(img, particle, radius=distance_threshold, color=(0, 255, 0))
+            new_img = cv2.circle(new_img, particle, radius=distance_threshold, color=(0, 255, 0), thickness=-1)
             # find centroids in df w/ clusters
+
+    if draw_clust_area:
+        lower_bound = np.array([0, 250, 0])
+        upper_bound = np.array([40, 255, 40])
+        clust_mask = cv2.inRange(new_img, lower_bound, upper_bound)
+        clust_cnts, clust_hierarchy = cv2.findContours(clust_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[-2:]
+        img = cv2.drawContours(img, clust_cnts, -1, (0, 255, 0), 3)
 
     def draw_clust_id_at_centroids(image, cl_df):
         for c_id in set(cl_df['cluster_id']):

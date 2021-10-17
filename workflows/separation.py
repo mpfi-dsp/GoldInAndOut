@@ -140,15 +140,26 @@ def draw_separation(nnd_df, clust_df, img, bin_counts, palette="rocket_r", circl
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
+        
+    if draw_clust_area:
+        new_img = np.zeros(img.shape, dtype=np.uint8)
+        new_img.fill(255)
     # draw clusters
     cl_palette = create_color_pal(n_bins=len(set(clust_df['cluster_id'])), palette_type=palette)
     for idx, entry in clust_df.iterrows():
         particle = tuple(int(x) for x in [entry['X'], entry['Y']])
         img = cv2.circle(img, particle, 10, sea_to_rgb(cl_palette[int(clust_df['cluster_id'][idx])]), -1)
         if draw_clust_area:
-            img = cv2.circle(img, particle, radius=int(distance_threshold), color=(0, 255, 0))
+            new_img = cv2.circle(new_img, particle, radius=distance_threshold, color=(0, 255, 0), thickness=-1)
         # cv2.putText(img, str(clust_df['cluster_id'][idx]), org=particle, fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255, 255, 255), fontScale=1)
     # draw nnd
+    if draw_clust_area:
+        lower_bound = np.array([0, 250, 0])
+        upper_bound = np.array([40, 255, 40])
+        clust_mask = cv2.inRange(new_img, lower_bound, upper_bound)
+        clust_cnts, clust_hierarchy = cv2.findContours(clust_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[-2:]
+        img = cv2.drawContours(img, clust_cnts, -1, (0, 255, 0), 3)
+
     count, bin_idx = 0, 0
     for idx, entry in nnd_df.iterrows():
         count += 1
