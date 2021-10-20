@@ -4,7 +4,7 @@ from typing import List
 
 
 """ VERSION NUMBER """
-VERSION_NUMBER: str = '1.14.0'
+VERSION_NUMBER: str = '1.15.0'
 
 """
 WORKFLOW METADATA 
@@ -142,8 +142,8 @@ WORKFLOWS: List[WorkflowObj] = [
 PALETTE_OPS: List[str] = ["rocket", "crest", "mako", "flare", "viridis", "magma", "cubehelix", "rocket_r", "mako_r", "crest_r",
  "flare_r", "viridis_r", "magma_r", ]
 
-REAL_COLOR: QColor = QColor(62, 193, 213)
-RAND_COLOR: QColor = QColor(212, 118, 41)
+REAL_COLOR = (212, 118, 41)
+RAND_COLOR = (62, 193, 213)
 
 """ METRIC UNIT OPTIONS """
 UNIT_OPS: List[str] = ['px', 'nm', 'μm', 'metric']

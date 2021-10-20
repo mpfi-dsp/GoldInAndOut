@@ -5,7 +5,7 @@ import numpy as np
 import cv2
 from utils import create_color_pal, to_df
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QImage
+from PyQt5.QtGui import QImage, QColor
 from typing import List, Tuple
 from globals import REAL_COLOR
 
@@ -103,7 +103,7 @@ def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coord
     return df, rand_df, clust_details_dfs[0], clust_details_dfs[1]
 
 
-def draw_clust(clust_df: pd.DataFrame, img: QImage, palette: str = "rocket_r", distance_threshold: int = 27, draw_clust_area: bool = False, clust_area_color: QColor = REAL_COLOR):
+def draw_clust(clust_df: pd.DataFrame, img: QImage, palette: str = "rocket_r", distance_threshold: int = 27, draw_clust_area: bool = False, clust_area_color: Tuple[int, int, int] = REAL_COLOR):
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color

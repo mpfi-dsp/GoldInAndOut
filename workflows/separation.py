@@ -6,6 +6,7 @@ import numpy as np
 from utils import create_color_pal, to_df
 from collections import Counter
 from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtGui import QColor
 from typing import List, Tuple
 import math
 import cv2
@@ -136,7 +137,7 @@ def run_separation(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_
     return full_real_df, full_rand_df, real_df, rand_df
 
 
-def draw_separation(nnd_df, clust_df, img, bin_counts, palette="rocket_r", circle_c=(0, 0, 255), distance_threshold: int = 34, draw_clust_area: bool = False, clust_area_color: QColor = REAL_COLOR):
+def draw_separation(nnd_df, clust_df, img, bin_counts, palette="rocket_r", circle_c=(0, 0, 255), distance_threshold: int = 34, draw_clust_area: bool = False, clust_area_color: Tuple[int, int, int] = REAL_COLOR):
     # color palette
     def sea_to_rgb(color):
         color = [val * 255 for val in color]

@@ -500,8 +500,8 @@ class WorkflowPage(QWidget):
                             ax.set_xlim(xmin=0, xmax=max(rand_x) * 1.3)
                             n = rand_x
                         else:
-                            ax.bar([el - 0.2 for el in rand_graph_x], rand_graph_y, 0.4, color=create_color_pal(n_bins=len(rand_graph_x), palette_type=self.r_pal_type.currentText()), alpha=0.7,  label='Random')
                             ax.bar([el + 0.2 for el in real_graph_x], real_graph_y, 0.4, color=create_color_pal(n_bins=len(real_graph_x), palette_type=self.pal_type.currentText()),  alpha=0.7, label='Real')
+                            ax.bar([el - 0.2 for el in rand_graph_x], rand_graph_y, 0.4, color=create_color_pal(n_bins=len(rand_graph_x), palette_type=self.r_pal_type.currentText()), alpha=0.7,  label='Random')
                             n = rand_graph_x
                         ax.set_title(f'{wf["graph"]["title"]} (Real & Random)')
                         ax.legend(loc='upper right')
@@ -550,7 +550,7 @@ class WorkflowPage(QWidget):
                 elif wf["type"] == Workflow.SEPARATION:
                     vals = self.get_custom_values()
                     if self.gen_real_cb.isChecked():
-                        drawn_img = draw_separation(nnd_df=self.data.real_df1, clust_df=self.data.real_df2, img=drawn_img, palette=palette, bin_counts=n, circle_c=(103, 114, 0),  distance_threshold=vals[0], draw_clust_area=selfdraw_clust_area, clust_area_color=REAL_COLOR)
+                        drawn_img = draw_separation(nnd_df=self.data.real_df1, clust_df=self.data.real_df2, img=drawn_img, palette=palette, bin_counts=n, circle_c=(103, 114, 0),  distance_threshold=vals[0], draw_clust_area=self.draw_clust_area, clust_area_color=REAL_COLOR)
                     if self.gen_rand_cb.isChecked():
                         drawn_img = draw_separation(nnd_df=self.data.rand_df1, clust_df=self.data.rand_df2, img=drawn_img, palette=r_palette, bin_counts=n, circle_c=(18, 156, 232), distance_threshold=vals[0], draw_clust_area=self.draw_clust_area, clust_area_color=RAND_COLOR)
                 elif wf["type"] == Workflow.RIPPLER:
