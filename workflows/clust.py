@@ -7,6 +7,7 @@ from utils import create_color_pal, to_df
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QImage
 from typing import List, Tuple
+from globals import REAL_COLOR
 
 
 def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], img_path: str, distance_threshold: int = 27, n_clusters: int = None, affinity: str = 'euclidean', linkage: str = 'single', clust_area: bool = False):
@@ -102,7 +103,7 @@ def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coord
     return df, rand_df, clust_details_dfs[0], clust_details_dfs[1]
 
 
-def draw_clust(clust_df: pd.DataFrame, img: QImage , palette: str ="rocket_r", distance_threshold: int = 27, draw_clust_area: bool = False):
+def draw_clust(clust_df: pd.DataFrame, img: QImage, palette: str = "rocket_r", distance_threshold: int = 27, draw_clust_area: bool = False, clust_area_color: QColor = REAL_COLOR):
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
@@ -130,7 +131,7 @@ def draw_clust(clust_df: pd.DataFrame, img: QImage , palette: str ="rocket_r", d
         upper_bound = np.array([40, 255, 40])
         clust_mask = cv2.inRange(new_img, lower_bound, upper_bound)
         clust_cnts, clust_hierarchy = cv2.findContours(clust_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[-2:]
-        img = cv2.drawContours(img, clust_cnts, -1, (0, 255, 0), 3)
+        img = cv2.drawContours(img, clust_cnts, -1, clust_area_color, 3)
 
     def draw_clust_id_at_centroids(image, cl_df):
         for c_id in set(cl_df['cluster_id']):

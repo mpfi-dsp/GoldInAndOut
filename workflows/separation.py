@@ -9,6 +9,7 @@ from PyQt5.QtCore import pyqtSignal
 from typing import List, Tuple
 import math
 import cv2
+from globals import REAL_COLOR
 
 
 def run_separation(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], min_clust_size: int = 3, distance_threshold: int = 34, n_clusters: int = None, affinity: str = 'euclidean', linkage: str = 'single',  clust_area: bool = False):
@@ -135,7 +136,7 @@ def run_separation(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_
     return full_real_df, full_rand_df, real_df, rand_df
 
 
-def draw_separation(nnd_df, clust_df, img, bin_counts, palette="rocket_r", circle_c=(0, 0, 255), distance_threshold: int = 34, draw_clust_area: bool = False):
+def draw_separation(nnd_df, clust_df, img, bin_counts, palette="rocket_r", circle_c=(0, 0, 255), distance_threshold: int = 34, draw_clust_area: bool = False, clust_area_color: QColor = REAL_COLOR):
     # color palette
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
@@ -161,7 +162,7 @@ def draw_separation(nnd_df, clust_df, img, bin_counts, palette="rocket_r", circl
         upper_bound = np.array([40, 255, 40])
         clust_mask = cv2.inRange(new_img, lower_bound, upper_bound)
         clust_cnts, clust_hierarchy = cv2.findContours(clust_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[-2:]
-        img = cv2.drawContours(img, clust_cnts, -1, (0, 255, 0), 3)
+        img = cv2.drawContours(img, clust_cnts, -1, clust_area_color, 3)
 
     count, bin_idx = 0, 0
     for idx, entry in nnd_df.iterrows():
