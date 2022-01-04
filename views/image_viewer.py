@@ -24,7 +24,6 @@ class QPhotoViewer(QGraphicsView):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setBackgroundBrush(QBrush(QColor(240,240,240)))
         self.setFrameShape(QFrame.NoFrame)
-        # self.setPhoto(QPixmap(img))
 
     def hasPhoto(self):
         return not self._empty
@@ -107,14 +106,11 @@ class QImageViewer(QMainWindow):
         self.menu = self.menuBar()
         self.create_actions()
         self.create_menus()
-        # self.setWindowFlags(Qt.FramelessWindowHint)
-        # self.viewer.fitInView(True)
 
 
     def save(self):
         print("save file")
         options = QFileDialog.Options()
-        # options |= QFileDialog.DontUseNativeDialog
         path, _ = QFileDialog.getSaveFileName(self, "Save File", "output_file.tif", "All Files(*);;", options=options)
         print(path)
         if path:
