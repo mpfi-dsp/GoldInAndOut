@@ -4,7 +4,7 @@ from typing import List
 
 
 """ VERSION NUMBER """
-VERSION_NUMBER: str = '1.15.0'
+VERSION_NUMBER: str = '1.16.0'
 
 """
 WORKFLOW METADATA 
