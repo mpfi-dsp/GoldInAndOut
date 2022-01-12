@@ -38,7 +38,17 @@ class HomePage(QWidget):
         layout.addRow(desc)
         # upload header
         self.upload_header = QLabel("Upload Files")
-        layout.addRow(self.upload_header)
+        # folder btn
+        folder_btn = QPushButton('Upload Folder', self)
+        folder_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        folder_btn.setToolTip('Upload all files at once')
+        folder_btn.setStyleSheet("max-width: 150px; ")
+        folder_btn.clicked.connect(self.open_folder_picker)
+
+        h_bl = QHBoxLayout()
+        h_bl.addWidget(self.upload_header)
+        h_bl.addWidget(folder_btn)
+        layout.addRow(h_bl)
         # img btn
         img_btn = QPushButton('Upload Image', self)
         img_btn.setCursor(QCursor(Qt.PointingHandCursor))
@@ -88,7 +98,7 @@ class HomePage(QWidget):
         # output folder btn
         out_btn = QPushButton('Select Output', self)
         out_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        out_btn.clicked.connect(partial(self.open_folder_picker))
+        out_btn.clicked.connect(partial(self.open_output_folder_picker))
         # output folder input
         self.output_dir_le = QLineEdit()
         self.output_dir_le.setPlaceholderText(DEFAULT_OUTPUT_DIR)
@@ -216,7 +226,6 @@ class HomePage(QWidget):
         self.csvs_ip_i.setText(str(UNIT_PX_SCALARS[value]))
         self.simplify_input(value)
 
-
     def on_output_changed(self, value):
         if value == "px":
             self.csvs_lb_o.setHidden(True)
@@ -241,7 +250,20 @@ class HomePage(QWidget):
                 self.csvs_ip_o.setHidden(False)
 
     def open_folder_picker(self):
-        self.output_dir_le.setText(QFileDialog.getExistingDirectory(self, 'Select Output Folder'))
+        try:
+            input_folder = QFileDialog.getExistingDirectory(self, 'Select Input Folder')
+            # print(input_folder)
+            for filename in os.listdir(input_folder):
+                if any(ele in filename.lower() for ele in ['profile', 'image', 'montage']) and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'mask' not in filename.lower():
+                    self.img_le.setText(filename)
+                elif 'mask' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'spines' not in filename.lower():
+                    self.mask_le.setText(filename)
+                elif any(ele in filename.lower() for ele in ['csv', 'csv1', 'csv_1', 'csv 1', '6nm', '12nm']) and filename.endswith('.csv') and 'spines' not in filename.lower():
+                    self.csv_le.setText(filename)
+                elif any(ele in filename.lower() for ele in ['csv2', 'csv_2', 'csv 1', 'spines']) and filename.endswith('.csv'):
+                    self.csv2_le.setText(filename)
+        except Exception as e:
+            print(e, traceback.format_exc())
 
     def open_file_picker(self, btn_type: FileType):
         """ OPEN FILE PICKER """
@@ -268,6 +290,9 @@ class HomePage(QWidget):
                     self.csv2_le.setText(filename)
         except Exception as e:
             print(e, traceback.format_exc())
+
+    def open_output_folder_picker(self):
+        self.output_dir_le.setText(QFileDialog.getExistingDirectory(self, 'Select Output Folder'))
 
     def set_mask_clr(self):
         """ MASK COLOR SET """
