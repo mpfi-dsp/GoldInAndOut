@@ -92,7 +92,7 @@ WORKFLOWS: List[WorkflowObj] = [
             },
             {
                 "title": "minimum clust size",
-                "placeholder": "3"
+                "placeholder": "2"
             },
         ]
     },
