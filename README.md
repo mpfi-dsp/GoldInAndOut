@@ -2,7 +2,7 @@
 
 🔬🥇🧠🍔 Automated Gold Particle Analysis For Freeze Fracture Replica Electron Microscopy Images
 
-Read more about GoldInAndOut in the paper published [here](https://www.youtube.com/watch?v=dQw4w9WgXcQ)!
+<!-- Read more about GoldInAndOut in the paper published [here](https://www.youtube.com/watch?v=dQw4w9WgXcQ)! -->
 
 *Note: The terms analysis `method` and `workflow` are used relatively interchangeably in this readme.*
 
@@ -219,7 +219,7 @@ I recommend reading through this handy article for more details regarding the sp
 
 Created for the Electron Microscopy Core of the Max Planck Florida Institute For Neuroscience.
 
-Thanks to all those who helped with this research project, particularly my mentors at the Max Planck Institute for Neuroscience including Dr. Diego Jerez, Dr. Naomi Kamasawa, Dr. Debbie Guerrero Given, Dr. Connon Thomas, Dr. Matthias Haury, and Dr. Joe Schumacher.
+Thanks to all those who helped with this research project, particularly my mentors at the Max Planck Institute for Neuroscience including Dr. Diego Jerez, Dr. Naomi Kamasawa, Dr. Debbie Guerrero Given, Connon Thomas, Dr. Matthias Haury, and Dr. Joe Schumacher.
 
 Additional shoutout to Stack Overflow, the greatest friend any programmer could ever ask for.
 
