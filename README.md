@@ -12,7 +12,7 @@
 
 ### Package Overview
 
-GoldInAndOut is built on PyQt5, a powerful python graphical user interface framework responsible for other amazing scientific software such as Dragonfly.
+GoldInAndOut is built on PyQt5, a powerful python graphical user interface framework responsible for other amazing scientific software such as ORS Dragonfly.
 
 In general, programming design choices were made with the goals of creating readable, extensible, and reliable code. Descriptive variable names and a heavy use of comments allow for this, as well as handling exceptions in almost any case where a crash is possible, and avoiding repeating code unnecessarily. I have also made use of the python equivalent of types and interfaces whenever possible. 
 
@@ -113,7 +113,7 @@ In the `globals.py` file, add your workflow to the `WORKFLOW_METADATA` dictionar
 
 Below is a sample workflow using JSON structure:
 
-```json
+```js
 {
     "name": "CLUST",
     "type": Workflow.CLUST,
@@ -219,7 +219,7 @@ I recommend reading through this handy article for more details regarding the sp
 
 Created for the Electron Microscopy Core of the Max Planck Florida Institute For Neuroscience.
 
-Thanks to all those who helped with this research project, particularly my mentors at the Max Planck Institute for Neuroscience including Dr. Diego Jerez, Dr. Naomi Kamasawa, Dr. Debbie Guerrero Given, Connon Thomas, Dr. Matthias Haury, and Dr. Joe Schumacher.
+Thanks to all those who helped with this research project, particularly my mentors at the Max Planck Institute for Neuroscience including Dr. Diego Jerez, Dr. Naomi Kamasawa, Dr. Debbie Guerrero-Given, Connon Thomas, Dr. Matthias Haury, and Dr. Joe Schumacher.
 
 Additional shoutout to Stack Overflow, the greatest friend any programmer could ever ask for.
 
