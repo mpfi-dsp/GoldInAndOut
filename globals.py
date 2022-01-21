@@ -26,6 +26,7 @@ Array of JSON objects containing the following data:
         @title: title of prop
         @placeholder: placeholder for prop label
 """
+
 # TODO: ADD NEW WORKFLOW METADATA HERE
 WORKFLOWS: List[WorkflowObj] = [
     {
@@ -168,6 +169,5 @@ DEFAULT_OUTPUT_DIR: str = './output'
 
 """ PROGRESS BAR COLORS """
 
-PROG_COLOR_1 = QColor(221, 221, 221) # 95, 197, 138) # # 240, 53, 218) # QColor(221, 221, 221)  # ddd
-PROG_COLOR_2 = QColor(0, 190, 204) # greenish 95, 197, 138) # 61, 217, 245)  # 233, 180, 33)  # 61, 217, 245) #QColor(233, 180, 33)  # e9b421
-
+PROG_COLOR_1 = QColor(221, 221, 221)
+PROG_COLOR_2 = QColor(0, 190, 204)

@@ -2,7 +2,6 @@
 import logging
 import traceback
 import pandas as pd
-# from confetti import SuccessGif
 from globals import WORKFLOWS, NAV_ICON, DEFAULT_OUTPUT_DIR, VERSION_NUMBER
 from views.home import HomePage
 from typings import Unit, OutputOptions
@@ -47,8 +46,7 @@ class GoldInAndOut(QWidget):
         logging.info("Booting up...")
         # set max threads
         numexpr.set_num_threads(numexpr.detect_number_of_cores())
-        logging.info("Detected %s cores...", str(
-            numexpr.detect_number_of_cores()))
+        logging.info("Detected %s cores...", str(numexpr.detect_number_of_cores()))
         # layout with list on left and stacked widget on right
         layout = QHBoxLayout(self, spacing=0)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -116,13 +114,11 @@ class GoldInAndOut(QWidget):
     def on_loaded_data(self, loaded_data: list):
         try:
             self.COORDS, self.ALT_COORDS = loaded_data
-
-            # TODO: remove when no longer using for testing
-            img_path: str = self.home_page.img_le.text() if len(self.home_page.img_le.text()) > 0 else "./input/example_image.tif"
-            mask_path: str = self.home_page.mask_le.text() if len(self.home_page.mask_le.text()) > 0 else "./input/example_mask.tif"
-            csv_path: str = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else "./input/example_csv.csv"
-            csv2_path: str = self.home_page.csv2_le.text() # if len(self.home_page.csv2_le.text()) > 0 else ["./input/example_csv.csv"]
-
+            # file paths
+            img_path: str = self.home_page.img_le.text() 
+            mask_path: str = self.home_page.mask_le.text() 
+            csv_path: str = self.home_page.csv_le.text() 
+            csv2_path: str = self.home_page.csv2_le.text() 
             # output unit options
             ou: Unit = unit_to_enum(self.home_page.op_scalar_type.currentText() if self.home_page.op_scalar_type.currentText(
             ) is not None else self.home_page.ip_scalar_type.currentText() if '(in&out)' in self.home_page.csvs_lb_i.text() else 'px')
