@@ -3,6 +3,7 @@ from PIL import Image
 from typings import Unit, Workflow
 from typing import List, Tuple
 import seaborn as sns
+from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 import io
@@ -15,7 +16,7 @@ class Progress(QThread):
         self.prog.emit(count)
 
 
-def create_color_pal(n_bins=10, palette_type="mako"):
+def create_color_pal(n_bins: int = 10, palette_type: str ="mako") -> List[Tuple[int, int, int]]:
     """ GENERATE COLOR PALETTE USING SEABORN """
     palette = sns.color_palette(palette_type, n_colors=n_bins)
     color_palette = []
@@ -36,7 +37,7 @@ def get_complimentary_color(hexcode):
     return comp_color
 
 
-def figure_to_img(fig):
+def figure_to_img(fig: plt.Figure) -> Image:
     """ CONVERT FIGURE TO IMG """
     buf = io.BytesIO()
     # convert Matplotlib figure to PIL Image
@@ -46,7 +47,7 @@ def figure_to_img(fig):
     return img
 
 
-def pixels_conversion(data: pd.DataFrame, unit: Unit = Unit.PIXEL, scalar: float = 1, r: int = 3):
+def pixels_conversion(data: pd.DataFrame, unit: Unit = Unit.PIXEL, scalar: float = 1, r: int = 3) -> pd.DataFrame:
     """ UPLOAD CSV AND CONVERT DF FROM ONE METRIC UNIT TO ANOTHER """
     ignored_cols = ['cluster_id', 'cluster_size', '%_gp_captured',
                     '%_img_covered', 'LCPI', 'total_gp']  # 'radius',
@@ -78,7 +79,6 @@ def pixels_conversion(data: pd.DataFrame, unit: Unit = Unit.PIXEL, scalar: float
                 df[col] = round(df[col].div(scalar), r)
         i += 1
     # print('converted:', df.head())
-
     return df
 
 

@@ -145,7 +145,7 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
     return rippler_out
 
 
-def draw_rippler(coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]], img, mask_path: str, palette="rocket_r", max_steps: int =10, step_size: int =60, circle_c=(0, 0, 255)):
+def draw_rippler(coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]], img: List, mask_path: str, palette: str = "rocket_r", max_steps: int = 10, step_size: int = 60, circle_c=(0, 0, 255)):
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color

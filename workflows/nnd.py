@@ -56,7 +56,7 @@ def run_nnd(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[floa
     return nnd(coordinate_list=real_coords, random_coordinate_list=rand_coords)
 
 
-def draw_length(nnd_df: pd.DataFrame, bin_counts: List[int], img, palette, circle_c=(0, 0, 255)):
+def draw_length(nnd_df: pd.DataFrame, bin_counts: List[int], img: List, palette: List[Tuple[int, int, int]], circle_c: Tuple[int, int, int] = (0, 0, 255)):
     """ DRAW LINES TO ANNOTATE N NEAREST DIST ON IMAGE """
     def sea_to_rgb(color):
         color = [val * 255 for val in color]

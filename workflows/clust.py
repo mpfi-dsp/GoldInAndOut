@@ -103,7 +103,7 @@ def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coord
     return df, rand_df, clust_details_dfs[0], clust_details_dfs[1]
 
 
-def draw_clust(clust_df: pd.DataFrame, img: QImage, palette: str = "rocket_r", distance_threshold: int = 27, draw_clust_area: bool = False, clust_area_color: Tuple[int, int, int] = REAL_COLOR):
+def draw_clust(clust_df: pd.DataFrame, img: List, palette: str = "rocket_r", distance_threshold: int = 27, draw_clust_area: bool = False, clust_area_color: Tuple[int, int, int] = REAL_COLOR):
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color

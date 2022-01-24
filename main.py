@@ -69,8 +69,7 @@ class GoldInAndOut(QWidget):
         self.nav_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.nav_list.setCursor(QCursor(Qt.PointingHandCursor))
         # add main page to nav
-        item = QListWidgetItem(
-            NAV_ICON, str("MAIN"), self.nav_list)
+        item = QListWidgetItem(NAV_ICON, str("MAIN"), self.nav_list)
         item.setSizeHint(QSize(60, 60))
         item.setTextAlignment(Qt.AlignCenter)
         # add each page to parent window stack
@@ -141,8 +140,7 @@ class GoldInAndOut(QWidget):
             for i in range(len(WORKFLOWS)):
                 if self.home_page.workflow_cbs[i].isChecked():
                     z += 1
-                    item = QListWidgetItem(
-                            NAV_ICON, str(WORKFLOWS[i]['name']), self.nav_list)
+                    item = QListWidgetItem(NAV_ICON, str(WORKFLOWS[i]['name']), self.nav_list)
                     item.setSizeHint(QSize(60, 60))
                     item.setTextAlignment(Qt.AlignCenter)
                     print(WORKFLOWS[i]['name'])

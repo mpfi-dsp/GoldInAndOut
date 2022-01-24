@@ -1,16 +1,15 @@
 import logging
-
 import pandas as pd
 from sklearn.cluster import AgglomerativeClustering
-import numpy as np
+from globals import REAL_COLOR
 from utils import create_color_pal, to_df
 from collections import Counter
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QColor
 from typing import List, Tuple
+import numpy as np
 import math
 import cv2
-from globals import REAL_COLOR
 
 
 def run_separation(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], min_clust_size: int = 3, distance_threshold: int = 34, n_clusters: int = None, affinity: str = 'euclidean', linkage: str = 'single',  clust_area: bool = False):
@@ -137,7 +136,7 @@ def run_separation(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_
     return full_real_df, full_rand_df, real_df, rand_df
 
 
-def draw_separation(nnd_df, clust_df, img, bin_counts, palette="rocket_r", circle_c=(0, 0, 255), distance_threshold: int = 34, draw_clust_area: bool = False, clust_area_color: Tuple[int, int, int] = REAL_COLOR):
+def draw_separation(nnd_df: pd.DataFrame, clust_df: pd.DataFrame, img: List, bin_counts: List[int], palette: List[Tuple[int, int, int]], circle_c: Tuple[int, int, int] =(0, 0, 255), distance_threshold: int = 34, draw_clust_area: bool = False, clust_area_color: Tuple[int, int, int] = REAL_COLOR):
     # color palette
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
