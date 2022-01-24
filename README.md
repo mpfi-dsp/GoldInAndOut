@@ -1,8 +1,8 @@
-# GoldInAndOut
+# Gold In-and-Out 
 
 🔬🥇🧠🍔 Automated Gold Particle Analysis For Freeze Fracture Replica Electron Microscopy Images
 
-<!-- Read more about GoldInAndOut in the paper published [here](https://www.youtube.com/watch?v=dQw4w9WgXcQ)! -->
+<!-- Read more about Gold In-and-Out in the paper published [here](https://www.youtube.com/watch?v=dQw4w9WgXcQ)! -->
 
 *Note: The terms analysis `method` and `workflow` are used relatively interchangeably in this readme.*
 
@@ -12,18 +12,17 @@
 
 ### Package Overview
 
-GoldInAndOut is built on PyQt5, a powerful python graphical user interface framework responsible for other amazing scientific software such as ORS Dragonfly.
+Gold In-and-Out (GIO) is built on PyQt5, a powerful python graphical user interface framework responsible for other amazing scientific software such as ORS Dragonfly.
 
 In general, programming design choices were made with the goals of creating readable, extensible, and reliable code. Descriptive variable names and a heavy use of comments allow for this, as well as handling exceptions in almost any case where a crash is possible, and avoiding repeating code unnecessarily. I have also made use of the python equivalent of types and interfaces whenever possible. 
 
-On a broad level, GoldInAndOut was designed to combine numerous analysis workflows and simplify the development process of adding additional methods. The code for GoldInAndOut is split among two parts, graphical interface elements and data science analysis. 
+On a broad level, Gold InAndOut was designed to combine numerous analysis workflows and simplify the development process of adding additional methods. The code for GoldInAndOut is split among two parts, graphical interface elements and data science analysis. 
 
 ### Graphical Interface
 
 All of the graphical interface code is located in the `/views` directory. This includes the primary window interface as well as the powerful built-in image viewer and logger. 
 
 All code for the primary window is contained in two files, `home.py` and `workflow.py`. This allows us to dramatically reduce excess or repeated code by generating different variations of the same core workflow analysis view. The home view lets the user input their desired input and global parameters, and run analysis. This will then populate the navigation sidebar with all selected workflow pages, which the user can toggle between at will for further customization and analysis.
-
 
 
 ### Data Science Analysis
@@ -61,7 +60,7 @@ python -u main.py
 
 ### Adding Additional Custom Workflows
 
-GoldInAndOut was specifically designed to make it incredibly easy to add new analysis methods to the package. You don't need to add a single line of code to either of the interface files to have a functional analysis workflow! 
+Gold In-and-Out was specifically designed to make it incredibly easy to add new analysis methods to the package. You don't need to add a single line of code to either of the interface files to have a functional analysis workflow! 
 
 To add a new method, follow these four simple steps:
 - Add it as a typing
@@ -84,7 +83,7 @@ You will use this as a reference elsewhere in the project.
 
 2) Code the actual analysis
 
-Add a python file to the `workflows/` directory containing the workflow or macro you'd like to add to the GUI. Ideally, this is in the format `<WorkflowName>.py`.
+Add a python file to the `workflows/` directory containing the workflow or macro you'd like to add to the GIO GUI. Ideally, this is in the format `<WorkflowName>.py`.
 
 Your file should contain at minimum a "run" method that takes in the real and random coordinate lists (in the format `List[Tuple[float, float]]`) (and optionally the progress bar event emitter `pyqtSignal`), performs your analysis math, and returns two pandas dataframes (one for real, one for random). You can also take the image, mask, or csv files, or any other custom parameters you require.
 
@@ -156,7 +155,7 @@ If your workflow requires custom parameters/props, use custom values in the form
         return [self.cstm_props[i].text() if self.cstm_props[i].text() else self.wf['props'][i]['placeholder'] for i in range(len(self.cstm_props))]
 ```
 
-Graphs will be automically generated based on your input in the globals file. An example is below:
+Graphs will be automatically generated based on your input in the globals file. An example is below:
 
 <img src="https://user-images.githubusercontent.com/47064842/133366982-91610e29-51d2-4166-a2f1-94fde45258bf.png" width="500px">
 
@@ -177,9 +176,9 @@ If you want to use your custom visualization method, you will also need to add t
 <img src="https://user-images.githubusercontent.com/47064842/137605445-66f459d0-90c4-4acb-b569-05f8ce1db838.png" width="500px">
 
 
-### Testing GoldInAndOut
+### Testing Gold In-and-Out
 
-You can run GoldInAndOut locally by either typing `python -u main.py` in the terminal or using a text editor or IDE with a debugger. 
+You can run Gold In-and-Out locally by either typing `python -u main.py` in the terminal or using a text editor or IDE with a debugger. 
 
 ```powershell
 [Running] python -u "c:\Users\yourname\...\GoldInAndOut\main.py"
@@ -193,7 +192,7 @@ For a text editor, I recommend [Visual Studio Code](https://code.visualstudio.co
 
 ### Compiling To Executable
 
-We are using [pyinstaller](https://www.pyinstaller.org/#)) to compile GoldInAndOut into a finished application. The steps differ based on your platform, but the following instructions are for windows (10-11).
+We are using [pyinstaller](https://www.pyinstaller.org/#)) to compile Gold In-and-Out into a finished application. The steps differ based on your platform, but the following instructions are for windows (10-11).
 
 First, ensure you have a `main.spec` and `resources.qrc` file. If you don't, run the following commands:
 
