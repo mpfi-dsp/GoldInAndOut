@@ -14,7 +14,7 @@ import cv2
 
 def run_separation(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]],
                    min_clust_size: int = 3, distance_threshold: int = 34, n_clusters: int = None,
-                   affinity: str = 'euclidean', linkage: str = 'single'):
+                   affinity: str = 'euclidean', linkage: str = 'single', clust_area: bool = False):
     """
     NEAREST NEIGHBOR DISTANCE OF HIERARCHICAL CLUSTERING
     _______________________________
@@ -56,8 +56,7 @@ def run_separation(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_
         return centroids, centroid_ids
 
     # cluster data
-    def cluster(coords: List[Tuple[float, float]], r_coords: List[Tuple[float, float]], n_clust: int, d_threshold: int,
-                min_size: int = 3):
+    def cluster(coords: List[Tuple[float, float]], r_coords: List[Tuple[float, float]], n_clust: int, d_threshold: int, min_size: int = 3):
         # TODO: come up with a better way of handling this
         # translate string var props to their real value (unfortunately necessary because of text inputs)
         if n_clust != "None":
@@ -112,7 +111,6 @@ def run_separation(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_
                 clean_df[['og_centroid', 'closest_centroid', 'dist']] = pd.DataFrame(
                     [x for x in data['NND'].tolist()])
             return clean_df
-
         # find nnd
         cleaned_real_df = distance_to_closest_particle(coordinate_list)
         cleaned_rand_df = distance_to_closest_particle(random_coordinate_list)

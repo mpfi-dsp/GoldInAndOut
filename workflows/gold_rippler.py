@@ -40,13 +40,11 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
     # convert to binary
     ret, binary = cv2.threshold(img_pface2, 100, 255, cv2.THRESH_OTSU)
     pface_mask = ~binary
-
     # find pface area
     pface_cnts, pface_hierarchy = cv2.findContours(
         pface_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[-2:]
     pface_cnts2, pface_hierarchy2 = cv2.findContours(
         pface_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[-2:]
-
     pface_area_external, pface_area_tree = 0, 0
     for cnt in pface_cnts2:
         area = cv2.contourArea(cnt)
@@ -54,12 +52,10 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
     for cnt in pface_cnts:
         area = cv2.contourArea(cnt)
         pface_area_tree += area
-
     difference = (pface_area_tree - pface_area_external)
     pface_area = pface_area_external - difference
     original_copy = img_og.copy()
     pb.emit(30)
-
     step = 0
     rippler_out = []
     for coord_list in [real_coords, rand_coords]:
@@ -70,19 +66,15 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
             total_captured_particles = 0
             scale_mask = np.zeros(pface_mask.shape, np.uint8)
             color_step = step % 11
-            # print('started rip')
             # draw ripples
+            print("alt coords in rip", alt_coords)
             for s in alt_coords:
                 x, y = int(s[0]), int(s[1])
                 cv2.circle(scale_mask, (y, x), rad, 255, -1)
                 cv2.circle(original_copy, (y, x), rad, COLORS[color_step], 5)
             step += 1
-            # print('find gp')
             for c in coord_list:
-                # print(rad, c)
                 x, y = int(c[0]), int(c[1])
-                # print('scale_mask', pface_mask.shape, y, x)
-                # print('scale_maskx', scale_mask[y])
                 if rad == max:
                     if scale_mask[x, y] != 0:
                         cv2.circle(original_copy, (y, x), 8, (0, 0, 255), -1)
@@ -97,8 +89,6 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
                         cv2.circle(original_copy, (y, x), 8, (0, 0, 255), -1)
                         # print('was in mask but not max')
             gp_in_spine = total_captured_particles / len(coord_list)
-
-            # print('gp_in_spine', gp_in_spine)
             # find spine contour area and pface contour area
             mask_combined = cv2.bitwise_and(scale_mask, pface_mask.copy())
             mask_cnts, mask_hierarchy = cv2.findContours(
@@ -109,39 +99,28 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
             scale_area_external = 0
             scale_area_tree = 0
             # find cts
-            # print('find cnts')
             for cnt in mask_cnts2:
                 area = cv2.contourArea(cnt)
                 scale_area_external += area
-            # print('scale_area_external', scale_area_external)
             for cnt in mask_cnts:
                 area = cv2.contourArea(cnt)
                 scale_area_tree += area
-            # print('scale_area_tree', scale_area_tree)
             # find stats
             difference = (scale_area_tree - scale_area_external)
             scale_area = scale_area_external - difference
             percent_area = scale_area / pface_area
-            # calculate SC3PA
-            scaled_SC3PA = gp_in_spine / percent_area
-            # print(rad, scaled_SC3PA)
-            LCPI.append(scaled_SC3PA)
+            # calculate LCPI
+            scaled_LCPI = gp_in_spine / percent_area
+            LCPI.append(scaled_LCPI)
             radius.append(rad)
             gp_captured.append(gp_in_spine)
             img_covered.append(percent_area)
             total_gp.append(len(coord_list))
             rad += int(step_size)
             pb.emit(rad)
-            # print('it ', scaled_SC3PA)
-
         # generate new df and return
-        new_df = pd.DataFrame(
-            data={'radius': radius, '%_gp_captured': gp_captured, '%_img_covered': img_covered, 'LCPI': LCPI,
-                  'total_gp': total_gp})
-        # print(new_df.head())
+        new_df = pd.DataFrame(data={'radius': radius, '%_gp_captured': gp_captured, '%_img_covered': img_covered, 'LCPI': LCPI, 'total_gp': total_gp})
         rippler_out.append(new_df)
-        # cv2.imwrite("test_img.jpg", output_img)
-    # print(rippler_out)
     return rippler_out
 
 
@@ -149,7 +128,6 @@ def draw_rippler(coords: List[Tuple[float, float]], alt_coords: List[Tuple[float
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
-    # print("draw rippler")
     output_img = img.copy()
     rad, step = 100, 0
     max = (int(max_steps) * int(step_size)) + rad

@@ -1,5 +1,6 @@
 import logging
 import pandas as pd
+from typing import List, Tuple
 import math
 import cv2
 

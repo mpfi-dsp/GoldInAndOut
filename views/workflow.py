@@ -253,7 +253,7 @@ class WorkflowPage(QWidget):
         self.run_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #E89C12; color: white; border-radius: 7px; ")
         self.run_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        self.run_btn.clicked.connect(partial(self.run, wf, coords))
+        self.run_btn.clicked.connect(partial(self.run, wf, coords, alt_coords))
         self.download_btn = QPushButton('Download Again', self)
         self.download_btn.setStyleSheet(
             "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 3px; background: #ccc; color: white; border-radius: 7px; ")
