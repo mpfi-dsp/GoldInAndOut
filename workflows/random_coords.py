@@ -12,8 +12,7 @@ def gen_random_coordinates(img_path: str, mask_path: str, count: int = 0):
     @count: number of random particles to generate
     """
     def generate_random_points(boundary: list, quantity: int, mask: list):
-        # print('bound', boundary)
-        # generate faux particles within the pface
+        # generate pseudo-random distribution of particles within the pface
         coords = []
         num = 0
         while num < quantity:
@@ -43,13 +42,10 @@ def gen_random_coordinates(img_path: str, mask_path: str, count: int = 0):
     # # convert to binary
     ret, binary = cv2.threshold(img_pface2, 100, 255, cv2.THRESH_OTSU)
     pface_mask = ~binary
-
-    # # grab contours of pface
+    # Alternative method of grabbing contours of pface
     # lower_bound = np.array([239, 174, 0])
     # upper_bound = np.array([254, 254, 254])
     # pface_mask: list = cv2.inRange(img_pface, lower_bound, upper_bound)
     # print(pface_mask.shape, pface_mask)
-    
     logging.info("Generated random particles")
-    # print('mask', img_pface, lower_bound, upper_bound)
     return generate_random_points(pface_mask.shape, count, pface_mask)

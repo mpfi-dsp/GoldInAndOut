@@ -12,7 +12,9 @@ import math
 import cv2
 
 
-def run_separation(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], min_clust_size: int = 3, distance_threshold: int = 34, n_clusters: int = None, affinity: str = 'euclidean', linkage: str = 'single',  clust_area: bool = False):
+def run_separation(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]],
+                   min_clust_size: int = 3, distance_threshold: int = 34, n_clusters: int = None,
+                   affinity: str = 'euclidean', linkage: str = 'single'):
     """
     NEAREST NEIGHBOR DISTANCE OF HIERARCHICAL CLUSTERING
     _______________________________
@@ -54,7 +56,8 @@ def run_separation(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_
         return centroids, centroid_ids
 
     # cluster data
-    def cluster(coords: List[Tuple[float, float]], r_coords: List[Tuple[float, float]], n_clust: int, d_threshold: int, min_size: int = 3):
+    def cluster(coords: List[Tuple[float, float]], r_coords: List[Tuple[float, float]], n_clust: int, d_threshold: int,
+                min_size: int = 3):
         # TODO: come up with a better way of handling this
         # translate string var props to their real value (unfortunately necessary because of text inputs)
         if n_clust != "None":
@@ -64,13 +67,12 @@ def run_separation(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_
             n_clust = None
             d_threshold = int(d_threshold)
         # actually run sklearn clustering function
-        hc = AgglomerativeClustering(n_clusters=n_clust, distance_threshold=d_threshold*2, affinity=affinity, linkage=linkage)
+        hc = AgglomerativeClustering(n_clusters=n_clust, distance_threshold=d_threshold * 2, affinity=affinity,
+                                     linkage=linkage)
         clust = hc.fit_predict(coords)
         # append cluster ids to df
-        # print('before conversion')
         df = to_df(coords)
         df['cluster_id'] = clust
-        # print('after conversion')
         # setup random coords
         rand_coordinates = np.array(r_coords)
         rand_coordinates = np.flip(rand_coordinates, 1)
@@ -79,12 +81,10 @@ def run_separation(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_
         # fill random df
         rand_df = pd.DataFrame(rand_coordinates, columns=["X", "Y"])
         rand_df['cluster_id'] = rand_cluster
-        # print("generated clusters")
-
         return df, rand_df, minify_list(clust, float(min_size)), minify_list(rand_cluster, float(min_size))
 
     def nnd(coordinate_list: List[Tuple[float, float]], random_coordinate_list: List[Tuple[float, float]]):
-        # finds nnd between centroids
+        # finds nnd between centroids. Same as in nnd.py, but repeated here in case anything needs to be tweaked specifically for this workflow. GIO design stipulates that each workflow should be self-sufficient and contain all the code it needs to run.
         def distance_to_closest_particle(coord_list):
             nnd_list = []
             for z in range(len(coord_list)):
@@ -111,18 +111,18 @@ def run_separation(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_
                 # clean up df
                 clean_df[['og_centroid', 'closest_centroid', 'dist']] = pd.DataFrame(
                     [x for x in data['NND'].tolist()])
-                # print("generated nnd list")
             return clean_df
+
         # find nnd
         cleaned_real_df = distance_to_closest_particle(coordinate_list)
         cleaned_rand_df = distance_to_closest_particle(random_coordinate_list)
-        # print("found nnd")
         return cleaned_real_df, cleaned_rand_df
 
     logging.info("running nearest neighbor distance between clusters")
     pb.emit(30)
     # cluster
-    full_real_df, full_rand_df, cluster, rand_cluster = cluster(real_coords, rand_coords, n_clusters, distance_threshold, min_clust_size)
+    full_real_df, full_rand_df, cluster, rand_cluster = cluster(real_coords, rand_coords, n_clusters,
+                                                                distance_threshold, min_clust_size)
     # generate centroids of clusters
     real_centroids, real_clust_ids = find_centroids(full_real_df, cluster)
     rand_centroids, rand_clust_ids = find_centroids(full_rand_df, rand_cluster)
@@ -132,11 +132,13 @@ def run_separation(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_
     real_df['cluster_id'] = real_clust_ids
     rand_df['cluster_id'] = rand_clust_ids
     # return dataframes with all elements, dataframe with only centroids and nnd
-    # print(real_df.head(), rand_df.head())
     return full_real_df, full_rand_df, real_df, rand_df
 
 
-def draw_separation(nnd_df: pd.DataFrame, clust_df: pd.DataFrame, img: List, bin_counts: List[int], palette: List[Tuple[int, int, int]], circle_c: Tuple[int, int, int] =(0, 0, 255), distance_threshold: int = 34, draw_clust_area: bool = False, clust_area_color: Tuple[int, int, int] = REAL_COLOR):
+def draw_separation(nnd_df: pd.DataFrame, clust_df: pd.DataFrame, img: List, bin_counts: List[int],
+                    palette: List[Tuple[int, int, int]], circle_c: Tuple[int, int, int] = (0, 0, 255),
+                    distance_threshold: int = 34, draw_clust_area: bool = False,
+                    clust_area_color: Tuple[int, int, int] = REAL_COLOR):
     # color palette
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
@@ -155,7 +157,6 @@ def draw_separation(nnd_df: pd.DataFrame, clust_df: pd.DataFrame, img: List, bin
         img = cv2.circle(img, particle, 10, sea_to_rgb(cl_palette[int(clust_df['cluster_id'][idx])]), -1)
         if draw_clust_area:
             new_img = cv2.circle(new_img, particle, radius=distance_threshold, color=(0, 255, 0), thickness=-1)
-        # cv2.putText(img, str(clust_df['cluster_id'][idx]), org=particle, fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255, 255, 255), fontScale=1)
     # draw nnd
     if draw_clust_area:
         lower_bound = np.array([0, 250, 0])
@@ -176,7 +177,7 @@ def draw_separation(nnd_df: pd.DataFrame, clust_df: pd.DataFrame, img: List, bin
         img = cv2.line(img, particle_1, particle_2, sea_to_rgb(palette[bin_idx]), 5)
         cv2.putText(img, str(int(nnd_df['cluster_id'][idx])), org=particle_1,
                     fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255, 255, 255), fontScale=1)
-        # TODO: if desire centroid area
+        # TODO: if you desire centroid area
         # if draw_clust_area:
         #     img = cv2.circle(img, particle_1, radius=int(distance_threshold), color=(0, 255, 0))
     return img
