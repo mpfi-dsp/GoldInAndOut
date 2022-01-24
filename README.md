@@ -2,7 +2,7 @@
 
 🔬🥇🧠🍔 Automated Gold Particle Analysis For Freeze Fracture Replica Electron Microscopy Images
 
-<!-- Read more about Gold In-and-Out in the paper published [here](https://www.youtube.com/watch?v=dQw4w9WgXcQ)! -->
+<!-- Read more about Gold In-and-Out in the paper *"GIO: A Toolkit for Analyzing Subcellular Distribution of Immunogold-Labeled Membrane Proteins in Freeze-Fracture Replica Images"* published [here](https://www.youtube.com/watch?v=dQw4w9WgXcQ)! -->
 
 *Note: The terms analysis `method` and `workflow` are used relatively interchangeably in this readme.*
 
