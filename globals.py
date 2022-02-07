@@ -126,7 +126,7 @@ WORKFLOWS: List[WorkflowObj] = [
         "name": "GOLDSTAR",
         "type": Workflow.GOLDSTAR,
         "header": "Gold Star Nearest Neighbor Distance",
-        "desc": "Find the nearest neighbor distance of two different populations. Requires lighthouse population.",
+        "desc": "Find the nearest neighbor distance of two different populations. Requires lighthouse population",
         "checked": False,
         "graph": {
             "type": "hist",
@@ -166,6 +166,8 @@ MAX_DIRS_PRUNE: int = 5
 """ DEFAULT OUTPUT DIRECTORY """
 DEFAULT_OUTPUT_DIR: str = './output'
 
+""" RANDOM COORDINATES DEFAULT DISTANCE THRESHOLD (px) """
+DEFAULT_DISTANCE_THRESH = 5
 
 """ PROGRESS BAR COLORS """
 

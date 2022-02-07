@@ -263,16 +263,17 @@ class HomePage(QWidget):
             path = str(Path.home())
             input_folder = QFileDialog.getExistingDirectory(self, 'Select Input Folder', path)
             # print(input_folder)
-            for filename in os.listdir(input_folder):
-                full_file = os.path.join(input_folder, filename)
-                if any(ele in filename.lower() for ele in ['profile', 'image', 'montage']) and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'mask' not in filename.lower():
-                    self.img_le.setText(full_file)
-                elif 'mask' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'spines' not in filename.lower():
-                    self.mask_le.setText(full_file)
-                elif any(ele in filename.lower() for ele in ['csv', 'csv1', 'csv_1', 'csv 1', '6nm', '12nm']) and filename.endswith('.csv') and 'spines' not in filename.lower():
-                    self.csv_le.setText(full_file)
-                elif any(ele in filename.lower() for ele in ['csv2', 'csv_2', 'csv 2', 'spines']) and filename.endswith('.csv'):
-                    self.csv2_le.setText(full_file)
+            if len(os.listdir(input_folder)) > 0:
+                for filename in os.listdir(input_folder):
+                    full_file = os.path.join(input_folder, filename)
+                    if any(ele in filename.lower() for ele in ['profile', 'image', 'montage']) and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'mask' not in filename.lower():
+                        self.img_le.setText(full_file)
+                    elif 'mask' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'spines' not in filename.lower():
+                        self.mask_le.setText(full_file)
+                    elif any(ele in filename.lower() for ele in ['csv', 'csv1', 'csv_1', 'csv 1', '6nm', '12nm']) and filename.endswith('.csv') and 'spines' not in filename.lower():
+                        self.csv_le.setText(full_file)
+                    elif any(ele in filename.lower() for ele in ['csv2', 'csv_2', 'csv 2', 'spines']) and filename.endswith('.csv'):
+                        self.csv2_le.setText(full_file)
         except Exception as e:
             print(e, traceback.format_exc())
 

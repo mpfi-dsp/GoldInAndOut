@@ -14,7 +14,7 @@ from styles.stylesheet import styles
 import resources
 # pyQT5
 import PyQt5
-from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal, QThread
+from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal, QThread #, pyqt5_enable_new_onexit_scheme
 from PyQt5.QtGui import QIcon, QCursor
 from PyQt5.QtWidgets import (QWidget, QListWidget, QStackedWidget, QHBoxLayout, QListWidgetItem, QApplication,
                              QMainWindow)
@@ -33,6 +33,12 @@ try:
     QtWin.setCurrentProcessExplicitAppUserModelID(appId)
 except ImportError:
     pass
+
+# try:
+#     # fix crashing on exit on MACOS
+#     pyqt5_enable_new_onexit_scheme(True)
+# except Exception as e:
+#     pass
 
 
 class GoldInAndOut(QWidget):

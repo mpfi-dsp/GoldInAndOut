@@ -23,7 +23,6 @@ def gen_random_coordinates(img_path: str, mask_path: str, count: int = 0):
                     print('too close')
             return True
 
-
         def generate_K_points(K):
             points = []
             while len(points) < K:
@@ -36,36 +35,6 @@ def gen_random_coordinates(img_path: str, mask_path: str, count: int = 0):
             return points
 
         return generate_K_points(quantity)
-
-
-        # coords = []
-        # x_vals = []
-        # y_vals = []
-        # def too_close(x, y):
-        #     for vals in [x_vals, y_vals]:
-        #         for val in vals:
-        #             if ((val - DEFAULT_DISTANCE_THRESH) <= x and (val + DEFAULT_DISTANCE_THRESH) >= x)) and ((val - DEFAULT_DISTANCE_THRESH) <= y and (val + DEFAULT_DISTANCE_THRESH) >= y):
-        #                 return True
-        #     # for val in y_vals:
-        #     #     if (val - DEFAULT_DISTANCE_THRESH <= y) and (val + DEFAULT_DISTANCE_THRESH) >= y:
-        #     #         return True
-        #     return False
-
-        # num = 0
-        # while num < quantity:
-        #     x = random.randint(1, boundary[0] - 1)
-        #     y = random.randint(1, boundary[1] - 1)
-        #     if mask[x, y] != 0 and not too_close(x, y):
-        #         coords.append((x, y))
-        #         x_vals.append(x)
-        #         y_vals.append(y)
-        #         print(x, y)
-        #         num += 1
-        #     else:
-        #         print("too close", (x, y))
-        #         # logging.info("too close")
-        # # print(f"The total number of particles inside the p-face are {count}.")
-        # return coords
 
     if len(img_path) == 0:
         return []
