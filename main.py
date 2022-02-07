@@ -14,7 +14,7 @@ from styles.stylesheet import styles
 import resources
 # pyQT5
 import PyQt5
-from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal, QThread
+from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal, QThread #, pyqt5_enable_new_onexit_scheme
 from PyQt5.QtGui import QIcon, QCursor
 from PyQt5.QtWidgets import (QWidget, QListWidget, QStackedWidget, QHBoxLayout, QListWidgetItem, QApplication,
                              QMainWindow)
@@ -34,6 +34,12 @@ try:
 except ImportError:
     pass
 
+# try:
+#     # fix crashing on exit on MACOS
+#     pyqt5_enable_new_onexit_scheme(True)
+# except Exception as e:
+#     pass
+
 
 class GoldInAndOut(QWidget):
     """ PARENT WINDOW INITIALIZATION """
@@ -42,7 +48,8 @@ class GoldInAndOut(QWidget):
         self.setWindowTitle(f'GoldInAndOut {VERSION_NUMBER}')
         self.setWindowIcon(QIcon(':/icons/logo.ico'))
         # self.setWindowIcon(QIcon('./logo.png'))
-        self.setMinimumSize(QSize(800, 1000))
+        self.setMinimumSize(QSize(800, 850))
+        self.logger_shown = False
         logging.info("Booting up...")
         # set max threads
         numexpr.set_num_threads(numexpr.detect_number_of_cores())
@@ -76,7 +83,7 @@ class GoldInAndOut(QWidget):
         self.page_stack.addWidget(self.home_page)
         # select first page by default
         self.nav_list.item(0).setSelected(True)
-        self.home_page.show_logs.clicked.connect(self.open_logger)
+        self.home_page.show_logs_btn.clicked.connect(self.open_logger)
         # init logger
         self.dlg = Logger()
 
@@ -90,9 +97,13 @@ class GoldInAndOut(QWidget):
             prop.setEnabled(True)
 
     def open_logger(self):
-        if self.home_page.show_logs.isChecked():
+        if self.logger_shown == False:
+            self.home_page.show_logs_btn.setText("Hide Logger")
+            self.logger_shown = True
             self.dlg.show()
         else:
+            self.logger_shown = False
+            self.home_page.show_logs_btn.setText("Display Logger")
             self.dlg.hide()
 
     def init_workflows(self):
@@ -101,7 +112,7 @@ class GoldInAndOut(QWidget):
             if len(self.home_page.img_le.text()) > 0 and len(self.home_page.csv_le.text()) > 0:
                 # gui elements to disable when running
                 self.home_props = [self.home_page.start_btn,
-                                   self.home_page.img_le,  self.home_page.mask_le, self.home_page.csv_le, self.home_page.csv2_le, self.home_page.ip_scalar_type, self.home_page.op_scalar_type, self.home_page.output_dir_le, self.home_page.dod_cb, self.home_page.csvs_lb_i, self.home_page.csvs_ip_o, self.home_page.clust_area, self.home_page.show_logs]
+                                   self.home_page.img_le,  self.home_page.mask_le, self.home_page.csv_le, self.home_page.csv2_le, self.home_page.ip_scalar_type, self.home_page.op_scalar_type, self.home_page.output_dir_le, self.home_page.dod_cb, self.home_page.csvs_lb_i, self.home_page.csvs_ip_o, self.home_page.clust_area, self.home_page.show_logs_btn]
                 for prop in self.home_props:
                     prop.setEnabled(False)
                 self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #ddd")
@@ -166,10 +177,10 @@ class GoldInAndOut(QWidget):
         try:
             # edit in production
             logging.info("Loading data...")
-            img_path = self.home_page.img_le.text() if len(self.home_page.img_le.text()) > 0 else "./input/example_image.tif"
-            mask_path = self.home_page.mask_le.text() if len(self.home_page.mask_le.text()) > 0 else "./input/example_mask.tif"
-            csv_path = self.home_page.csv_le.text() if len(self.home_page.csv_le.text()) > 0 else "./input/example_csv.csv"
-            csv2_path = self.home_page.csv2_le.text()
+            img_path: str = self.home_page.img_le.text() 
+            mask_path: str = self.home_page.mask_le.text() 
+            csv_path: str = self.home_page.csv_le.text() 
+            csv2_path: str = self.home_page.csv2_le.text() 
             unit = unit_to_enum(self.home_page.ip_scalar_type.currentText()) if self.home_page.ip_scalar_type.currentText() else Unit.PIXEL
             scalar = float(self.home_page.csvs_ip_i.text() if len(self.home_page.csvs_ip_i.text()) > 0 else 1)
             # load in data in thread

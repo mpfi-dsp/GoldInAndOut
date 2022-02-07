@@ -4,3 +4,5 @@ build/
 dist/
 app.spec
 main.spec
+gio_env
+gio

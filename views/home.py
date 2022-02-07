@@ -16,7 +16,7 @@ from typings import FileType
 from utils import get_complimentary_color
 
 HEADER = "Automated Gold Particle Analysis"
-DESC = "Simply upload the appropriate files, check the workflows you'd like to run, select desired parameters, and click \"Start\"!"
+DESC = "Upload files, select workflows and desired parameters, and click \"Start\"!"
 
 class HomePage(QWidget):
     """
@@ -37,7 +37,7 @@ class HomePage(QWidget):
         desc.setWordWrap(True)
         layout.addRow(desc)
         # upload header
-        self.upload_header = QLabel("Upload Files")
+        self.upload_header = QLabel("Select Input & Output")
         # folder btn
         folder_btn = QPushButton('Upload Folder', self)
         folder_btn.setCursor(QCursor(Qt.PointingHandCursor))
@@ -92,9 +92,9 @@ class HomePage(QWidget):
         spacer = QSpacerItem(15, 10, QSizePolicy.Minimum, QSizePolicy.Expanding)
         layout.addItem(spacer)
 
-        # output folder header
-        workflows_header = QLabel("Output Folder")
-        layout.addRow(workflows_header)
+        # TODO: output folder header
+        # workflows_header = QLabel("Output Folder")
+        # layout.addRow(workflows_header)
         # output folder btn
         out_btn = QPushButton('Select Output', self)
         out_btn.setCursor(QCursor(Qt.PointingHandCursor))
@@ -120,15 +120,24 @@ class HomePage(QWidget):
             v_cb.addWidget(cb)
         layout.addRow(v_cb)
         layout.addItem(spacer)
-        # props header
+
         props_header = QLabel("Global Parameters")
-        layout.addRow(props_header)
+        # folder btn
+        self.show_logs_btn = QPushButton('Display Logger', self)
+        self.show_logs_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.show_logs_btn.setToolTip('Open in new window')
+        self.show_logs_btn.setStyleSheet("max-width: 150px; ")
+        # props header
+        p_bl = QHBoxLayout()
+        p_bl.addWidget(props_header)
+        p_bl.addWidget(self.show_logs_btn)
+        layout.addRow(p_bl)
         # delete old dirs checkbox
         self.dod_cb = QCheckBox(f'prune old output (delete folders older than {MAX_DIRS_PRUNE} runs)')
         layout.addRow(self.dod_cb)
         # show logs checkbox
-        self.show_logs = QCheckBox('display logger (open in new window)')
-        layout.addRow(self.show_logs)
+        # self.show_logs = QCheckBox('display logger (open in new window)')
+        # layout.addRow(self.show_logs)
         # cluster area checkbox
         self.clust_area = QCheckBox('find cluster area')
         layout.addRow(self.clust_area)
@@ -254,16 +263,17 @@ class HomePage(QWidget):
             path = str(Path.home())
             input_folder = QFileDialog.getExistingDirectory(self, 'Select Input Folder', path)
             # print(input_folder)
-            for filename in os.listdir(input_folder):
-                full_file = os.path.join(input_folder, filename)
-                if any(ele in filename.lower() for ele in ['profile', 'image', 'montage']) and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'mask' not in filename.lower():
-                    self.img_le.setText(full_file)
-                elif 'mask' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'spines' not in filename.lower():
-                    self.mask_le.setText(full_file)
-                elif any(ele in filename.lower() for ele in ['csv', 'csv1', 'csv_1', 'csv 1', '6nm', '12nm']) and filename.endswith('.csv') and 'spines' not in filename.lower():
-                    self.csv_le.setText(full_file)
-                elif any(ele in filename.lower() for ele in ['csv2', 'csv_2', 'csv 2', 'spines']) and filename.endswith('.csv'):
-                    self.csv2_le.setText(full_file)
+            if len(os.listdir(input_folder)) > 0:
+                for filename in os.listdir(input_folder):
+                    full_file = os.path.join(input_folder, filename)
+                    if any(ele in filename.lower() for ele in ['profile', 'image', 'montage']) and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'mask' not in filename.lower():
+                        self.img_le.setText(full_file)
+                    elif 'mask' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'spines' not in filename.lower():
+                        self.mask_le.setText(full_file)
+                    elif any(ele in filename.lower() for ele in ['csv', 'csv1', 'csv_1', 'csv 1', '6nm', '12nm']) and filename.endswith('.csv') and 'spines' not in filename.lower():
+                        self.csv_le.setText(full_file)
+                    elif any(ele in filename.lower() for ele in ['csv2', 'csv_2', 'csv 2', 'spines']) and filename.endswith('.csv'):
+                        self.csv2_le.setText(full_file)
         except Exception as e:
             print(e, traceback.format_exc())
 
