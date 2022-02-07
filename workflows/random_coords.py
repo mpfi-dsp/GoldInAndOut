@@ -2,6 +2,7 @@ import logging
 import numpy as np
 import random
 import cv2
+from globals import DEFAULT_DISTANCE_THRESH 
 
 def gen_random_coordinates(img_path: str, mask_path: str, count: int = 0):
     """
@@ -12,17 +13,59 @@ def gen_random_coordinates(img_path: str, mask_path: str, count: int = 0):
     @count: number of random particles to generate
     """
     def generate_random_points(boundary: list, quantity: int, mask: list):
-        # generate pseudo-random distribution of particles within the pface
-        coords = []
-        num = 0
-        while num < quantity:
-            x = random.randint(1, boundary[0] - 1)
-            y = random.randint(1, boundary[1] - 1)
-            if mask[x, y] != 0:
-                coords.append((x, y))
-                num += 1
-        # print(f"The total number of particles inside the p-face are {count}.")
-        return coords
+        # generate pseudo-random distribution of particles within the p-face
+        def meets_threshold(new_point, points):
+            for point in points:
+                dist = np.sqrt(np.sum(np.square(new_point-point)))
+                print(dist, 'dist')
+                if dist < DEFAULT_DISTANCE_THRESH:
+                    return False
+                    print('too close')
+            return True
+
+
+        def generate_K_points(K):
+            points = []
+            while len(points) < K:
+                x = random.randint(1, boundary[0] - 1)
+                y = random.randint(1, boundary[1] - 1)
+                if mask[x, y] != 0:
+                    new_point = np.array([x, y])
+                    if meets_threshold(new_point, points):
+                        points.append(new_point)
+            return points
+
+        return generate_K_points(quantity)
+
+
+        # coords = []
+        # x_vals = []
+        # y_vals = []
+        # def too_close(x, y):
+        #     for vals in [x_vals, y_vals]:
+        #         for val in vals:
+        #             if ((val - DEFAULT_DISTANCE_THRESH) <= x and (val + DEFAULT_DISTANCE_THRESH) >= x)) and ((val - DEFAULT_DISTANCE_THRESH) <= y and (val + DEFAULT_DISTANCE_THRESH) >= y):
+        #                 return True
+        #     # for val in y_vals:
+        #     #     if (val - DEFAULT_DISTANCE_THRESH <= y) and (val + DEFAULT_DISTANCE_THRESH) >= y:
+        #     #         return True
+        #     return False
+
+        # num = 0
+        # while num < quantity:
+        #     x = random.randint(1, boundary[0] - 1)
+        #     y = random.randint(1, boundary[1] - 1)
+        #     if mask[x, y] != 0 and not too_close(x, y):
+        #         coords.append((x, y))
+        #         x_vals.append(x)
+        #         y_vals.append(y)
+        #         print(x, y)
+        #         num += 1
+        #     else:
+        #         print("too close", (x, y))
+        #         # logging.info("too close")
+        # # print(f"The total number of particles inside the p-face are {count}.")
+        # return coords
 
     if len(img_path) == 0:
         return []
