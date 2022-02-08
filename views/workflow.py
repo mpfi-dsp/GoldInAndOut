@@ -594,12 +594,12 @@ class WorkflowPage(QWidget):
                     if self.gen_real_cb.isChecked():
                         drawn_img = draw_rippler(coords=self.coords, alt_coords=self.alt_coords,
                                                  mask_path=self.mask_drop.currentText(), img=drawn_img, palette=palette,
-                                                 circle_c=(18, 156, 232), max_steps=vals[0], step_size=vals[1])
+                                                 circle_c=(18, 156, 232), max_steps=vals[0], step_size=vals[1], initial_radius=int(vals[2]))
                     if self.gen_rand_cb.isChecked():
                         drawn_img = draw_rippler(coords=self.rand_coords, alt_coords=self.alt_coords,
                                                  mask_path=self.mask_drop.currentText(), img=drawn_img,
                                                  palette=r_palette, circle_c=(103, 114, 0), max_steps=vals[0],
-                                                 step_size=vals[1])
+                                                 step_size=vals[1], initial_radius=int(vals[2]))
                 elif wf["type"] == Workflow.GOLDSTAR:
                     # if real coords selected, annotate them on img with lines indicating length
                     if self.gen_real_cb.isChecked():

@@ -120,6 +120,10 @@ WORKFLOWS: List[WorkflowObj] = [
                 "title": "step size (px)",
                 "placeholder": "60"
             },
+            {
+                "title": "initial radius (px)",
+                "placeholder": "50"
+            }
         ]
     },
     {
