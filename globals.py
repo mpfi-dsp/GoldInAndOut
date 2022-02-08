@@ -132,7 +132,12 @@ WORKFLOWS: List[WorkflowObj] = [
             "y_label": "Number of Particles",
             "x_type": "dist"
         },
-        "props": []
+        "props": [
+            {
+                "title": "A* (around landmarks)",
+                "placeholder": "0"
+            }
+        ]
     },
 ]
 

@@ -604,11 +604,11 @@ class WorkflowPage(QWidget):
                     # if real coords selected, annotate them on img with lines indicating length
                     if self.gen_real_cb.isChecked():
                         drawn_img = draw_goldstar(nnd_df=self.data.real_df1, bin_counts=n, img=drawn_img,
-                                                  palette=palette, circle_c=(103, 114, 0), a_star=vals[0])
+                                                  palette=palette, circle_c=(103, 114, 0))
                     # if rand coords selected, annotate them on img with lines indicating length
                     if self.gen_rand_cb.isChecked():
                         drawn_img = draw_goldstar(nnd_df=self.data.rand_df1, bin_counts=n, img=drawn_img,
-                                                  palette=r_palette, circle_c=(18, 156, 232), a_star=vals[0])
+                                                  palette=r_palette, circle_c=(18, 156, 232))
                 # end graph display, set display img to annotated image
                 # https://stackoverflow.com/questions/33741920/convert-opencv-3-iplimage-to-pyqt5-qimage-qpixmap-in-python
                 height, width, bytesPerComponent = drawn_img.shape

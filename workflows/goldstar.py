@@ -2,10 +2,11 @@ import logging
 import pandas as pd
 from typing import List, Tuple
 import math
+import numpy as np
 from PyQt5.QtCore import pyqtSignal
 import cv2
 
-def run_goldstar(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]], pb: pyqtSignal, a_star: bool = False):
+def run_goldstar(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]], pb: pyqtSignal, img_path: str = "", mask_path: str = "", a_star: int = 0):
     """
     NEAREST NEIGHBOR DISTANCE
     _______________________________
@@ -13,8 +14,37 @@ def run_goldstar(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple
     @rand_coords: list of randomly generated coordinates
     @pb: progress bar wrapper element, allows us to track how much time is left in process
     """
-    def goldstar_nnd(coordinate_list, random_coordinate_list, alt_coordinate_list):
-        def goldstar_distance_closest(coord_list, alt_list):
+    def a_star_nnd(coord_list: List[Tuple[float, float]], rand_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]], img_path: str = "", mask_path: str = ""):
+        # import img
+        img_original = cv2.imread(img_path)
+        crop = img_original.shape
+        # if no mask provided, use the entire image
+        if len(mask_path) > 0:
+            img_pface = cv2.imread(mask_path)
+        else:
+            img_pface = np.zeros(crop, dtype=np.uint8)
+            img_pface.fill(245)
+        # crop to size of normal image
+        img_pface = img_pface[:crop[0], :crop[1], :3]
+        # convert to grayscale
+        img_pface2 = cv2.cvtColor(img_pface, cv2.COLOR_BGR2GRAY)
+        # # convert to binary
+        ret, binary = cv2.threshold(img_pface2, 100, 255, cv2.THRESH_OTSU)
+        pface_mask = ~binary
+        # set as grid
+        real_particle_grid = pface_mask
+        for coord in alt_list:
+            real_particle_grid[int(coord[1]), int(coord[0])] = 2
+        for coord in coord_list:
+            real_particle_grid[int(coord[1]), int(coord[0])] = 3
+
+        # TODO: traverse the 1's, find the closest 3 to a 2.
+
+        print(pface_mask, pface_mask.shape)
+
+    def goldstar_nnd(coordinate_list: List[Tuple[float, float]], random_coordinate_list: List[Tuple[float, float]], alt_coordinate_list: List[Tuple[float, float]], mask_path: str):
+
+        def goldstar_distance_closest(coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]]):
             nnd_list = []
             for p in coord_list:
                 pb.emit(p)
@@ -34,20 +64,24 @@ def run_goldstar(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple
             return nnd_list
         # find dist to closest particle goldstar
         logging.info("running goldstar nnd")
+
         real_goldstar_list = goldstar_distance_closest(coordinate_list, alt_coordinate_list)
-        real_df = pd.DataFrame(data={'Nearest Neighbor Starfish Distance': real_goldstar_list})
+        real_df = pd.DataFrame(data={'Nearest Neighbor GoldStar Distance': real_goldstar_list})
         # clean up df
         clean_real_df = pd.DataFrame()
         clean_real_df[['og_coord', 'goldstar_coord', 'dist']] = pd.DataFrame(
-            [x for x in real_df['Nearest Neighbor Starfish Distance'].tolist()])
+            [x for x in real_df['Nearest Neighbor GoldStar Distance'].tolist()])
         # find random dist
         random_goldstar_list = goldstar_distance_closest(random_coordinate_list, alt_coordinate_list)
-        rand_df = pd.DataFrame(data={'Nearest Neighbor Starfish Distance': random_goldstar_list})
+        rand_df = pd.DataFrame(data={'Nearest Neighbor GoldStar Distance': random_goldstar_list})
         # fill clean random df
         clean_rand_df = pd.DataFrame()
         clean_rand_df[['og_coord', 'goldstar_coord', 'dist']] = pd.DataFrame(
-            [x for x in rand_df['Nearest Neighbor Starfish Distance'].tolist()])
+            [x for x in rand_df['Nearest Neighbor GoldStar Distance'].tolist()])
         return clean_real_df, clean_rand_df
+
+    if a_star == 0:
+        a_star_nnd(real_coords, rand_coords, alt_coords, img_path, mask_path)
     # if generate_random prop enabled, create random coordinates and return results, else return real coordinates
     return goldstar_nnd(coordinate_list=real_coords, random_coordinate_list=rand_coords, alt_coordinate_list=alt_coords)
 
