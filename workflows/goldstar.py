@@ -2,9 +2,10 @@ import logging
 import pandas as pd
 from typing import List, Tuple
 import math
+from PyQt5.QtCore import pyqtSignal
 import cv2
 
-def run_goldstar(real_coords, rand_coords, alt_coords, pb):
+def run_goldstar(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]], pb: pyqtSignal, a_star: bool = False):
     """
     NEAREST NEIGHBOR DISTANCE
     _______________________________

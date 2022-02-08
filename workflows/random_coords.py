@@ -17,10 +17,8 @@ def gen_random_coordinates(img_path: str, mask_path: str, count: int = 0):
         def meets_threshold(new_point, points):
             for point in points:
                 dist = np.sqrt(np.sum(np.square(new_point-point)))
-                print(dist, 'dist')
                 if dist < DEFAULT_DISTANCE_THRESH:
                     return False
-                    print('too close')
             return True
 
         def generate_K_points(K):

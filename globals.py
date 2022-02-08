@@ -62,11 +62,7 @@ WORKFLOWS: List[WorkflowObj] = [
             {
                 "title": "distance threshold (px)",
                 "placeholder": "27"
-            },
-            {
-             "title": "number of clusters",
-             "placeholder": "None"
-             }
+            }
         ]
     },
     {
@@ -87,9 +83,6 @@ WORKFLOWS: List[WorkflowObj] = [
             {
                 "title": "distance threshold (px)",
                 "placeholder": "27"
-            },
-            {"title": "number of clusters",
-             "placeholder": "None"
             },
             {
                 "title": "minimum clust size",
