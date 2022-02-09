@@ -53,6 +53,7 @@ class AnalysisWorker(QObject):
     def run(self, wf: WorkflowObj, vals: List[str], coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]] = None, img_path: str = "", mask_path: str = "", clust_area: bool = False):
         try:
             real_df1 = real_df2 = rand_df1 = rand_df2 = pd.DataFrame()
+            print('vals', vals)
             # ADD NEW WORKFLOWS HERE
             if wf['type'] == Workflow.NND:
                 real_df1, rand_df1 = run_nnd(

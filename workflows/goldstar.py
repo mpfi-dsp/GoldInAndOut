@@ -39,7 +39,6 @@ def run_goldstar(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple
     #         real_particle_grid[int(coord[1]), int(coord[0])] = 3
 
     #     # TODO: traverse real_particle_grid for 1's, find the closest 2 to a 3. Save the nearest distance to a list with the (x, y) of the coordinate represented by the 2 and the 3, as well as the euclidean distance between the 2 and the 3. Return the list.
-        
 
     #     print(pface_mask, pface_mask.shape)
 
@@ -54,8 +53,9 @@ def run_goldstar(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple
                 nnd_obj = [p1, (0,0), 0]
                 p_if_y, p_if_x = p1
                 for j in alt_list:
-                    if p != j:
-                        p2 = (j[1], j[0])
+                    p2 = (j[1], j[0])
+                    # print('pj', p1, p2)
+                    if p1 != p2:
                         p_jf_y, p_jf_x = p2
                         dist = math.sqrt(((p_jf_y - p_if_y) ** 2) + ((p_jf_x - p_if_x) ** 2))
                         if dist < small_dist:

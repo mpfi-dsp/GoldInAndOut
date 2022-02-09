@@ -68,7 +68,7 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
             scale_mask = np.zeros(pface_mask.shape, np.uint8)
             color_step = step % 11
             # draw ripples
-            print("alt coords in rip", alt_coords)
+            # print("alt coords in rip", alt_coords)
             for s in alt_coords:
                 x, y = int(s[0]), int(s[1])
                 cv2.circle(scale_mask, (y, x), rad, 255, -1)
@@ -111,7 +111,10 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
             scale_area = scale_area_external - difference
             percent_area = scale_area / pface_area
             # calculate LCPI
-            scaled_LCPI = gp_in_spine / percent_area
+            # print("lcpi", gp_in_spine, percent_area, gp_in_spine / percent_area )
+            scaled_LCPI = 0.0
+            if percent_area > 0.01:
+                scaled_LCPI = gp_in_spine / percent_area
             LCPI.append(scaled_LCPI)
             radius.append(rad)
             gp_captured.append(gp_in_spine)
