@@ -6,7 +6,7 @@ import numpy as np
 from PyQt5.QtCore import pyqtSignal
 import cv2
 
-def run_goldstar(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]], pb: pyqtSignal, img_path: str = "", mask_path: str = "", a_star: int = 0):
+def run_goldstar(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]], pb: pyqtSignal):
     """
     NEAREST NEIGHBOR DISTANCE
     _______________________________
@@ -65,30 +65,20 @@ def run_goldstar(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple
             return nnd_list
         # find dist to closest particle goldstar
         logging.info("running goldstar nnd")
-
         real_goldstar_list = goldstar_distance_closest(coordinate_list, alt_coordinate_list)
-        real_df = pd.DataFrame(data={'GoldStar': real_goldstar_list})
-        print('real', real_df.head())
+        real_df = pd.DataFrame(data={'Nearest Neighbor Starfish Distance': real_goldstar_list})
         # clean up df
         clean_real_df = pd.DataFrame()
         clean_real_df[['og_coord', 'goldstar_coord', 'dist']] = pd.DataFrame(
-            [x for x in real_df['GoldStar'].tolist()])
-
-        print('random_coordinate_list', random_coordinate_list)
+            [x for x in real_df['Nearest Neighbor Starfish Distance'].tolist()])
         # find random dist
         random_goldstar_list = goldstar_distance_closest(random_coordinate_list, alt_coordinate_list)
-        print('rand_goldstar_list', random_goldstar_list)
-        rand_df = pd.DataFrame(data={'GoldStar': random_goldstar_list})
-        print('ran', rand_df.head())
-
+        rand_df = pd.DataFrame(data={'Nearest Neighbor Starfish Distance': random_goldstar_list})
         # fill clean random df
         clean_rand_df = pd.DataFrame()
         clean_rand_df[['og_coord', 'goldstar_coord', 'dist']] = pd.DataFrame(
-            [x for x in rand_df['GoldStar'].tolist()])
+            [x for x in rand_df['Nearest Neighbor Starfish Distance'].tolist()])
         return clean_real_df, clean_rand_df
-
-    # if a_star == 0:
-    #     a_star_nnd(real_coords, rand_coords, alt_coords, img_path, mask_path)
     # if generate_random prop enabled, create random coordinates and return results, else return real coordinates
     return goldstar_nnd(coordinate_list=real_coords, random_coordinate_list=rand_coords, alt_coordinate_list=alt_coords)
 
