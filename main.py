@@ -106,10 +106,16 @@ class GoldInAndOut(QWidget):
             self.home_page.show_logs_btn.setText("Display Logger")
             self.dlg.hide()
 
+    def props_checked(self):
+        for wf_cb in self.home_page.workflow_cbs:
+            if wf_cb.isChecked():
+                return True
+        return False
+
     def init_workflows(self):
         try:
             """ INITIALIZE CHILD WORKFLOW WINDOWS """
-            if len(self.home_page.img_le.text()) > 0 and len(self.home_page.csv_le.text()) > 0:
+            if len(self.home_page.img_le.text()) > 0 and len(self.home_page.csv_le.text()) > 0 and (self.props_checked() == True):
                 # gui elements to disable when running
                 self.home_props = [self.home_page.start_btn,
                                    self.home_page.img_le,  self.home_page.mask_le, self.home_page.csv_le, self.home_page.csv2_le, self.home_page.ip_scalar_type, self.home_page.op_scalar_type, self.home_page.output_dir_le, self.home_page.dod_cb, self.home_page.csvs_lb_i, self.home_page.csvs_ip_o, self.home_page.clust_area, self.home_page.show_logs_btn]

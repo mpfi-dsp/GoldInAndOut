@@ -64,8 +64,7 @@ class AnalysisWorker(QObject):
                 real_df2, rand_df2, real_df1, rand_df1 = run_separation(
                     real_coords=coords, rand_coords=rand_coords,  distance_threshold=vals[0], min_clust_size=vals[1], pb=self.progress, clust_area=clust_area)
             elif wf['type'] == Workflow.RIPPLER:
-                real_df1, rand_df1 = run_rippler(real_coords=coords, alt_coords=alt_coords, rand_coords=rand_coords, pb=self.progress,
-                                                 img_path=img_path, mask_path=mask_path, max_steps=vals[0], step_size=vals[1], initial_radius=vals[2])
+                real_df1, rand_df1 = run_rippler(real_coords=coords, alt_coords=alt_coords, rand_coords=rand_coords, pb=self.progress, img_path=img_path, mask_path=mask_path, max_steps=vals[0], step_size=vals[1], initial_radius=vals[2])
             elif wf['type'] == Workflow.GOLDSTAR:
                 real_df1, rand_df1 = run_goldstar(
                     real_coords=coords, rand_coords=rand_coords, alt_coords=alt_coords, pb=self.progress, img_path=img_path, mask_path=mask_path, a_star=vals[0])
