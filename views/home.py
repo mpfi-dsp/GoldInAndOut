@@ -41,7 +41,7 @@ class HomePage(QWidget):
         # folder btn
         folder_btn = QPushButton('Upload Folder', self)
         folder_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        folder_btn.setToolTip('Upload all files at once')
+        folder_btn.setToolTip('Upload all files at once. Filenames: "image" => image, "mask" => mask, "gold" => csv1, "landmark" => csv2.')
         folder_btn.setStyleSheet("max-width: 150px; ")
         folder_btn.clicked.connect(self.open_folder_picker)
 
@@ -52,7 +52,7 @@ class HomePage(QWidget):
         # img btn
         img_btn = QPushButton('Upload Image', self)
         img_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        img_btn.setToolTip('Image can be in TIF, PNG, JPG, or JPEG format')
+        img_btn.setToolTip('Supports TIF, PNG, JPG, or JPEG format..')
         img_btn.clicked.connect(partial(self.open_file_picker, FileType.IMAGE))
         # img input
         self.img_le = QLineEdit()
@@ -62,7 +62,7 @@ class HomePage(QWidget):
         # mask btn
         mask_btn = QPushButton('Upload Mask', self)
         mask_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        mask_btn.setToolTip('Mask can be any color with white background')
+        mask_btn.setToolTip('Supports TIF, PNG, JPG, or JPEG format. Mask can be any color with white background.')
         mask_btn.clicked.connect(partial(self.open_file_picker,  FileType.MASK))
         # mask input
         self.mask_le = QLineEdit()
@@ -72,7 +72,7 @@ class HomePage(QWidget):
         # csv btn
         csv_btn = QPushButton('Upload CSV', self)
         csv_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        csv_btn.setToolTip('Particle population. CSV must have X and Y columns.')
+        csv_btn.setToolTip('Particle population. CSV must have X and Y columns with no spaces.')
         csv_btn.clicked.connect(partial(self.open_file_picker, FileType.CSV))
         # csv input
         self.csv_le = QLineEdit()
@@ -82,7 +82,7 @@ class HomePage(QWidget):
         # csv2 btn
         csv2_btn = QPushButton('Upload CSV2', self)
         csv2_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        csv2_btn.setToolTip('Landmark population. CSV must have X and Y columns.')
+        csv2_btn.setToolTip('Landmark population. CSV must have X and Y columns with no spaces.')
         csv2_btn.clicked.connect(partial(self.open_file_picker, FileType.CSV2))
         # output_dir input
         self.csv2_le = QLineEdit()
