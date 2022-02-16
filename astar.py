@@ -130,27 +130,54 @@ grid = grid^(grid&1==grid)
 # grid = np.where((grid==0)|(grid==1), grid^1, grid)
 # grid = ~grid + 
 print(grid, grid.shape)
- 
+
+# def gaussian_pyramid(image, scale=2, minSize=(60, 60)):
+#    yield image
+#    while True:
+#      w = int(image.shape[1] / scale)
+#      h = int(image.shape[0] / scale)
+#      image = cv2.pyrDown(image, dstsize=(w,h))
+#      if image.shape[0] < minSize[1] or image.shape[1] < minSize[0]:
+#         break
+#      yield image
+
+# new_grid = gaussian_pyramid(grid, scale=2, minSize=(256, 256))
+# new_grid = np.array(new_grid)
+# print(new_grid)
+
+# fig, ax = plt.subplots(figsize=(8,8))
+# ax.imshow(grid, cmap=plt.cm.Dark2)
+# ax.scatter(COORDS[0][1],COORDS[0][0], marker = "*", color = "yellow", s = 200)
+# ax.scatter(ALT_COORDS[0][1],ALT_COORDS[0][0], marker = "*", color = "red", s = 200)
+# plt.show()
+
+new_grid = cv2.pyrDown(cv2.pyrDown(cv2.pyrDown(grid)))
+print(new_grid, new_grid.shape)
+
+for i, particle in enumerate(COORDS):
+    COORDS[i] = (int(particle[0] * (1/8)), int(particle[1] * (1/8)))
+
+for i, alt_coord in enumerate(ALT_COORDS):
+    ALT_COORDS[i] = (int(alt_coord[0] * (1/8)), int(alt_coord[1] * (1/8)))
+
 # run a star
 for particle in COORDS:
     start = tuple(int(x) for x in particle)#[::-1]
-    print('start', grid[start])
-    if grid[start] == 0:
+    print('start', new_grid[start])
+    if new_grid[start] == 0:
         for alt_coord in ALT_COORDS:
-            # start = tuple((grid.shape[1] - int(particle[1]), grid.shape[0] - int(particle[0])))#[::-1]
-            # goal = tuple((grid.shape[1] - int(alt_coord[1]), grid.shape[0] - int(alt_coord[0])))
             goal = tuple(int(x) for x in alt_coord)#[::-1]
             print(start, goal)
 
 
             # plot map and path
-            # fig, ax = plt.subplots(figsize=(8,8))
-            # ax.imshow(grid, cmap=plt.cm.Dark2)
-            # ax.scatter(start[1],start[0], marker = "*", color = "yellow", s = 200)
-            # ax.scatter(goal[1],goal[0], marker = "*", color = "red", s = 200)
-            # plt.show()
+            fig, ax = plt.subplots(figsize=(8,8))
+            ax.imshow(new_grid, cmap=plt.cm.Dark2)
+            ax.scatter(start[1],start[0], marker = "*", color = "yellow", s = 200)
+            ax.scatter(goal[1],goal[0], marker = "*", color = "red", s = 200)
+            plt.show()
             print('generating path')
-            route = astar(grid, start, goal)
+            route = astar(new_grid, start, goal)
             route = route + [start]
             # Reverse the order:
             route = route[::-1]
@@ -160,31 +187,3 @@ for particle in COORDS:
             if dist < small_dist:
                 small_dist = dist
                 print('new smallest distance', dist)
-
-# x_coords = []
-
-# y_coords = []
-# for i in (range(0,len(route))):
-
-#     x = route[i][0]
-
-#     y = route[i][1]
-
-#     x_coords.append(x)
-
-#     y_coords.append(y)
-# plot map and path
-
-# fig, ax = plt.subplots(figsize=(6,7))
-
-# ax.imshow(grid, cmap=plt.cm.Dark2)
-
-# ax.scatter(start[1],start[0], marker = "*", color = "yellow", s = 200)
-
-# ax.scatter(goal[1],goal[0], marker = "*", color = "red", s = 200)
-
-# ax.plot(y_coords,x_coords, color = "black")
-
-# plt.show()
- 
-# print('distance', len(route))
