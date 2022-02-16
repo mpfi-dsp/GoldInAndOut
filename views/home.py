@@ -266,13 +266,13 @@ class HomePage(QWidget):
             if len(os.listdir(input_folder)) > 0:
                 for filename in os.listdir(input_folder):
                     full_file = os.path.join(input_folder, filename)
-                    if 'image' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'mask' not in filename.lower():
+                    if 'image' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'mask' not in filename.lower() and len(self.img_le.text()) == 0:
                         self.img_le.setText(full_file)
-                    elif 'mask' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'image' not in filename.lower():
+                    elif 'mask' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'image' not in filename.lower() and len(self.mask_le.text()) == 0:
                         self.mask_le.setText(full_file)
                     elif 'gold' in filename.lower() and filename.endswith('.csv') and 'landmark' not in filename.lower() and len(self.csv_le.text()) == 0:
                         self.csv_le.setText(full_file)
-                    elif 'landmark' in filename.lower() and filename.endswith('.csv') and 'gold' not in filename.lower():
+                    elif 'landmark' in filename.lower() and filename.endswith('.csv') and 'gold' not in filename.lower() and len(self.csv2_le.text()) == 0:
                         self.csv2_le.setText(full_file)
         except Exception as e:
             print(e, traceback.format_exc())
