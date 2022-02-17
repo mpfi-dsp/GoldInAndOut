@@ -4,7 +4,7 @@ from typing import List
 
 
 """ VERSION NUMBER """
-VERSION_NUMBER: str = '1.17.0'
+VERSION_NUMBER: str = '1.18.1'
 
 """
 WORKFLOW METADATA 
@@ -62,11 +62,7 @@ WORKFLOWS: List[WorkflowObj] = [
             {
                 "title": "distance threshold (px)",
                 "placeholder": "27"
-            },
-            {
-             "title": "number of clusters",
-             "placeholder": "None"
-             }
+            }
         ]
     },
     {
@@ -87,9 +83,6 @@ WORKFLOWS: List[WorkflowObj] = [
             {
                 "title": "distance threshold (px)",
                 "placeholder": "27"
-            },
-            {"title": "number of clusters",
-             "placeholder": "None"
             },
             {
                 "title": "minimum clust size",
@@ -120,13 +113,17 @@ WORKFLOWS: List[WorkflowObj] = [
                 "title": "step size (px)",
                 "placeholder": "60"
             },
+            {
+                "title": "initial radius (px)",
+                "placeholder": "50"
+            }
         ]
     },
     {
         "name": "GOLDSTAR",
         "type": Workflow.GOLDSTAR,
         "header": "Gold Star Nearest Neighbor Distance",
-        "desc": "Find the nearest neighbor distance of two different populations. Requires lighthouse population.",
+        "desc": "Find the nearest neighbor distance of two different populations. Requires lighthouse population",
         "checked": False,
         "graph": {
             "type": "hist",
@@ -135,7 +132,12 @@ WORKFLOWS: List[WorkflowObj] = [
             "y_label": "Number of Particles",
             "x_type": "dist"
         },
-        "props": []
+        "props": [
+            {
+                "title": "A* (around landmarks)",
+                "placeholder": "0"
+            }
+        ]
     },
 ]
 
@@ -166,6 +168,8 @@ MAX_DIRS_PRUNE: int = 5
 """ DEFAULT OUTPUT DIRECTORY """
 DEFAULT_OUTPUT_DIR: str = './output'
 
+""" RANDOM COORDINATES DEFAULT DISTANCE THRESHOLD (px) """
+DEFAULT_DISTANCE_THRESH = 5
 
 """ PROGRESS BAR COLORS """
 

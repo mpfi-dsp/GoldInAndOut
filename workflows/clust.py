@@ -10,31 +10,25 @@ from typing import List, Tuple
 from globals import REAL_COLOR
 
 
-def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], img_path: str, distance_threshold: int = 27, n_clusters: int = None, affinity: str = 'euclidean', linkage: str = 'single', clust_area: bool = False):
+def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], img_path: str, distance_threshold: int = 27, affinity: str = 'euclidean', linkage: str = 'single', clust_area: bool = False):
     """
     HIERARCHICAL CLUSTERING
     _______________________________
-    @prog: progress bar wrapper element, allows us to track how much time is left in process
+    @pb: progress bar wrapper element, allows us to track how much time is left in process
     @distance_threshold: using a distance threshold to automatically cluster particles
-    @n_clusters: set number of clusters to use
     @affinity: metric used to calc linkage
     @linkage: linkage criteria to use - determines which distance to use between sets of observation
+        @single: uses the minimum of the distances between all observations of the two sets
         @ward: minimizes the variance of the clusters being merged
         @average: uses the average of the distances of each observation of the two sets
         @maximum: linkage uses the maximum distances between all observations of the two sets
-        @single: uses the minimum of the distances between all observations of the two sets
     @real_coords: the real coordinates
     @rand_coords: list of randomly generated coordinates
     """
     logging.info("clustering")
     pb.emit(10)
     # handle ugly pyqt5 props
-    if n_clusters != "None":
-        distance_threshold = None
-        n_clusters = int(n_clusters)
-    else:
-        n_clusters = None
-        distance_threshold = int(distance_threshold)
+    n_clusters = None
     # cluster
     hc = AgglomerativeClustering(n_clusters=n_clusters, distance_threshold=distance_threshold*2, affinity=affinity, linkage=linkage)
     cluster = hc.fit_predict(real_coords)
@@ -98,8 +92,6 @@ def draw_clust(clust_df: pd.DataFrame, img: List, palette: str = "rocket_r", dis
         new_img = np.zeros(img.shape, dtype=np.uint8)
         new_img.fill(255)
 
-    if distance_threshold != 27 and draw_clust_area:
-        distance_threshold = int(distance_threshold)
     # make color pal
     palette = create_color_pal(n_bins=len(set(clust_df['cluster_id'])), palette_type=palette)
     # draw dots

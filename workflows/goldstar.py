@@ -2,9 +2,11 @@ import logging
 import pandas as pd
 from typing import List, Tuple
 import math
+import numpy as np
+from PyQt5.QtCore import pyqtSignal
 import cv2
 
-def run_goldstar(real_coords, rand_coords, alt_coords, pb):
+def run_goldstar(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]], pb: pyqtSignal):
     """
     NEAREST NEIGHBOR DISTANCE
     _______________________________
@@ -12,8 +14,37 @@ def run_goldstar(real_coords, rand_coords, alt_coords, pb):
     @rand_coords: list of randomly generated coordinates
     @pb: progress bar wrapper element, allows us to track how much time is left in process
     """
-    def goldstar_nnd(coordinate_list, random_coordinate_list, alt_coordinate_list):
-        def goldstar_distance_closest(coord_list, alt_list):
+    # def a_star_nnd(coord_list: List[Tuple[float, float]], rand_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]], img_path: str = "", mask_path: str = ""):
+    #     # import img
+    #     img_original = cv2.imread(img_path)
+    #     crop = img_original.shape
+    #     # if no mask provided, use the entire image
+    #     if len(mask_path) > 0:
+    #         img_pface = cv2.imread(mask_path)
+    #     else:
+    #         img_pface = np.zeros(crop, dtype=np.uint8)
+    #         img_pface.fill(245)
+    #     # crop to size of normal image
+    #     img_pface = img_pface[:crop[0], :crop[1], :3]
+    #     # convert to grayscale
+    #     img_pface2 = cv2.cvtColor(img_pface, cv2.COLOR_BGR2GRAY)
+    #     # # convert to binary
+    #     ret, binary = cv2.threshold(img_pface2, 100, 255, cv2.THRESH_OTSU)
+    #     pface_mask = ~binary
+    #     # set as grid
+    #     real_particle_grid = pface_mask
+    #     for coord in alt_list:
+    #         real_particle_grid[int(coord[1]), int(coord[0])] = 2
+    #     for coord in coord_list:
+    #         real_particle_grid[int(coord[1]), int(coord[0])] = 3
+
+    #     # TODO: traverse real_particle_grid for 1's, find the closest 2 to a 3. Save the nearest distance to a list with the (x, y) of the coordinate represented by the 2 and the 3, as well as the euclidean distance between the 2 and the 3. Return the list.
+
+    #     print(pface_mask, pface_mask.shape)
+
+    def goldstar_nnd(coordinate_list: List[Tuple[float, float]], random_coordinate_list: List[Tuple[float, float]], alt_coordinate_list: List[Tuple[float, float]]):
+
+        def goldstar_distance_closest(coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]]):
             nnd_list = []
             for p in coord_list:
                 pb.emit(p)
@@ -22,8 +53,9 @@ def run_goldstar(real_coords, rand_coords, alt_coords, pb):
                 nnd_obj = [p1, (0,0), 0]
                 p_if_y, p_if_x = p1
                 for j in alt_list:
-                    if p != j:
-                        p2 = (j[1], j[0])
+                    p2 = (j[1], j[0])
+                    # print('pj', p1, p2)
+                    if p1 != p2:
                         p_jf_y, p_jf_x = p2
                         dist = math.sqrt(((p_jf_y - p_if_y) ** 2) + ((p_jf_x - p_if_x) ** 2))
                         if dist < small_dist:

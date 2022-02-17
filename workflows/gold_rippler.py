@@ -19,7 +19,7 @@ COLORS = [(128, 0, 0),
               (233, 150, 122)]
 
 
-def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]], img_path: str, mask_path: str, pb: pyqtSignal, max_steps: int = 10, step_size: int = 60):
+def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]], img_path: str, mask_path: str, pb: pyqtSignal, max_steps: int = 10, step_size: int = 60, initial_radius: int = 50):
     """
     GOLD RIPPLER (LCPI)
     _______________________________
@@ -27,9 +27,10 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
     @rand_coords: random centroids coordinates scaled to whatever format desired
     @alt_coords: 2nd csv coordinates being measured against scaled to whatever format desired
     @img_path: path to img
-    @mask_path: path to pface mask
+    @mask_path: path to p-face mask
     @pb: progress bar wrapper element, allows us to track how much time is left in process
-    @max_steps: maximum number of
+    @max_steps: maximum number of steps
+    @initial_radius: initial radius of ripples
     """
     logging.info("running gold rippler (LCPI)")
     # find LCPI (Landmark correlated particle intensity)
@@ -60,14 +61,14 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
     rippler_out = []
     for coord_list in [real_coords, rand_coords]:
         LCPI, radius, gp_captured, img_covered, total_gp = [[] for _ in range(5)]
-        rad = 100
-        max = (int(max_steps) * int(step_size)) + rad
+        rad = initial_radius
+        max = (max_steps * step_size) + rad
         while rad <= max:
             total_captured_particles = 0
             scale_mask = np.zeros(pface_mask.shape, np.uint8)
             color_step = step % 11
             # draw ripples
-            print("alt coords in rip", alt_coords)
+            # print("alt coords in rip", alt_coords)
             for s in alt_coords:
                 x, y = int(s[0]), int(s[1])
                 cv2.circle(scale_mask, (y, x), rad, 255, -1)
@@ -110,13 +111,16 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
             scale_area = scale_area_external - difference
             percent_area = scale_area / pface_area
             # calculate LCPI
-            scaled_LCPI = gp_in_spine / percent_area
+            # print("lcpi", gp_in_spine, percent_area, gp_in_spine / percent_area )
+            scaled_LCPI = 0.0
+            if percent_area > 0.01:
+                scaled_LCPI = gp_in_spine / percent_area
             LCPI.append(scaled_LCPI)
             radius.append(rad)
             gp_captured.append(gp_in_spine)
             img_covered.append(percent_area)
             total_gp.append(len(coord_list))
-            rad += int(step_size)
+            rad += step_size
             pb.emit(rad)
         # generate new df and return
         new_df = pd.DataFrame(data={'radius': radius, '%_gp_captured': gp_captured, '%_img_covered': img_covered, 'LCPI': LCPI, 'total_gp': total_gp})
@@ -124,13 +128,13 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
     return rippler_out
 
 
-def draw_rippler(coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]], img: List, mask_path: str, palette: str = "rocket_r", max_steps: int = 10, step_size: int = 60, circle_c=(0, 0, 255)):
+def draw_rippler(coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]], img: List, mask_path: str, palette: str = "rocket_r", max_steps: int = 10, step_size: int = 60, circle_c: Tuple[int, int, int] = (0, 0, 255), initial_radius: int = 50):
     def sea_to_rgb(color):
         color = [val * 255 for val in color]
         return color
     output_img = img.copy()
-    rad, step = 100, 0
-    max = (int(max_steps) * int(step_size)) + rad
+    rad, step = initial_radius, 0
+    max = (max_steps * step_size) + rad
     pal = create_color_pal(n_bins=11, palette_type=palette)
     img_pface = cv2.imread(mask_path)
     # convert to grayscale
@@ -159,6 +163,6 @@ def draw_rippler(coords: List[Tuple[float, float]], alt_coords: List[Tuple[float
                 if scale_mask[x, y] != 0:
                     #  orange particles: inside ripple
                     cv2.circle(output_img, (y, x), 8, circle_c, -1)
-        rad += int(step_size)
+        rad += step_size
         step += 1
     return output_img
