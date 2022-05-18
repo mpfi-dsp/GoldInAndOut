@@ -24,7 +24,7 @@ from views.logger import Logger
 from globals import PALETTE_OPS, PROG_COLOR_1, PROG_COLOR_2, REAL_COLOR, RAND_COLOR
 from typings import Unit, Workflow, DataObj, OutputOptions, WorkflowObj
 from typing import List, Tuple
-from utils import Progress, create_color_pal, enum_to_unit, to_coord_list, pixels_conversion
+from utils import Progress, create_color_pal, enum_to_unit, to_coord_list, pixels_conversion, avg_vals
 from threads import AnalysisWorker, DownloadWorker
 from workflows.random_coords import gen_random_coordinates
 from workflows.clust import draw_clust
@@ -405,6 +405,8 @@ class WorkflowPage(QWidget):
                 # fix csv index not matching id
                 self.data.real_df1.sort_values(wf["graph"]["x_type"], inplace=True)
                 self.data.real_df1 = self.data.real_df1.reset_index(drop=True)
+                # add averaged values to real dataframe
+                self.data.real_df1 = avg_vals(wf['type'], self.data.real_df1)
                 # logging.info('output_ops', output_ops)
                 self.data.final_real = pixels_conversion(
                     data=self.data.real_df1, unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
@@ -412,6 +414,8 @@ class WorkflowPage(QWidget):
                         self.data.rand_df1[wf["graph"]["x_type"]]) > 0:
                     self.data.rand_df1.sort_values(wf["graph"]["x_type"], inplace=True)
                     self.data.rand_df1 = self.data.rand_df1.reset_index(drop=True)
+                    # add averaged values to real dataframe
+                    self.data.rand_df1 = avg_vals(wf['type'], self.data.rand_df1)
                 if not self.data.rand_df1.empty:
                     self.data.final_rand = pixels_conversion(
                         data=self.data.rand_df1, unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))

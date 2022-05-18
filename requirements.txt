@@ -1,5 +1,5 @@
 numpy
-PyQt5==5.14.1
+PyQt5
 numexpr
 seaborn
 Pillow

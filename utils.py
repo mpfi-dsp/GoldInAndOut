@@ -139,6 +139,32 @@ def to_df(coords: List[Tuple[float, float]]) -> pd.DataFrame:
     df = pd.DataFrame(data={'X': x_coords, 'Y': y_coords})
     return df
 
+def avg_vals(val, df: pd.DataFrame) -> pd.DataFrame:
+    if val == Workflow.NND:
+        real_avg = df['dist'].mean()
+        df['avg_dist'] = 0
+        df.at[0, 'avg_dist'] = real_avg
+
+    if val == Workflow.CLUST:
+        clustCounts = df['cluster_id'].value_counts()
+        clustCountsNo1 = clustCounts[clustCounts > 1]
+        real_avg = clustCounts.mean()
+        No1_avg = clustCountsNo1.mean()
+
+        df['avg'] = 0
+        df.at[0, 'avg'] = real_avg
+    
+        df['avg_no_1s'] = 0
+        df.at[0, 'avg_no_1s'] = No1_avg
+
+    if val == Workflow.SEPARATION:
+        real_avg = df['dist'].mean()
+        df['avg_dist'] = 0
+        df.at[0, 'avg_dist'] = real_avg
+    
+    return(df)
+    
+
 # """ TURN ENUM INTO WORKFLOW NAME """
 # def enum_to_workflow(val):
 #     if val == Workflow.NND:

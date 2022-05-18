@@ -74,7 +74,6 @@ def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coord
                     clust_obj[2] += area
                 clust_objs.append(clust_obj)
             new_df = pd.DataFrame(clust_objs, columns=["cluster_id", "cluster_size", "cluster_area"])
-            new_df = new_df.reset_index(drop=True)
             clust_details_dfs.append(new_df)
     else: 
         emp_df = pd.DataFrame()
