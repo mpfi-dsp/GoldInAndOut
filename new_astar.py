@@ -397,8 +397,8 @@ for i, alt_coord in enumerate(ALT_COORDS):
 
 fig, ax = plt.subplots(figsize=(8,8))
 
-start = tuple(int(x) for x in COORDS[2])
-goal = tuple(int(x) for x in ALT_COORDS[2])
+start = tuple(int(x) for x in COORDS[0])
+goal = tuple(int(x) for x in ALT_COORDS[0])
 
 ax.scatter(start[1],start[0], marker = "*", color = "pink", s = 200)
 ax.scatter(goal[1],goal[0], marker = "*", color = "grey", s = 200)
@@ -449,25 +449,30 @@ def makeHolePath(maze, cost, start, end, its = None):
 
     return xVals, yVals, uVals
 
-def astarMap(map, flippedMap, start, goal):
+ax.imshow(new_grid, cmap=plt.cm.binary)
+
+def astarMap(map, flippedMap, _start, _goal):
     print("Starting Hole Path...")
-    _Xi, _Yi, _Ui = makeHolePath(flippedMap, 1, goal, start)
+    _Xi, _Yi, _Ui = makeHolePath(flippedMap, 1, _goal, _start)
     print("Hole Path Finished")
 
-    if((_Yi[-1], _Xi[-1]) == (goal[1],goal[0])):
+    if((_Yi[-1], _Xi[-1]) == (_goal[1],_goal[0])):
         gPoint = (_Xi[1], _Yi[1])
     else:
         gPoint = (_Xi[-1], _Yi[-1])
 
-    new_grid = cv2.circle(map, (gPoint[1],gPoint[0]), 3, (0, 0, 0), -1)
+    c_map = cv2.circle(map, (gPoint[1],gPoint[0]), 3, (0, 0, 0), -1)
 
     print("Starting Paritcle Path...")
-    _X, _Y, _U = makePath(map,1, start, gPoint)
+    _X, _Y, _U = makePath(c_map,1, _start, gPoint)
     print("Particle Path Finished")
 
-    ax.imshow(map, cmap=plt.cm.binary)
+    # ax.imshow(map, cmap=plt.cm.binary)
     plt.scatter(_Y, _X)
     plt.scatter(_Yi, _Xi)
-    plt.show()
 
-astarMap(new_grid, new_grid_flipped, start, goal)
+for i in range(len(ALT_COORDS)):
+    point = tuple(int(x) for x in ALT_COORDS[i])
+    astarMap(new_grid, new_grid_flipped, start, point)
+
+plt.show()
