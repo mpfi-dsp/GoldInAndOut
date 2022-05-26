@@ -14,7 +14,34 @@ import time
 from PyQt5.QtCore import pyqtSignal
 import logging
 
-# start_time = time.time()
+def map_downscale(img_path: str, mask_path: str):
+    # import img
+    img_original = cv2.imread(img_path)
+    crop = img_original.shape
+    # if no mask provided, use the entire image
+    if len(mask_path) > 0:
+        img_pface = cv2.imread(mask_path)
+    else:
+        img_pface = np.zeros(crop, dtype=np.uint8)
+        img_pface.fill(245)
+    # crop to size of normal image
+    img_pface = img_pface[:crop[0], :crop[1], :3]
+    # convert to grayscale
+    img_pface2 = cv2.cvtColor(img_pface, cv2.COLOR_BGR2GRAY)
+    # # convert to binary
+    ret, binary = cv2.threshold(img_pface2, 100, 255, cv2.THRESH_OTSU)
+    grid = ~binary
+    flip_grid = binary
+    # print(grid, grid.shape)
+    grid[grid == 255] = 1
+    flip_grid[flip_grid == 255] = 1
+    grid = grid^(grid&1==grid)
+    flip_grid = flip_grid^(flip_grid&1==flip_grid)
+
+    new_grid = cv2.pyrDown(cv2.pyrDown(cv2.pyrDown(cv2.pyrDown(grid))))
+    new_grid_flipped = cv2.pyrDown(cv2.pyrDown(cv2.pyrDown(cv2.pyrDown(flip_grid))))
+
+    return(new_grid, new_grid_flipped)
 
 def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]], pb: pyqtSignal):
 
@@ -432,148 +459,110 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
 
         return(dist_list)
 
-    def map_downscale(img_path: str, mask_path: str):
-        # import img
-        img_original = cv2.imread(img_path)
-        crop = img_original.shape
-        # if no mask provided, use the entire image
-        if len(mask_path) > 0:
-            img_pface = cv2.imread(mask_path)
-        else:
-            img_pface = np.zeros(crop, dtype=np.uint8)
-            img_pface.fill(245)
-        # crop to size of normal image
-        img_pface = img_pface[:crop[0], :crop[1], :3]
-        # convert to grayscale
-        img_pface2 = cv2.cvtColor(img_pface, cv2.COLOR_BGR2GRAY)
-        # # convert to binary
-        ret, binary = cv2.threshold(img_pface2, 100, 255, cv2.THRESH_OTSU)
-        grid = ~binary
-        flip_grid = binary
-        # print(grid, grid.shape)
-        grid[grid == 255] = 1
-        flip_grid[flip_grid == 255] = 1
-        grid = grid^(grid&1==grid)
-        flip_grid = flip_grid^(flip_grid&1==flip_grid)
-
-        new_grid = cv2.pyrDown(cv2.pyrDown(cv2.pyrDown(grid)))
-        new_grid_flipped = cv2.pyrDown(cv2.pyrDown(cv2.pyrDown(flip_grid)))
-
-        return(new_grid, new_grid_flipped)
-
-    # This is where the actual code runs...
-    logging.info("initializing variables & making maps...")
-
-    i_l = 0
-    nnd_list = []
-    step_list = []
-
     map, flippedMap = map_downscale(map_path, mask_path)
-    # ax.imshow(map, cmap=plt.cm.binary)
-
-    coord_list = coord_list[:1]
-
-    for i, particle in enumerate(coord_list):
-        coord_list[i] = (int(particle[0] * (1/8)), int(particle[1] * (1/8)))
-
-    for i, alt_coord in enumerate(alt_list):
-        alt_list[i] = (int(alt_coord[0] * (1/8)), int(alt_coord[1] * (1/8)))
     
-    logging.info("running A* algorithm...")
-    for p in coord_list:
-        pb.emit(p)
-        i_l += 1
-        i_j = 0
-        small_dist = 10000000000000000000
-        max_len = 10000
-        p1 = (p[1], p[0])
-        # ax.scatter(p1[0], p1[1], marker = "*", color = "pink", s = 200)
-        nnd_obj = [p1, (0,0), 0]
-        p_if_y, p_if_x = p1
+    def astar(_coord_list: List[Tuple[float, float]], _alt_list: List[Tuple[float, float]]):
+        # This is where the actual code runs...
+        logging.info("initializing variables & making maps...")
 
-        ordered_alt_list = orderCoords(p1, alt_list)
+        i_l = 0
+        nnd_list = []
+        step_list = []
 
-        for j in ordered_alt_list:
-            i_j += 1
+        # _coord_list = _coord_list[:30]
 
-            p2 = (j[0], j[1])
-            # ax.scatter(p2[0], p2[1], marker = "*", color = "grey", s = 200)
-            if p1 != p2:
-                p_jf_y, p_jf_x = p2
-                
-                _Xi, _Yi = makeHolePath(flippedMap, 1, (p2[1], p2[0]), (p1[1], p1[0]), (max_len - 1))
+        for i, particle in enumerate(_coord_list):
+            _coord_list[i] = (int(particle[0] * (1/16)), int(particle[1] * (1/16)))
 
-                if((_Yi[-1], _Xi[-1]) == p2):
-                    gPoint = (_Xi[0], _Yi[0])
-                else:
-                    gPoint = (_Xi[-1], _Yi[-1])
+        for i, alt_coord in enumerate(_alt_list):
+            _alt_list[i] = (int(alt_coord[0] * (1/16)), int(alt_coord[1] * (1/16)))
+        
+        logging.info("running A* algorithm...")
 
-                c_map = cv2.circle(map, (gPoint[1],gPoint[0]), 3, (0, 0, 0), -1)
+        start_time = time.time()
 
-                _X, _Y = makePath(c_map, 1, (p1[1], p1[0]), gPoint, ((max_len - len(_Yi) - 1)), True)
+        for p in _coord_list:
+            pb.emit(p)
+            i_l += 1
+            i_j = 0
+            small_dist = 10000000000000000000
+            max_len = 10000
+            p1 = (p[1], p[0])
+            nnd_obj = [(p1[0]*16,p1[1]*16), (0,0), 0]
+            path_coords = [0, 0]
+            p_if_y, p_if_x = p1
 
-                if(_Y == None):
-                    continue
+            ordered_alt_list = orderCoords(p1, _alt_list)
 
-                dist = len(_Y) + len(_Yi)
-                # print("Particle %d, Spine %d Dist: %d" % (i_l, i_j, dist))
-                # print("--- %s seconds ---" % (time.time() - start_time))
+            for j in ordered_alt_list:
+                i_j += 1
 
-                if dist < small_dist:
-                    small_dist = dist
-                    max_len = dist
-                    nnd_obj[1], nnd_obj[2] = p2, small_dist
-                    step_obj = [_Y, _X, _Yi, _Xi, p]                    
+                p2 = (j[0], j[1])
+                if p1 != p2:
+                    p_jf_y, p_jf_x = p2
+                    
+                    _Xi, _Yi = makeHolePath(flippedMap, 1, (p2[1], p2[0]), (p1[1], p1[0]), (max_len - 1))
 
-        nnd_list.append(nnd_obj)
-        step_list.append(step_obj)
-    real_df = pd.DataFrame(nnd_list, columns = ['og_coord', 'a*_coord', 'dist'])
-    step_df = pd.DataFrame(step_obj, columns = ['Particle_Y', 'Particle_X', 'Hole_Y', 'Hole_X', 'Particle_#'])
-    return(real_df, step_df)
-    
-    # for coord in step_list:
-        # ax.scatter(coord[0], coord[1])
-        # ax.scatter(coord[2], coord[3])
-    
-    # plt.show()
+                    if((_Yi[-1], _Xi[-1]) == p2):
+                        gPoint = (_Xi[0], _Yi[0])
+                    else:
+                        gPoint = (_Xi[-1], _Yi[-1])
 
-# img_path = "./Feb 8 2022 P1 for test/P1 Bk6 Cav2_1 12nm montage.tif"
-# mask_path = "./Feb 8 2022 P1 for test/P1 Bk6 Cav2_1 12nm blue mask.tif"
-# csv_path = "./Feb 8 2022 P1 for test/P1 XY 12nm in pixels.csv"
-# csv2_path = "./Feb 8 2022 P1 for test/P1 XY spines in pixels.csv"
+                    c_map = cv2.circle(map, (gPoint[1],gPoint[0]), 3, (0, 0, 0), -1)
 
-# data = pd.read_csv(csv_path, sep=",")
-# scaled_df = pixels_conversion(data=data, unit=Unit.PIXEL, scalar=1.0)
-# COORDS = to_coord_list(scaled_df)
+                    _X, _Y = makePath(c_map, 1, (p1[1], p1[0]), gPoint, ((max_len - len(_Yi) - 1)), True)
 
-# data = pd.read_csv(csv2_path, sep=",")
-# ALT_COORDS = to_coord_list(
-# pixels_conversion(data=data, unit=Unit.PIXEL, scalar=1.0))
+                    if(_Y == None):
+                        continue
 
-# fig, ax = plt.subplots(figsize=(8,8))
+                    dist = len(_Y) + len(_Yi)
 
-# run_astar(img_path, mask_path, COORDS[:5], ALT_COORDS)
+                    curTime = time.time() - start_time
+                    logging.info(round(curTime, 2))
 
-'''
-for i, particle in enumerate(COORDS):
-    COORDS[i] = (int(particle[0] * (1/8)), int(particle[1] * (1/8)))
+                    if dist < small_dist:
+                        small_dist = dist
+                        max_len = dist
+                        nnd_obj[1], nnd_obj[2] = (p2[0]*16, p2[1]*16), small_dist*16
+                        path_coords[0], path_coords[1] = _Y, _X
+            # logging.info("Appending Data...")
+            nnd_list.append(nnd_obj)
+            step_list.append(path_coords)
+        logging.info("Returning Data...")
+        return nnd_list, step_list
 
-for i, alt_coord in enumerate(ALT_COORDS):
-    ALT_COORDS[i] = (int(alt_coord[0] * (1/8)), int(alt_coord[1] * (1/8)))
+    logging.info("Creating Dataframes...")
+    real_astar_list, astar_coords = astar(coord_list, alt_list)
+    real_df = pd.DataFrame(data={'Nearest Neighbor A* Distance': real_astar_list})
 
-fig, ax = plt.subplots(figsize=(8,8))
+    clean_real_df = pd.DataFrame()
+    clean_real_df[['og_coord', 'astar_coord', 'dist']] = pd.DataFrame(
+        [x for x in real_df['Nearest Neighbor A* Distance'].tolist()])
 
-# ax.imshow(new_grid, cmap=plt.cm.binary)
+    df = pd.DataFrame(astar_coords, columns=["a*Y", "a*X"])
+    logging.info("Finishing...")
+    return clean_real_df, clean_real_df, df, df
 
-# astarMap(new_grid, new_grid_flipped, start, goal)
-run_astar(img_path, mask_path, COORDS[:5], ALT_COORDS)
-'''
-'''
-def draw_astar(nnd_df: pd.DataFrame, coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]]):
-    for i in coord_list:
-        ax.scatter(i[1],i[0], marker = "*", color = "pink", s = 200)
-    for j in alt_list:
-        ax.scatter(j[1],j[0], marker = "*", color = "grey", s = 200)
 
-    ax.scatter
-'''
+def draw_astar(nnd_df: pd.DataFrame, bin_counts: List[int], img: List, palette: List[Tuple[int, int, int]], circle_c: Tuple[int, int, int] = (0, 0, 255)):
+    """ DRAW LINES TO ANNOTATE N NEAREST DIST ON IMAGE """
+    def sea_to_rgb(color):
+        color = [val * 255 for val in color]
+        return color
+
+    count, bin_idx = 0, 0
+    for idx, entry in nnd_df.iterrows():
+        count += 1
+        particle_1 = tuple(int(x) for x in entry['og_coord'])
+        particle_2 = tuple(int(x) for x in entry['astar_coord'])
+        if count >= bin_counts[bin_idx] and bin_idx < len(bin_counts) - 1:
+            bin_idx += 1
+            count = 0
+        img = cv2.circle(img, particle_1, 10, circle_c, -1)
+        img = cv2.line(img, particle_1, particle_2, sea_to_rgb(palette[bin_idx]), 5)
+        img = cv2.circle(img, particle_2, 10, (0, 0, 255), -1)
+
+    for idx, entry in nnd_df.iterrows():
+        particle_1 = tuple(int(x) for x in entry['og_coord'])
+        cv2.putText(img, str(idx), org=particle_1, fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255, 255, 255), fontScale=0.5)
+    return img

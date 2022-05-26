@@ -71,7 +71,7 @@ class AnalysisWorker(QObject):
                 real_df1, rand_df1 = run_goldstar(
                     real_coords=coords, rand_coords=rand_coords, alt_coords=alt_coords, pb=self.progress) #img_path=img_path, mask_path=mask_path, a_star=vals[0])
             elif wf['type'] == Workflow.ASTAR:
-                real_df1, real_df2 = run_astar(
+                real_df1, rand_df1, real_df2, rand_df2 = run_astar(
                     map_path=img_path, mask_path=mask_path, coord_list=coords, alt_list=alt_coords, pb=self.progress)
             self.output_data = DataObj(real_df1, real_df2, rand_df1, rand_df2)
             self.finished.emit(self.output_data)
