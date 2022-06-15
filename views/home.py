@@ -1,7 +1,7 @@
 # pyQT5
 import os
 import traceback
-
+import logging
 import cv2
 from PyQt5.QtGui import QCursor, QMovie, QPixmap, QImage
 from PyQt5.QtWidgets import (QLabel, QFileDialog, QSpacerItem, QCheckBox, QHBoxLayout, QPushButton, QWidget,
@@ -26,6 +26,7 @@ class HomePage(QWidget):
     """
     def __init__(self, start: partial):
         super().__init__()
+        self.folder_count = 0
         # init layout
         layout = QFormLayout()
         # header
@@ -44,10 +45,17 @@ class HomePage(QWidget):
         folder_btn.setToolTip('Upload all files at once. Filenames: "image" => image, "mask" => mask, "gold" => csv1, "landmark" => csv2.')
         folder_btn.setStyleSheet("max-width: 150px; ")
         folder_btn.clicked.connect(self.open_folder_picker)
-
+        # multi-file folder btn
+        multi_folder_btn = QPushButton('Multi-folder Upload', self)
+        multi_folder_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        multi_folder_btn.setToolTip('Upload multiple folders at once. Filenames: "image" => image, "mask" => mask, "gold" => csv1, "landmark" => csv2, "scalar" => scalar.')
+        multi_folder_btn.setStyleSheet("max-width: 150px; ")
+        multi_folder_btn.clicked.connect(self.open_multi_folder_picker)
+        # file btns widget
         h_bl = QHBoxLayout()
         h_bl.addWidget(self.upload_header)
         h_bl.addWidget(folder_btn)
+        h_bl.addWidget(multi_folder_btn)
         layout.addRow(h_bl)
         # img btn
         img_btn = QPushButton('Upload Image', self)
@@ -259,6 +267,7 @@ class HomePage(QWidget):
                 self.csvs_ip_o.setHidden(False)
 
     def open_folder_picker(self):
+        self.folder_count = 1
         try:
             path = str(Path.home())
             input_folder = QFileDialog.getExistingDirectory(self, 'Select Input Folder', path)
@@ -274,6 +283,8 @@ class HomePage(QWidget):
                         self.csv_le.setText(full_file)
                     elif 'landmark' in filename.lower() and filename.endswith('.csv') and 'gold' not in filename.lower() and len(self.csv2_le.text()) == 0:
                         self.csv2_le.setText(full_file)
+                    elif 'scalar' in filename.lower() and filename.endswith('.txt'):
+                        self.set_scalar(full_file)
         except Exception as e:
             print(e, traceback.format_exc())
 
@@ -303,8 +314,86 @@ class HomePage(QWidget):
         except Exception as e:
             print(e, traceback.format_exc())
 
+    def open_multi_folder_picker(self):
+        self.multi_folders = {
+            'image': [],
+            'mask': [],
+            'csv': [],
+            'csv2': [],
+            'scalar': []
+        }
+        try:
+            path = str(Path.home())
+            input_folder_dir = QFileDialog.getExistingDirectory(self, 'Select Input Folder', path)
+            self.folder_count = len(os.listdir(input_folder_dir))
+            logging.info(f'folder count: {self.folder_count}')
+            if (self.folder_count > 0):
+                for subfolder_dir in os.listdir(input_folder_dir):
+                    subfolder_contents = os.listdir(os.path.join(input_folder_dir, subfolder_dir))
+                    if len(subfolder_contents) > 0:
+                        for filename in subfolder_contents:
+                            full_file = os.path.join(subfolder_dir, filename)
+                            if 'image' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'mask' not in filename.lower() and len(self.img_le.text()) == 0:
+                                self.multi_folders.get('image').append(full_file)
+                            elif 'mask' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'image' not in filename.lower() and len(self.mask_le.text()) == 0:
+                               self.multi_folders.get('mask').append(full_file)
+                            elif 'gold' in filename.lower() and filename.endswith('.csv') and 'landmark' not in filename.lower() and len(self.csv_le.text()) == 0:
+                                self.multi_folders.get('csv').append(full_file)
+                            elif 'landmark' in filename.lower() and filename.endswith('.csv') and 'gold' not in filename.lower() and len(self.csv2_le.text()) == 0:
+                                self.multi_folders.get('csv2').append(full_file)
+                            elif 'scalar' in filename.lower() and filename.endswith('.txt'):
+                                self.multi_folders.get('scalar').append(full_file)
+            logging.info(f'folders: {self.multi_folders}')
+            multi_folder_btn.setText(f'{self.folder_count} folders selected')
+            if (len(self.multi_folders.get('image')) > 0):
+                self.img_le.setText(self.multi_folders.get('image')[0])
+            if (len(self.multi_folders.get('mask')) > 0):
+                self.mask_le.setText(self.multi_folders.get('mask')[0])
+            if (len(self.multi_folders.get('csv')) > 0):
+                self.csv_le.setText(self.multi_folders.get('csv')[0])
+            if (len(self.multi_folders.get('csv2')) > 0):
+                self.csv2_le.setText(self.multi_folders.get('csv2')[0])
+            if (len(self.multi_folders.get('scalar')) > 0):
+                self.set_scalar(self.multi_folders.get('scalar')[0])
+        except Exception as e:
+            print(e, traceback.format_exc())
+
     def open_output_folder_picker(self):
         self.output_dir_le.setText(QFileDialog.getExistingDirectory(self, 'Select Output Folder'))
+
+    def set_scalar(self, scalar_file):
+        try:
+            with open(scalar_file, 'r') as f:
+                # read in scalar file and extract value and unit
+                lines = f.read()
+                scalars = lines.split(' ')
+                scalar_in = scalars[0][(int(scalars[0].lower().find("1px=",0))+4):].lower()
+                scalar_out = scalars[1][(int(scalars[1].lower().find("1px=",0))+4):].lower()
+                print(scalar_in, scalar_out)
+                # set input scalar accordingly
+                if 'px' in scalar_in:
+                    scalar_in = scalar_in.replace('px', '')
+                    self.ip_scalar_type.setCurrentIndex(0)
+                elif 'nm' in scalar_in:
+                    scalar_in = scalar_in.replace('nm', '')
+                    self.ip_scalar_type.setCurrentIndex(1)
+                elif 'um' in scalar_in or 'µm' in scalar_in:
+                    scalar_in = scalar_in.replace('um', '').replace('μm', '')
+                    self.ip_scalar_type.setCurrentIndex(2)
+                self.csvs_ip_i.setText(scalar_in)
+                # set output scalar accordingly
+                if 'px' in scalar_out:
+                    scalar_out = scalar_out.replace('px', '')
+                    self.op_scalar_type.setCurrentIndex(0)
+                elif 'nm' in scalar_out:
+                    scalar_out = scalar_out.replace('nm', '')
+                    self.op_scalar_type.setCurrentIndex(1)
+                elif 'um' in scalar_out:
+                    scalar_out = scalar_out.replace('um', '').replace('μm', '')
+                    self.op_scalar_type.setCurrentIndex(2)
+                self.csvs_ip_o.setText(scalar_out)
+        except Exception as e:
+            print(e, traceback.format_exc())
 
     def set_mask_clr(self):
         """ MASK COLOR SET """
