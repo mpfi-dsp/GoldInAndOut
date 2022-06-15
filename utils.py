@@ -50,7 +50,7 @@ def figure_to_img(fig: plt.Figure) -> Image:
 def pixels_conversion(data: pd.DataFrame, unit: Unit = Unit.PIXEL, scalar: float = 1, r: int = 3) -> pd.DataFrame:
     """ UPLOAD CSV AND CONVERT DF FROM ONE METRIC UNIT TO ANOTHER """
     ignored_cols = ['cluster_id', 'cluster_size', '%_gp_captured',
-                    '%_img_covered', 'LCPI', 'total_gp']  # 'radius',
+                    '%_img_covered', 'LCPI', 'total_gp', 'a*Y', 'a*X', 'num']  # 'radius',
     i = 0
     df = data.copy()
     if df.columns[0] == '' or df.columns[0] == ' ' or df.columns[0] == 'ID' or df.columns[0] == 'id':
@@ -138,6 +138,32 @@ def to_df(coords: List[Tuple[float, float]]) -> pd.DataFrame:
         y_coords.append(coord[0])
     df = pd.DataFrame(data={'X': x_coords, 'Y': y_coords})
     return df
+
+def avg_vals(val, df: pd.DataFrame) -> pd.DataFrame:
+    if val == Workflow.NND:
+        real_avg = df['dist'].mean()
+        df['avg_dist'] = 0
+        df.at[0, 'avg_dist'] = real_avg
+
+    if val == Workflow.CLUST:
+        clustCounts = df['cluster_id'].value_counts()
+        clustCountsNo1 = clustCounts[clustCounts > 1]
+        real_avg = clustCounts.mean()
+        No1_avg = clustCountsNo1.mean()
+
+        df['avg'] = 0
+        df.at[0, 'avg'] = real_avg
+    
+        df['avg_no_1s'] = 0
+        df.at[0, 'avg_no_1s'] = No1_avg
+
+    if val == Workflow.SEPARATION:
+        real_avg = df['dist'].mean()
+        df['avg_dist'] = 0
+        df.at[0, 'avg_dist'] = real_avg
+    
+    return(df)
+    
 
 # """ TURN ENUM INTO WORKFLOW NAME """
 # def enum_to_workflow(val):

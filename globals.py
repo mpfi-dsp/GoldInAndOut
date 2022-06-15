@@ -139,6 +139,21 @@ WORKFLOWS: List[WorkflowObj] = [
             }
         ]
     },
+    {
+        "name": "ASTAR",
+        "type": Workflow.ASTAR,
+        "header": "A* NND Around Landmarks",
+        "desc": "Find the nearest neighbor distance of two different populations around landmarks. Requires lighthouse population",
+        "checked": True,
+        "graph": {
+            "type": "hist",
+            "title": "A* NND",
+            "x_label": "Distance",
+            "y_label": "Number of Particles",
+            "x_type": "dist"
+        },
+        "props": []
+    },
 ]
 
 """ COLOR PALETTE OPTIONS """

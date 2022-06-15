@@ -24,13 +24,14 @@ from views.logger import Logger
 from globals import PALETTE_OPS, PROG_COLOR_1, PROG_COLOR_2, REAL_COLOR, RAND_COLOR
 from typings import Unit, Workflow, DataObj, OutputOptions, WorkflowObj
 from typing import List, Tuple
-from utils import Progress, create_color_pal, enum_to_unit, to_coord_list, pixels_conversion
+from utils import Progress, create_color_pal, enum_to_unit, to_coord_list, pixels_conversion, avg_vals
 from threads import AnalysisWorker, DownloadWorker
 from workflows.random_coords import gen_random_coordinates
 from workflows.clust import draw_clust
 from workflows.gold_rippler import draw_rippler
 from workflows.separation import draw_separation
 from workflows.goldstar import draw_goldstar
+from workflows.new_astar import draw_astar
 from workflows.nnd import draw_length
 
 
@@ -405,6 +406,8 @@ class WorkflowPage(QWidget):
                 # fix csv index not matching id
                 self.data.real_df1.sort_values(wf["graph"]["x_type"], inplace=True)
                 self.data.real_df1 = self.data.real_df1.reset_index(drop=True)
+                # add averaged values to real dataframe
+                self.data.real_df1 = avg_vals(wf['type'], self.data.real_df1)
                 # logging.info('output_ops', output_ops)
                 self.data.final_real = pixels_conversion(
                     data=self.data.real_df1, unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
@@ -412,6 +415,8 @@ class WorkflowPage(QWidget):
                         self.data.rand_df1[wf["graph"]["x_type"]]) > 0:
                     self.data.rand_df1.sort_values(wf["graph"]["x_type"], inplace=True)
                     self.data.rand_df1 = self.data.rand_df1.reset_index(drop=True)
+                    # add averaged values to real dataframe
+                    self.data.rand_df1 = avg_vals(wf['type'], self.data.rand_df1)
                 if not self.data.rand_df1.empty:
                     self.data.final_rand = pixels_conversion(
                         data=self.data.rand_df1, unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
@@ -609,6 +614,11 @@ class WorkflowPage(QWidget):
                     if self.gen_rand_cb.isChecked():
                         drawn_img = draw_goldstar(nnd_df=self.data.rand_df1, bin_counts=n, img=drawn_img,
                                                   palette=r_palette, circle_c=(18, 156, 232))
+                elif wf["type"] == Workflow.ASTAR:
+                    # if real coords selected, annotate them on img with lines indicating length
+                    if self.gen_real_cb.isChecked():
+                        drawn_img = draw_astar(nnd_df=self.data.real_df1, bin_counts=n, img=drawn_img,
+                                                  palette=palette, circle_c=(103, 114, 0))
                 # end graph display, set display img to annotated image
                 # https://stackoverflow.com/questions/33741920/convert-opencv-3-iplimage-to-pyqt5-qimage-qpixmap-in-python
                 height, width, bytesPerComponent = drawn_img.shape
