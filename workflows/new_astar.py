@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 from matplotlib.pyplot import figure
+import matplotlib
 import numpy as np
 import cv2
 from utils import pixels_conversion, enum_to_unit, to_coord_list
@@ -44,8 +45,8 @@ def map_downscale(img_path: str, mask_path: str):
     return(new_grid, new_grid_flipped)
 
 def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]], pb: pyqtSignal):
-
-    logging.info("Function running...")
+    """ RUN ASTAR ON A MAP """
+    matplotlib.use('agg')
 
     class Node:
         """

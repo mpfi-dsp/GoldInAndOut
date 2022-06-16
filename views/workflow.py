@@ -1,6 +1,7 @@
 # general
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
+import matplotlib
 from functools import partial
 import seaborn as sns
 import numpy as np
@@ -395,6 +396,7 @@ class WorkflowPage(QWidget):
         # plt.switch_backend('Agg') 
         # TODO: potentially move some drawing functions to separate threads?
         try:
+            matplotlib.use('agg')
             if self.gen_real_cb.isChecked() or self.gen_rand_cb.isChecked() and len(self.coords) > 0:
                 logging.info('%s: generating visualizations', wf['name'])
                 plt.close('all')

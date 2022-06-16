@@ -4,8 +4,10 @@ from typings import Unit, Workflow
 from typing import List, Tuple
 import seaborn as sns
 from matplotlib import pyplot as plt
+import matplotlib
 import numpy as np
 import pandas as pd
+import traceback
 import io
 
 class Progress(QThread):
@@ -39,6 +41,7 @@ def get_complimentary_color(hexcode):
 
 def figure_to_img(fig: plt.Figure) -> Image:
     """ CONVERT FIGURE TO IMG """
+    matplotlib.use('agg')
     buf = io.BytesIO()
     # convert Matplotlib figure to PIL Image
     fig.savefig(buf)
@@ -140,28 +143,31 @@ def to_df(coords: List[Tuple[float, float]]) -> pd.DataFrame:
     return df
 
 def avg_vals(val, df: pd.DataFrame) -> pd.DataFrame:
-    if val == Workflow.NND:
-        real_avg = df['dist'].mean()
-        df['avg_dist'] = 0
-        df.at[0, 'avg_dist'] = real_avg
+    try:
+        if val == Workflow.NND:
+            real_avg = df['dist'].mean()
+            df['avg_dist'] = 0
+            df.at[0, 'avg_dist'] = real_avg
 
-    if val == Workflow.CLUST:
-        clustCounts = df['cluster_id'].value_counts()
-        clustCountsNo1 = clustCounts[clustCounts > 1]
-        real_avg = clustCounts.mean()
-        No1_avg = clustCountsNo1.mean()
+        if val == Workflow.CLUST:
+            clustCounts = df['cluster_id'].value_counts()
+            clustCountsNo1 = clustCounts[clustCounts > 1]
+            real_avg = clustCounts.mean()
+            No1_avg = clustCountsNo1.mean()
 
-        df['avg'] = 0
-        df.at[0, 'avg'] = real_avg
-    
-        df['avg_no_1s'] = 0
-        df.at[0, 'avg_no_1s'] = No1_avg
+            df['avg'] = 0
+            df.at[0, 'avg'] = real_avg
+            # TODO: triggering error in multi file 
+            df['avg_no_1s'] = 0
+            df.at[0, 'avg_no_1s'] = No1_avg
 
-    if val == Workflow.SEPARATION:
-        real_avg = df['dist'].mean()
-        df['avg_dist'] = 0
-        df.at[0, 'avg_dist'] = real_avg
-    
+        if val == Workflow.SEPARATION:
+            real_avg = df['dist'].mean()
+            df['avg_dist'] = 0
+            df.at[0, 'avg_dist'] = real_avg
+    except Exception as e:
+        print(e, traceback.format_exc())
+        
     return(df)
     
 

@@ -9,6 +9,8 @@ from utils import pixels_conversion, enum_to_unit, to_coord_list
 import pandas as pd
 from typings import Unit, Workflow, DataObj, OutputOptions, WorkflowObj
 
+# matplotlib.use('agg')
+
 class Node:
     """
         A node class for A* Pathfinding

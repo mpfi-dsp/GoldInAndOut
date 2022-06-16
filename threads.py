@@ -98,8 +98,10 @@ class DownloadWorker(QObject):
                     oldest_dir = \
                         sorted([os.path.abspath(
                             f'{o_dir}/{f}') for f in os.listdir(o_dir)], key=os.path.getctime)[0]
-                    logging.info("pruning %s", oldest_dir)
-                    shutil.rmtree(oldest_dir)
+                    # filter out macos system files
+                    if '.DS_Store' not in oldest_dir:
+                        logging.info("pruning %s", oldest_dir)  
+                        shutil.rmtree(oldest_dir)
                 logging.info('%s: pruned old output', wf["name"])
         except Exception as e:
             self.dlg = Logger()

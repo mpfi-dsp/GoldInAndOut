@@ -27,6 +27,7 @@ class HomePage(QWidget):
     def __init__(self, start: partial):
         super().__init__()
         self.folder_count = 0
+        self.run_idx = 0
         # init layout
         layout = QFormLayout()
         # header
@@ -46,55 +47,55 @@ class HomePage(QWidget):
         folder_btn.setStyleSheet("max-width: 150px; ")
         folder_btn.clicked.connect(self.open_folder_picker)
         # multi-file folder btn
-        multi_folder_btn = QPushButton('Multi-folder Upload', self)
-        multi_folder_btn.setCursor(QCursor(Qt.PointingHandCursor))
-        multi_folder_btn.setToolTip('Upload multiple folders at once. Filenames: "image" => image, "mask" => mask, "gold" => csv1, "landmark" => csv2, "scalar" => scalar.')
-        multi_folder_btn.setStyleSheet("max-width: 150px; ")
-        multi_folder_btn.clicked.connect(self.open_multi_folder_picker)
+        self.multi_folder_btn = QPushButton('Multi-folder Upload', self)
+        self.multi_folder_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.multi_folder_btn.setToolTip('Upload multiple folders at once. Filenames: "image" => image, "mask" => mask, "gold" => csv1, "landmark" => csv2, "scalar" => scalar.')
+        self.multi_folder_btn.setStyleSheet("max-width: 150px; ")
+        self.multi_folder_btn.clicked.connect(self.open_multi_folder_picker)
         # file btns widget
         h_bl = QHBoxLayout()
         h_bl.addWidget(self.upload_header)
         h_bl.addWidget(folder_btn)
-        h_bl.addWidget(multi_folder_btn)
+        h_bl.addWidget(self.multi_folder_btn)
         layout.addRow(h_bl)
         # img btn
-        img_btn = QPushButton('Upload Image', self)
+        img_btn = QPushButton('Set Image', self)
         img_btn.setCursor(QCursor(Qt.PointingHandCursor))
         img_btn.setToolTip('Supports TIF, PNG, JPG, or JPEG format..')
         img_btn.clicked.connect(partial(self.open_file_picker, FileType.IMAGE))
         # img input
         self.img_le = QLineEdit()
-        self.img_le.setPlaceholderText("None Selected") 
+        self.img_le.setPlaceholderText("None Selected (TIF, PNG, JPG)") 
         # add img row
         layout.addRow(img_btn, self.img_le)
         # mask btn
-        mask_btn = QPushButton('Upload Mask', self)
+        mask_btn = QPushButton('Set Mask', self)
         mask_btn.setCursor(QCursor(Qt.PointingHandCursor))
         mask_btn.setToolTip('Supports TIF, PNG, JPG, or JPEG format. Mask can be any color with white background.')
         mask_btn.clicked.connect(partial(self.open_file_picker,  FileType.MASK))
         # mask input
         self.mask_le = QLineEdit()
-        self.mask_le.setPlaceholderText("None Selected")
+        self.mask_le.setPlaceholderText("None Selected (TIF, PNG, JPG)")
         # add mask row
         layout.addRow(mask_btn, self.mask_le)
         # csv btn
-        csv_btn = QPushButton('Upload CSV', self)
+        csv_btn = QPushButton('Set Gold', self)
         csv_btn.setCursor(QCursor(Qt.PointingHandCursor))
         csv_btn.setToolTip('Particle population. CSV must have X and Y columns with no spaces.')
         csv_btn.clicked.connect(partial(self.open_file_picker, FileType.CSV))
         # csv input
         self.csv_le = QLineEdit()
-        self.csv_le.setPlaceholderText("None Selected")
+        self.csv_le.setPlaceholderText("None Selected (CSV)")
         # add csv row
         layout.addRow(csv_btn, self.csv_le)
         # csv2 btn
-        csv2_btn = QPushButton('Upload CSV2', self)
+        csv2_btn = QPushButton('Set Mark', self)
         csv2_btn.setCursor(QCursor(Qt.PointingHandCursor))
         csv2_btn.setToolTip('Landmark population. CSV must have X and Y columns with no spaces.')
         csv2_btn.clicked.connect(partial(self.open_file_picker, FileType.CSV2))
         # output_dir input
         self.csv2_le = QLineEdit()
-        self.csv2_le.setPlaceholderText("None Selected")
+        self.csv2_le.setPlaceholderText("None Selected (CSV)")
         # add output
         layout.addRow(csv2_btn, self.csv2_le)
         spacer = QSpacerItem(15, 10, QSizePolicy.Minimum, QSizePolicy.Expanding)
@@ -104,7 +105,7 @@ class HomePage(QWidget):
         # workflows_header = QLabel("Output Folder")
         # layout.addRow(workflows_header)
         # output folder btn
-        out_btn = QPushButton('Select Output', self)
+        out_btn = QPushButton('Set Output', self)
         out_btn.setCursor(QCursor(Qt.PointingHandCursor))
         out_btn.clicked.connect(partial(self.open_output_folder_picker))
         # output folder input
@@ -268,6 +269,8 @@ class HomePage(QWidget):
 
     def open_folder_picker(self):
         self.folder_count = 1
+        self.run_idx = 0
+        self.multi_folder_btn.setText("Multi-folder Upload")
         try:
             path = str(Path.home())
             input_folder = QFileDialog.getExistingDirectory(self, 'Select Input Folder', path)
@@ -322,39 +325,47 @@ class HomePage(QWidget):
             'csv2': [],
             'scalar': []
         }
+        self.run_idx = 0
         try:
             path = str(Path.home())
             input_folder_dir = QFileDialog.getExistingDirectory(self, 'Select Input Folder', path)
-            self.folder_count = len(os.listdir(input_folder_dir))
+            detected_dirs = os.listdir(input_folder_dir)
+            print('detected subdirectories:', detected_dirs)
+            # remove hidden dirs
+            detected_dirs = [f for f in detected_dirs if not f.startswith('.') and os.path.isdir(f)]
+            self.folder_count = len(detected_dirs)
             logging.info(f'folder count: {self.folder_count}')
             if (self.folder_count > 0):
-                for subfolder_dir in os.listdir(input_folder_dir):
-                    subfolder_contents = os.listdir(os.path.join(input_folder_dir, subfolder_dir))
-                    if len(subfolder_contents) > 0:
-                        for filename in subfolder_contents:
-                            full_file = os.path.join(subfolder_dir, filename)
-                            if 'image' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'mask' not in filename.lower() and len(self.img_le.text()) == 0:
-                                self.multi_folders.get('image').append(full_file)
-                            elif 'mask' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'image' not in filename.lower() and len(self.mask_le.text()) == 0:
-                               self.multi_folders.get('mask').append(full_file)
-                            elif 'gold' in filename.lower() and filename.endswith('.csv') and 'landmark' not in filename.lower() and len(self.csv_le.text()) == 0:
-                                self.multi_folders.get('csv').append(full_file)
-                            elif 'landmark' in filename.lower() and filename.endswith('.csv') and 'gold' not in filename.lower() and len(self.csv2_le.text()) == 0:
-                                self.multi_folders.get('csv2').append(full_file)
-                            elif 'scalar' in filename.lower() and filename.endswith('.txt'):
-                                self.multi_folders.get('scalar').append(full_file)
-            logging.info(f'folders: {self.multi_folders}')
-            multi_folder_btn.setText(f'{self.folder_count} folders selected')
-            if (len(self.multi_folders.get('image')) > 0):
-                self.img_le.setText(self.multi_folders.get('image')[0])
-            if (len(self.multi_folders.get('mask')) > 0):
-                self.mask_le.setText(self.multi_folders.get('mask')[0])
-            if (len(self.multi_folders.get('csv')) > 0):
-                self.csv_le.setText(self.multi_folders.get('csv')[0])
-            if (len(self.multi_folders.get('csv2')) > 0):
-                self.csv2_le.setText(self.multi_folders.get('csv2')[0])
-            if (len(self.multi_folders.get('scalar')) > 0):
-                self.set_scalar(self.multi_folders.get('scalar')[0])
+                if (self.folder_count > 0) and os.path.isdir(input_folder_dir):
+                    for subfolder_dir in detected_dirs:
+                        full_sub_dir = os.path.join(input_folder_dir, subfolder_dir)
+                        if (os.path.isdir(full_sub_dir)):
+                            subfolder_contents = os.listdir(full_sub_dir)
+                            if len(subfolder_contents) > 0:
+                                for filename in subfolder_contents:
+                                    full_file = os.path.join(full_sub_dir, filename)
+                                    if 'image' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'mask' not in filename.lower() and len(self.img_le.text()) == 0:
+                                        self.multi_folders.get('image').append(full_file)
+                                    elif 'mask' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'image' not in filename.lower() and len(self.mask_le.text()) == 0:
+                                        self.multi_folders.get('mask').append(full_file)
+                                    elif 'gold' in filename.lower() and filename.endswith('.csv') and 'landmark' not in filename.lower() and len(self.csv_le.text()) == 0:
+                                        self.multi_folders.get('csv').append(full_file)
+                                    elif 'landmark' in filename.lower() and filename.endswith('.csv') and 'gold' not in filename.lower() and len(self.csv2_le.text()) == 0:
+                                        self.multi_folders.get('csv2').append(full_file)
+                                    elif 'scalar' in filename.lower() and filename.endswith('.txt'):
+                                        self.multi_folders.get('scalar').append(full_file)
+                logging.info(f'folders: {self.multi_folders}')
+                self.multi_folder_btn.setText(f'{self.folder_count} folders selected')
+                if (len(self.multi_folders.get('image')) > 0):
+                    self.img_le.setText(self.multi_folders.get('image')[0])
+                if (len(self.multi_folders.get('mask')) > 0):
+                    self.mask_le.setText(self.multi_folders.get('mask')[0])
+                if (len(self.multi_folders.get('csv')) > 0):
+                    self.csv_le.setText(self.multi_folders.get('csv')[0])
+                if (len(self.multi_folders.get('csv2')) > 0):
+                    self.csv2_le.setText(self.multi_folders.get('csv2')[0])
+                if (len(self.multi_folders.get('scalar')) > 0):
+                    self.set_scalar(self.multi_folders.get('scalar')[0])
         except Exception as e:
             print(e, traceback.format_exc())
 

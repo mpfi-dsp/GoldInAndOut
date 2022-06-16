@@ -96,6 +96,19 @@ class GoldInAndOut(QWidget):
         for prop in self.home_props:
             prop.setEnabled(True)
 
+        if (self.home_page.run_idx < self.home_page.folder_count-1):
+            self.home_page.run_idx += 1
+            logging.info("Running folder %s of %s", str(self.home_page.run_idx+1), str(self.home_page.folder_count))
+            self.home_page.img_le.setText(self.home_page.multi_folders.get('image')[self.home_page.run_idx]) 
+            self.home_page.mask_le.setText(self.home_page.multi_folders.get('mask')[self.home_page.run_idx]) 
+            self.home_page.csv_le.setText(self.home_page.multi_folders.get('csv')[self.home_page.run_idx]) 
+            self.home_page.csv2_le.setText(self.home_page.multi_folders.get('csv2')[self.home_page.run_idx]) 
+            self.home_page.set_scalar(self.home_page.multi_folders.get('scalar')[self.home_page.run_idx])
+            self.home_page.progress.setStyleSheet("text-align: center; border: solid grey; border-radius: 7px;color: white; background: #ff00ff; font-size: 20px;")
+            self.init_workflows()
+        else:
+            self.home_page.run_idx = 0
+
     def open_logger(self):
         if self.logger_shown == False:
             self.home_page.show_logs_btn.setText("Hide Logger")
@@ -122,6 +135,8 @@ class GoldInAndOut(QWidget):
                 for prop in self.home_props:
                     prop.setEnabled(False)
                 self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #ddd")
+                if (self.home_page.folder_count > 1):
+                    self.home_page.progress.setStyleSheet("text-align: center; border: solid grey; border-radius: 7px;color: white; background: #ff00ff; font-size: 20px;")
                 self.empty_stack()
                 self.home_page.progress.setValue(0)
                 self.load_data()
@@ -164,17 +179,17 @@ class GoldInAndOut(QWidget):
                     print(WORKFLOWS[i]['name'])
                     self.page_stack.addWidget(
                         WorkflowPage(coords=self.COORDS,
-                                     alt_coords=self.ALT_COORDS,
-                                     wf=WORKFLOWS[i],
-                                     img=img_path,
-                                     mask=mask_path,
-                                     csv=csv_path,
-                                     csv2=csv2_path,
-                                     output_ops=output_ops,
-                                     pg=partial(self.update_main_progress, (int((z / wf_td * 100)))),
-                                     clust_area=c_area,
-                                     log=self.dlg
-                                     ))
+                                    alt_coords=self.ALT_COORDS,
+                                    wf=WORKFLOWS[i],
+                                    img=img_path,
+                                    mask=mask_path,
+                                    csv=csv_path,
+                                    csv2=csv2_path,
+                                    output_ops=output_ops,
+                                    pg=partial(self.update_main_progress, (int((z / wf_td * 100)))),
+                                    clust_area=c_area,
+                                    log=self.dlg
+                                    ))
         except Exception as e:
             print(e, traceback.format_exc())
 

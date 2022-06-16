@@ -144,7 +144,7 @@ WORKFLOWS: List[WorkflowObj] = [
         "type": Workflow.ASTAR,
         "header": "A* NND Around Landmarks",
         "desc": "Find the nearest neighbor distance of two different populations around landmarks. Requires lighthouse population",
-        "checked": True,
+        "checked": False,
         "graph": {
             "type": "hist",
             "title": "A* NND",
