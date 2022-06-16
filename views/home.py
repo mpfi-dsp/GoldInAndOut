@@ -267,10 +267,21 @@ class HomePage(QWidget):
                 self.csvs_lb_o.setHidden(False)
                 self.csvs_ip_o.setHidden(False)
 
-    def open_folder_picker(self):
+    def reset_file_selection(self):
+        self.multi_folder_btn.setText("Multi-folder Upload")
+        self.img_le.setText("")
+        self.mask_le.setText("")
+        self.csv_le.setText("")
+        self.csv2_le.setText("")
+        self.ip_scalar_type.setCurrentIndex(0)
+        self.op_scalar_type.setCurrentIndex(0)
+        self.csvs_ip_i.setText("")
+        self.csvs_ip_o.setText("")
         self.folder_count = 1
         self.run_idx = 0
-        self.multi_folder_btn.setText("Multi-folder Upload")
+
+    def open_folder_picker(self):
+        self.reset_file_selection()
         try:
             path = str(Path.home())
             input_folder = QFileDialog.getExistingDirectory(self, 'Select Input Folder', path)
@@ -325,14 +336,14 @@ class HomePage(QWidget):
             'csv2': [],
             'scalar': []
         }
-        self.run_idx = 0
+        self.reset_file_selection()
         try:
             path = str(Path.home())
             input_folder_dir = QFileDialog.getExistingDirectory(self, 'Select Input Folder', path)
             detected_dirs = os.listdir(input_folder_dir)
             print('detected subdirectories:', detected_dirs)
             # remove hidden dirs
-            detected_dirs = [f for f in detected_dirs if not f.startswith('.') and os.path.isdir(f)]
+            detected_dirs = [f for f in detected_dirs if os.path.isdir(os.path.join(input_folder_dir, f)) and not f.startswith('.')]
             self.folder_count = len(detected_dirs)
             logging.info(f'folder count: {self.folder_count}')
             if (self.folder_count > 0):

@@ -88,8 +88,6 @@ class GoldInAndOut(QWidget):
         self.dlg = Logger()
 
     def on_run_complete(self):
-        self.home_page.start_btn.setText("Run Again")
-        self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #E89C12")
         self.home_page.progress.setValue(100)
         self.home_page.prog_animation.stop()
         
@@ -99,6 +97,7 @@ class GoldInAndOut(QWidget):
         if (self.home_page.run_idx < self.home_page.folder_count-1):
             self.home_page.run_idx += 1
             logging.info("Running folder %s of %s", str(self.home_page.run_idx+1), str(self.home_page.folder_count))
+            self.home_page.start_btn.setText(f'Folder {str(self.home_page.run_idx+1)} of {str(self.home_page.folder_count)}')
             self.home_page.img_le.setText(self.home_page.multi_folders.get('image')[self.home_page.run_idx]) 
             self.home_page.mask_le.setText(self.home_page.multi_folders.get('mask')[self.home_page.run_idx]) 
             self.home_page.csv_le.setText(self.home_page.multi_folders.get('csv')[self.home_page.run_idx]) 
@@ -107,7 +106,10 @@ class GoldInAndOut(QWidget):
             self.home_page.progress.setStyleSheet("text-align: center; border: solid grey; border-radius: 7px;color: white; background: #ff00ff; font-size: 20px;")
             self.init_workflows()
         else:
+            print('finished2')
             self.home_page.run_idx = 0
+            self.home_page.start_btn.setText("Run Again")
+            self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #E89C12")
 
     def open_logger(self):
         if self.logger_shown == False:

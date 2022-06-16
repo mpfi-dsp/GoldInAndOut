@@ -46,7 +46,7 @@ def map_downscale(img_path: str, mask_path: str):
 
 def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]], pb: pyqtSignal):
     """ RUN ASTAR ON A MAP """
-    matplotlib.use('agg')
+    # matplotlib.use('agg')
 
     class Node:
         """
@@ -519,7 +519,7 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
                     dist = len(_Y) + len(_Yi)
 
                     curTime = time.time() - start_time
-                    logging.info(round(curTime, 2))
+                    # logging.info(round(curTime, 2))
 
                     if dist < small_dist:
                         small_dist = dist
