@@ -9,6 +9,7 @@ class Workflow(Enum):
     SEPARATION = 3
     RIPPLER = 4
     GOLDSTAR = 5
+    ASTAR = 6
 
 class Unit(Enum):
     PIXEL = 1

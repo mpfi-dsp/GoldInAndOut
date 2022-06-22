@@ -88,13 +88,32 @@ class GoldInAndOut(QWidget):
         self.dlg = Logger()
 
     def on_run_complete(self):
-        self.home_page.start_btn.setText("Run Again")
-        self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #E89C12")
         self.home_page.progress.setValue(100)
         self.home_page.prog_animation.stop()
         
         for prop in self.home_props:
             prop.setEnabled(True)
+
+        if (self.home_page.run_idx < self.home_page.folder_count-1):
+            self.home_page.run_idx += 1
+            if (len(self.home_page.multi_folders[self.home_page.run_idx]['image']) == 0 or len(self.home_page.multi_folders[self.home_page.run_idx]['mask']) == 0 or len(self.home_page.multi_folders[self.home_page.run_idx]['csv']) == 0):
+                self.home_page.run_idx += 1
+                logging.info("Skipping folder %s because it is missing critical files", str(self.home_page.run_idx+1))
+            logging.info("Running folder %s of %s", str(self.home_page.run_idx+1), str(self.home_page.folder_count))
+            self.home_page.start_btn.setText(f'Folder {str(self.home_page.run_idx+1)} of {str(self.home_page.folder_count)}')
+            self.home_page.img_le.setText(self.home_page.multi_folders[self.home_page.run_idx]['image'][0]) 
+            self.home_page.mask_le.setText(self.home_page.multi_folders[self.home_page.run_idx]['mask'][0]) 
+            self.home_page.csv_le.setText(self.home_page.multi_folders[self.home_page.run_idx]['csv'][0]) 
+            self.home_page.csv2_le.setText(self.home_page.multi_folders[self.home_page.run_idx]['csv2'][0]) 
+            if (len(self.home_page.multi_folders[self.home_page.run_idx]['scalar']) > 0):
+                self.home_page.set_scalar(self.home_page.multi_folders[self.home_page.run_idx]['scalar'][0])
+            self.home_page.progress.setStyleSheet("text-align: center; border: solid grey; border-radius: 7px;color: white; background: #ff00ff; font-size: 20px;")
+            self.init_workflows()
+        else:
+            logging.info('finished2')
+            self.home_page.run_idx = 0
+            self.home_page.start_btn.setText("Run Again")
+            self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #E89C12")
 
     def open_logger(self):
         if self.logger_shown == False:
@@ -122,6 +141,8 @@ class GoldInAndOut(QWidget):
                 for prop in self.home_props:
                     prop.setEnabled(False)
                 self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #ddd")
+                if (self.home_page.folder_count > 1):
+                    self.home_page.progress.setStyleSheet("text-align: center; border: solid grey; border-radius: 7px;color: white; background: #ff00ff; font-size: 20px;")
                 self.empty_stack()
                 self.home_page.progress.setValue(0)
                 self.load_data()
@@ -164,17 +185,17 @@ class GoldInAndOut(QWidget):
                     print(WORKFLOWS[i]['name'])
                     self.page_stack.addWidget(
                         WorkflowPage(coords=self.COORDS,
-                                     alt_coords=self.ALT_COORDS,
-                                     wf=WORKFLOWS[i],
-                                     img=img_path,
-                                     mask=mask_path,
-                                     csv=csv_path,
-                                     csv2=csv2_path,
-                                     output_ops=output_ops,
-                                     pg=partial(self.update_main_progress, (int((z / wf_td * 100)))),
-                                     clust_area=c_area,
-                                     log=self.dlg
-                                     ))
+                                    alt_coords=self.ALT_COORDS,
+                                    wf=WORKFLOWS[i],
+                                    img=img_path,
+                                    mask=mask_path,
+                                    csv=csv_path,
+                                    csv2=csv2_path,
+                                    output_ops=output_ops,
+                                    pg=partial(self.update_main_progress, (int((z / wf_td * 100)))),
+                                    clust_area=c_area,
+                                    log=self.dlg
+                                    ))
         except Exception as e:
             print(e, traceback.format_exc())
 

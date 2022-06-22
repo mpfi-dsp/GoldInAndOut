@@ -4,7 +4,7 @@ from typing import List
 
 
 """ VERSION NUMBER """
-VERSION_NUMBER: str = '1.19.0'
+VERSION_NUMBER: str = '2.2.0'
 
 """
 WORKFLOW METADATA 
@@ -138,6 +138,21 @@ WORKFLOWS: List[WorkflowObj] = [
                 "placeholder": "0"
             }
         ]
+    },
+    {
+        "name": "ASTAR",
+        "type": Workflow.ASTAR,
+        "header": "A* NND Around Landmarks",
+        "desc": "Find the nearest neighbor distance of two different populations around landmarks. Requires lighthouse population",
+        "checked": False,
+        "graph": {
+            "type": "hist",
+            "title": "A* NND",
+            "x_label": "Distance",
+            "y_label": "Number of Particles",
+            "x_type": "dist"
+        },
+        "props": []
     },
 ]
 
