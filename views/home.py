@@ -329,13 +329,7 @@ class HomePage(QWidget):
             print(e, traceback.format_exc())
 
     def open_multi_folder_picker(self):
-        self.multi_folders = {
-            'image': [],
-            'mask': [],
-            'csv': [],
-            'csv2': [],
-            'scalar': []
-        }
+        self.multi_folders = []
         self.reset_file_selection()
         try:
             path = str(Path.home())
@@ -353,30 +347,38 @@ class HomePage(QWidget):
                         if (os.path.isdir(full_sub_dir)):
                             subfolder_contents = os.listdir(full_sub_dir)
                             if len(subfolder_contents) > 0:
+                                new_fld = {
+                                    'image': [],
+                                    'mask': [],
+                                    'csv': [],
+                                    'csv2': [],
+                                    'scalar': []
+                                }
                                 for filename in subfolder_contents:
                                     full_file = os.path.join(full_sub_dir, filename)
                                     if 'image' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'mask' not in filename.lower() and len(self.img_le.text()) == 0:
-                                        self.multi_folders.get('image').append(full_file)
+                                       new_fld['image'].append(full_file)
                                     elif 'mask' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'image' not in filename.lower() and len(self.mask_le.text()) == 0:
-                                        self.multi_folders.get('mask').append(full_file)
+                                        new_fld['mask'].append(full_file)
                                     elif 'gold' in filename.lower() and filename.endswith('.csv') and 'landmark' not in filename.lower() and len(self.csv_le.text()) == 0:
-                                        self.multi_folders.get('csv').append(full_file)
+                                        new_fld['csv'].append(full_file)
                                     elif 'landmark' in filename.lower() and filename.endswith('.csv') and 'gold' not in filename.lower() and len(self.csv2_le.text()) == 0:
-                                        self.multi_folders.get('csv2').append(full_file)
+                                        new_fld['csv2'].append(full_file)
                                     elif 'scalar' in filename.lower() and filename.endswith('.txt'):
-                                        self.multi_folders.get('scalar').append(full_file)
+                                        new_fld['scalar'].append(full_file)
+                                self.multi_folders.append(new_fld)
                 logging.info(f'folders: {self.multi_folders}')
                 self.multi_folder_btn.setText(f'{self.folder_count} folders selected')
-                if (len(self.multi_folders.get('image')) > 0):
-                    self.img_le.setText(self.multi_folders.get('image')[0])
-                if (len(self.multi_folders.get('mask')) > 0):
-                    self.mask_le.setText(self.multi_folders.get('mask')[0])
-                if (len(self.multi_folders.get('csv')) > 0):
-                    self.csv_le.setText(self.multi_folders.get('csv')[0])
-                if (len(self.multi_folders.get('csv2')) > 0):
-                    self.csv2_le.setText(self.multi_folders.get('csv2')[0])
-                if (len(self.multi_folders.get('scalar')) > 0):
-                    self.set_scalar(self.multi_folders.get('scalar')[0])
+                if (len(self.multi_folders[0]['image']) > 0):
+                    self.img_le.setText(self.multi_folders[0]['image'][0])
+                if (len(self.multi_folders[0]['mask']) > 0):
+                    self.mask_le.setText(self.multi_folders[0]['mask'][0])
+                if (len(self.multi_folders[0]['csv']) > 0):
+                    self.csv_le.setText(self.multi_folders[0]['csv'][0])
+                if (len(self.multi_folders[0]['csv2']) > 0):
+                    self.csv2_le.setText(self.multi_folders[0]['csv2'][0])
+                if (len(self.multi_folders[0]['scalar']) > 0):
+                    self.set_scalar(self.multi_folders[0]['scalar'][0])
         except Exception as e:
             print(e, traceback.format_exc())
 

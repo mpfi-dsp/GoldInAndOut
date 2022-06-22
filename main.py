@@ -96,17 +96,21 @@ class GoldInAndOut(QWidget):
 
         if (self.home_page.run_idx < self.home_page.folder_count-1):
             self.home_page.run_idx += 1
+            if (len(self.home_page.multi_folders[self.home_page.run_idx]['image']) == 0 or len(self.home_page.multi_folders[self.home_page.run_idx]['mask']) == 0 or len(self.home_page.multi_folders[self.home_page.run_idx]['csv']) == 0):
+                self.home_page.run_idx += 1
+                logging.info("Skipping folder %s because it is missing critical files", str(self.home_page.run_idx+1))
             logging.info("Running folder %s of %s", str(self.home_page.run_idx+1), str(self.home_page.folder_count))
             self.home_page.start_btn.setText(f'Folder {str(self.home_page.run_idx+1)} of {str(self.home_page.folder_count)}')
-            self.home_page.img_le.setText(self.home_page.multi_folders.get('image')[self.home_page.run_idx]) 
-            self.home_page.mask_le.setText(self.home_page.multi_folders.get('mask')[self.home_page.run_idx]) 
-            self.home_page.csv_le.setText(self.home_page.multi_folders.get('csv')[self.home_page.run_idx]) 
-            self.home_page.csv2_le.setText(self.home_page.multi_folders.get('csv2')[self.home_page.run_idx]) 
-            self.home_page.set_scalar(self.home_page.multi_folders.get('scalar')[self.home_page.run_idx])
+            self.home_page.img_le.setText(self.home_page.multi_folders[self.home_page.run_idx]['image'][0]) 
+            self.home_page.mask_le.setText(self.home_page.multi_folders[self.home_page.run_idx]['mask'][0]) 
+            self.home_page.csv_le.setText(self.home_page.multi_folders[self.home_page.run_idx]['csv'][0]) 
+            self.home_page.csv2_le.setText(self.home_page.multi_folders[self.home_page.run_idx]['csv2'][0]) 
+            if (len(self.home_page.multi_folders[self.home_page.run_idx]['scalar']) > 0):
+                self.home_page.set_scalar(self.home_page.multi_folders[self.home_page.run_idx]['scalar'][0])
             self.home_page.progress.setStyleSheet("text-align: center; border: solid grey; border-radius: 7px;color: white; background: #ff00ff; font-size: 20px;")
             self.init_workflows()
         else:
-            print('finished2')
+            logging.info('finished2')
             self.home_page.run_idx = 0
             self.home_page.start_btn.setText("Run Again")
             self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #E89C12")
