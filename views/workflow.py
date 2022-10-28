@@ -32,7 +32,8 @@ from workflows.clust import draw_clust
 from workflows.gold_rippler import draw_rippler
 from workflows.separation import draw_separation
 from workflows.goldstar import draw_goldstar
-from workflows.new_astar import draw_astar
+from workflows.goldAstar import draw_goldAstar
+# from workflows.astar import draw_astar
 from workflows.nnd import draw_length
 
 
@@ -556,6 +557,7 @@ class WorkflowPage(QWidget):
                 self.graph = QImage(canvas.buffer_rgba(), width, height, QImage.Format_ARGB32)
                 # load in image
                 drawn_img = cv2.imread(self.img_drop.currentText())
+                drawn_mask = cv2.imread(self.mask_drop.currentText())
                 # display img
                 pixmap = QPixmap.fromImage(self.graph)
                 smaller_pixmap = pixmap.scaled(300, 250, Qt.KeepAspectRatio, Qt.FastTransformation)
@@ -619,7 +621,7 @@ class WorkflowPage(QWidget):
                 elif wf["type"] == Workflow.ASTAR:
                     # if real coords selected, annotate them on img with lines indicating length
                     if self.gen_real_cb.isChecked():
-                        drawn_img = draw_astar(nnd_df=self.data.real_df1, bin_counts=n, img=drawn_img,
+                        drawn_img = draw_goldAstar(nnd_df=self.data.real_df1, path_df=self.data.real_df2, bin_counts=n, img=drawn_img, mask=drawn_mask,
                                                   palette=palette, circle_c=(103, 114, 0))
                 # end graph display, set display img to annotated image
                 # https://stackoverflow.com/questions/33741920/convert-opencv-3-iplimage-to-pyqt5-qimage-qpixmap-in-python
