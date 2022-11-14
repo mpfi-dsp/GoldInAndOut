@@ -12,10 +12,20 @@ from workflows.astar import run_astar, map_fill # Fill Workflow
 # from workflows.backupAstar import run_astar, map_fill # NoFill workflow
 import cv2
 
-# img_path = "./Feb 8 2022 P1 for test/P1 Bk6 Cav2_1 12nm image montage.tif"
-# mask_path = "./Feb 8 2022 P1 for test/P1 Bk6 Cav2_1 12nm blue mask.tif"
-# csv_path = "./Feb 8 2022 P1 for test/P1 XY Gold 12nm in pixels.csv"
-# csv2_path = "./Feb 8 2022 P1 for test/P1 XY landmark spines in pixels.csv"
+# img_path = "./P4/P4 JCFFRIL25 Bk6 Cav2.1 12nm.tif"
+# mask_path = "./P4/P4 wh bck blue mask.tif"
+# csv_path = "./P4/P4 Results XY 12nm in pixels.csv"
+# csv2_path = "./P4/P4 Spine Results XY in pixels.csv"
+
+# img_path = "./P2/P2 Bk6 Cav2_1 12nm image.tif"
+# mask_path = "./P2/P2 Bk6 Cav2_1 12nm blue mask.tif"
+# csv_path = "./P2/P2 XY 12nm in pixels gold.csv"
+# csv2_path = "./P2/P2 XY Spines in pixels landmark.csv"
+
+# img_path = "./P3/P3 JCFFRIL25 Bk6 Cav2.1 12nm image.tif"
+# mask_path = "./P3/P3 JCFFRIL25 Bk6 Cav2.1 12nm blue mask.tif"
+# csv_path = "./P3/P3 XY 12nm in pixels gold.csv"
+# csv2_path = "./P3/P3 XY Spines in pixels landmark.csv"
 
 # data = pd.read_csv(csv_path, sep=",")
 # scaled_df = pixels_conversion(data=data, unit=Unit.PIXEL, scalar=1.0)
@@ -170,6 +180,7 @@ def run_goldAstar(map_path, mask_path, coord_list: List[Tuple[float, float]], al
 
     print("A* Length: {}".format(len(astarList)))
 
+    # astarDF, astarDF_, astarCoords, astarCoords_ = run_astar(map_path, mask_path, astarList[84:], alt_list)
     astarDF, astarDF_, astarCoords, astarCoords_ = run_astar(map_path, mask_path, astarList, alt_list, pb)
     
     nonSelected_DF = pd.DataFrame(list(zip(nonSelected_Point, nonSelected_Landmark, nonSelected_Distance,
@@ -185,7 +196,9 @@ def run_goldAstar(map_path, mask_path, coord_list: List[Tuple[float, float]], al
     return combined_astarDF, combined_astarDF, astarCoords, astarCoords
     # return astarDF, astarDF, astarCoords, astarCoords
 
-def draw_goldAstar(nnd_df: pd.DataFrame, path_df: pd.DataFrame, bin_counts: List[int], img: List, mask: List, palette: List[Tuple[int, int, int]], circle_c: Tuple[int, int, int] = (0, 0, 255)):
+# run_goldAstar(img_path, mask_path, COORDS, ALT_COORDS)
+
+def draw_goldAstar(nnd_df: pd.DataFrame, path_df: pd.DataFrame, bin_counts: List[int], img: List, mask: List, palette: List[Tuple[int, int, int]], alt_palette: List[Tuple[int, int, int]], circle_c: Tuple[int, int, int] = (0, 0, 255)):
     
     mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
     ret, binary = cv2.threshold(mask, 100, 255, cv2.THRESH_OTSU)
@@ -217,7 +230,7 @@ def draw_goldAstar(nnd_df: pd.DataFrame, path_df: pd.DataFrame, bin_counts: List
         else:
             paths = path_df['Path']
             current_path = np.array([paths[pth_idx]])
-            img = cv2.polylines(img, np.int32([current_path]), False, sea_to_rgb(palette[bin_idx]), 5)
+            img = cv2.polylines(img, np.int32([current_path]), False, sea_to_rgb(alt_palette[bin_idx]), 5)
             pth_idx += 1
         
         img = cv2.circle(img, particle_1, 10, circle_c, -1)

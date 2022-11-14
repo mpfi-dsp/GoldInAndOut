@@ -4,7 +4,11 @@ from typing import List
 
 
 """ VERSION NUMBER """
-VERSION_NUMBER: str = '2.2.0'
+<<<<<<< Updated upstream
+VERSION_NUMBER: str = '2.3.0'
+=======
+VERSION_NUMBER: str = '2.3.1'
+>>>>>>> Stashed changes
 
 """
 WORKFLOW METADATA 
