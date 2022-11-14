@@ -104,7 +104,8 @@ def map_fill(img, flip = True):
 
     return(out)
 
-def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]], pb: pyqtSignal):
+def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]]):
+# def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]], pb: pyqtSignal):
     """ RUN ASTAR ON A MAP """
 
     class Node:
@@ -234,7 +235,6 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
                 # print ("giving up on pathfinding too many iterations")
                 # print("Iterations: " + str(outer_iterations))
                 if(cutoff):
-                    # print("Cutoff, {}...".format(outer_iterations))
                     return
                 else:
                     return return_path(current_node,maze)
@@ -255,26 +255,21 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
 
                 # Get node position
                 node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
-                # print(node_position)
-                # print(f"{no_rows}, {no_columns}")
+                # print(f"{node_position[1]}, {node_position[0]}, {maze[node_position[1]][node_position[0]]}")
 
                 # Make sure within range (check if within maze boundary)
                 if (node_position[1] > (no_rows - 1) or 
                     node_position[1] < 0 or 
                     node_position[0] > (no_columns -1) or 
                     node_position[0] < 0):
-
-                    # print("Out-Of-Range...")
                     continue
 
                 # Make sure walkable terrain
                 if maze[node_position[1]][node_position[0]] != 0:
-                    # print("Non-Walkable...")
                     continue
 
                 # Create new node
                 new_node = Node(current_node, node_position)
-                # print("New node added")
 
                 # Append
                 children.append(new_node)
@@ -405,12 +400,15 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
 
                 # Get node position
                 node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
+                # print(f"{node_position[1]}, {node_position[0]}, {maze[node_position[1]][node_position[0]]}")
 
                 # Make sure within range (check if within maze boundary)
-                if (node_position[0] > (no_rows - 1) or 
-                    node_position[0] < 0 or 
-                    node_position[1] > (no_columns -1) or 
-                    node_position[1] < 0):
+                if (node_position[1] > (no_rows - 1) or 
+                    node_position[1] < 0 or 
+                    node_position[0] > (no_columns -1) or 
+                    node_position[0] < 0):
+
+                    # print("OOB")
                     continue
 
                 # Make sure walkable terrain
@@ -577,11 +575,11 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
         lastTime = start_time                               # Create initial lastTime
 
         for p in _coord_list:
-            # print("NEW PARTICLE:")                          # This is the initial setup for the A* code
             i_l += 1                                        # Increment particle counter
+            print(f"Particle: {i_l}")
             i_j = 0                                         # Counter for each landmark (per particle)
             small_dist = 10000000000000000000               # Initial value for smallest dist (will be overidden)
-            max_len = 300                                   # Initial value for pathfinding cutoff
+            max_len = 1000                                  # Initial value for pathfinding cutoff
             p1 = (int(p[0]/16), int(p[1]/16))               # Downscale particle by 1/16th coordinates to match map downscaling
             nnd_obj = [(p[0], p[1]), (0,0), 0, 0, 0, 0]     # Create blank object to store value we want to push to the exported DataFrame
             # ^^^ Particle, Landmark, G* Dist, A* Dist, Smooth Dist
@@ -597,16 +595,14 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
                    
                     c_map = map.copy()  # Create copy of map
 
-                    # print(map[p2[1]][p2[0]])
-
                     if(map[p2[1]][p2[0]] == 1):
-                        # print("YES!!!")
                         _Xi, _Yi = makeHolePath(flippedMap, 1, (p2[0], p2[1]), (p1[0], p1[1]), (max_len - 1))
                         _XYi = np.column_stack((_Xi,_Yi))
                         for x in _XYi:
-                            c_map = cv2.circle(c_map, x, 3, (0, 0, 0), -1)
+                            c_map = cv2.circle(c_map, x, 5, (0, 0, 0), -1)
 
                     if(map[p1[1]][p1[0]] == 1):
+                        print("out")
                     # If our particle is outside of the mask area...
                         _Xi, _Yi = makeHolePath(flippedMap, 1, (p1[0], p1[1]), (p2[0], p2[1]), (max_len - 1))
                         # In a similar way to our landmark path, map from our particle to a collision point
@@ -614,19 +610,29 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
 
                         _XYi = np.column_stack((_Xi,_Yi))
                         for x in _XYi:
-                            c_map = cv2.circle(c_map, x, 1, (0, 0, 0), -1)
+                            c_map = cv2.circle(c_map, x, 5, (0, 0, 0), -1)
 
                         _X, _Y = makePath(c_map, 1, (p1[0], p1[1]), (p2[0], p2[1]), ((max_len - 1)), True)
                         
                         # Aaaaand here's the connecting path! (between our two collision points)
 
-                        dist = len(_Y)# + len(_Yi) # Calculate distance
+                        dist = len(_Y)
                     else:
                     # If our particle is inside of the mask area...
                         _X, _Y = makePath(c_map, 1, (p1[0], p1[1]), (p2[0], p2[1]), ((max_len - 1)), True)
                         # Make our connecting path from the particle to our landmark collision point
 
-                        dist = len(_Y) # Bet you can't guess what this does
+                        dist = len(_Y)
+
+                    # '''
+                    fig = plt.figure()
+                    plt.scatter(_X, _Y)
+                    plt.plot(p2[0], p2[1], 'y*')
+                    plt.plot(p1[0], p1[1], 'r*')
+                    plt.imshow(c_map, cmap='binary')
+                    # plt.show()
+                    plt.savefig(f"review_imgs/{i_l}_{i_j}.png")
+                    # '''
 
                     if(_Y == []): # Make sure our paths exist
                         continue
@@ -637,14 +643,22 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
                     timeSince = round(curTime - lastTime, 2)        #Get time since last loop
                     lastTime = curTime                              #Set loop timer to current time
 
-                    # print(f"TIME: {curTime} Particle: {i_l}, Landmark: {i_j} - {smoothDist}", {map[p2[1]][p2[0]]})
-                    # logging.info(f"TIME: {curTime} Particle: {i_l}, Landmark: {i_j} - {smoothDist}", {map[p2[1]][p2[0]]})
+                    print(f"TIME: {curTime} Particle: {i_l}, Landmark: {i_j} - {smoothDist}", {map[p2[1]][p2[0]]})
 
                     xs = [x[0] for x in mids]
                     ys = [x[1] for x in mids]
 
+                    '''
+                    fig = plt.figure()
+                    plt.scatter(_X, _Y)
+                    plt.plot(p2[0], p2[1], 'y*')
+                    plt.plot(p1[0], p1[1], 'r*')
+                    plt.imshow(c_map, cmap='binary')
+                    plt.show()
+                    # '''
+
                     if dist < small_dist:           # If we find a new smallest distance...
-                        if(j[2] < smoothDist):
+                        if(j[2] <= smoothDist):
                             # print("New Smallest Dist!") 
                             small_dist = dist           # Make sure we update the smallest distance to the new one
                             max_len = dist              # As well as updating the maximum length of our paths
@@ -654,7 +668,7 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
                             path_coords[1] = [tuple(x * 16 for x in point) for point in mids]
                             path_coords[1][0] = nnd_obj[0]
                         else:
-                            # logging.info("Smoothed Distance less than Goldstar Distance... Aborting...")
+                            # print(f"{j[2]}, {smoothDist}")
                             logging.info("Aborting...")
             
             # logging.info("Appending Data...")

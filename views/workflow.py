@@ -164,6 +164,15 @@ class WorkflowPage(QWidget):
         self.r_pal_type.addItems(PALETTE_OPS)
         self.r_pal_type.setCurrentText("mako")
         layout.addRow(r_pal_lb, self.r_pal_type)
+        # palette alternate
+        a_pal_lb = QLabel(
+            '<a href="https://seaborn.pydata.org/tutorial/color_palettes.html#perceptually-uniform-palettes">alternate color palette</a>')
+        a_pal_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
+        a_pal_lb.setOpenExternalLinks(True)
+        self.a_pal_type = QComboBox()
+        self.a_pal_type.addItems(PALETTE_OPS)
+        self.a_pal_type.setCurrentText("magma")
+        layout.addRow(a_pal_lb, self.a_pal_type)
         # num bins
         bars_lb = QLabel(
             '<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.hist.html">number of hist bins</a>')
@@ -548,6 +557,7 @@ class WorkflowPage(QWidget):
                 # generate palette
                 palette = create_color_pal(n_bins=int(len(n)), palette_type=self.pal_type.currentText())
                 r_palette = create_color_pal(n_bins=int(len(n)), palette_type=self.r_pal_type.currentText())
+                a_palette = create_color_pal(n_bins=int(len(n)), palette_type=self.a_pal_type.currentText())
                 # draw on canvas
                 canvas.draw()
                 # determine shape of canvas
@@ -622,7 +632,7 @@ class WorkflowPage(QWidget):
                     # if real coords selected, annotate them on img with lines indicating length
                     if self.gen_real_cb.isChecked():
                         drawn_img = draw_goldAstar(nnd_df=self.data.real_df1, path_df=self.data.real_df2, bin_counts=n, img=drawn_img, mask=drawn_mask,
-                                                  palette=palette, circle_c=(103, 114, 0))
+                                                  palette=palette, alt_palette = a_palette, circle_c=(103, 114, 0))
                 # end graph display, set display img to annotated image
                 # https://stackoverflow.com/questions/33741920/convert-opencv-3-iplimage-to-pyqt5-qimage-qpixmap-in-python
                 height, width, bytesPerComponent = drawn_img.shape
