@@ -22,21 +22,21 @@ import cv2
 # csv_path = "./P2/P2 XY 12nm in pixels gold.csv"
 # csv2_path = "./P2/P2 XY Spines in pixels landmark.csv"
 
-img_path = "./P3/P3 JCFFRIL25 Bk6 Cav2.1 12nm image.tif"
-mask_path = "./P3/P3 JCFFRIL25 Bk6 Cav2.1 12nm blue mask.tif"
-csv_path = "./P3/P3 XY 12nm in pixels gold.csv"
-csv2_path = "./P3/P3 XY Spines in pixels landmark.csv"
+# img_path = "./P3/P3 JCFFRIL25 Bk6 Cav2.1 12nm image.tif"
+# mask_path = "./P3/P3 JCFFRIL25 Bk6 Cav2.1 12nm blue mask.tif"
+# csv_path = "./P3/P3 XY 12nm in pixels gold.csv"
+# csv2_path = "./P3/P3 XY Spines in pixels landmark.csv"
 
-data = pd.read_csv(csv_path, sep=",")
-scaled_df = pixels_conversion(data=data, unit=Unit.PIXEL, scalar=1.0)
-COORDS = to_coord_list(scaled_df)
+# data = pd.read_csv(csv_path, sep=",")
+# scaled_df = pixels_conversion(data=data, unit=Unit.PIXEL, scalar=1.0)
+# COORDS = to_coord_list(scaled_df)
 
-data = pd.read_csv(csv2_path, sep=",")
-ALT_COORDS = to_coord_list(
-pixels_conversion(data=data, unit=Unit.PIXEL, scalar=1.0))
+# data = pd.read_csv(csv2_path, sep=",")
+# ALT_COORDS = to_coord_list(
+# pixels_conversion(data=data, unit=Unit.PIXEL, scalar=1.0))
 
-def run_goldAstar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]]):
-# def run_goldAstar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]], pb: pyqtSignal):
+# def run_goldAstar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]]):
+def run_goldAstar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]], pb: pyqtSignal):
     def dist2(p1, p2):
         return (p1[0]-p2[0])**2 + (p1[1]-p2[1])**2
 
@@ -180,8 +180,8 @@ def run_goldAstar(map_path, mask_path, coord_list: List[Tuple[float, float]], al
 
     print("A* Length: {}".format(len(astarList)))
 
-    astarDF, astarDF_, astarCoords, astarCoords_ = run_astar(map_path, mask_path, astarList, alt_list)
-    # astarDF, astarDF_, astarCoords, astarCoords_ = run_astar(map_path, mask_path, astarList, alt_list, pb)
+    # astarDF, astarDF_, astarCoords, astarCoords_ = run_astar(map_path, mask_path, astarList[84:], alt_list)
+    astarDF, astarDF_, astarCoords, astarCoords_ = run_astar(map_path, mask_path, astarList, alt_list, pb)
     
     nonSelected_DF = pd.DataFrame(list(zip(nonSelected_Point, nonSelected_Landmark, nonSelected_Distance,
                 np.zeros(len(nonSelected_Point)), np.zeros(len(nonSelected_Point)), nonSelected_Distance)),
@@ -196,7 +196,7 @@ def run_goldAstar(map_path, mask_path, coord_list: List[Tuple[float, float]], al
     return combined_astarDF, combined_astarDF, astarCoords, astarCoords
     # return astarDF, astarDF, astarCoords, astarCoords
 
-run_goldAstar(img_path, mask_path, COORDS, ALT_COORDS)
+# run_goldAstar(img_path, mask_path, COORDS, ALT_COORDS)
 
 def draw_goldAstar(nnd_df: pd.DataFrame, path_df: pd.DataFrame, bin_counts: List[int], img: List, mask: List, palette: List[Tuple[int, int, int]], alt_palette: List[Tuple[int, int, int]], circle_c: Tuple[int, int, int] = (0, 0, 255)):
     

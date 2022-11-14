@@ -91,7 +91,7 @@ def map_fill(img, flip = True):
 
     ret, binary = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY)
 
-    if(flip == True):
+    if(flip):
         binary = cv2.bitwise_not(binary)
 
     out = np.zeros_like(binary)
@@ -99,13 +99,17 @@ def map_fill(img, flip = True):
     contours, hierarchy = cv2.findContours(binary.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     cv2.drawContours(out, contours, -1, 255, cv2.FILLED)
 
-    out[out == 0] = 1
-    out[out == 255] = 0
+    if(flip):
+        out[out == 0] = 1
+        out[out == 255] = 0
+    else:
+        out[out == 0] = 0
+        out[out == 255] = 1
 
     return(out)
 
-def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]]):
-# def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]], pb: pyqtSignal):
+# def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]]):
+def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]], pb: pyqtSignal):
     """ RUN ASTAR ON A MAP """
 
     class Node:
@@ -599,10 +603,9 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
                         _Xi, _Yi = makeHolePath(flippedMap, 1, (p2[0], p2[1]), (p1[0], p1[1]), (max_len - 1))
                         _XYi = np.column_stack((_Xi,_Yi))
                         for x in _XYi:
-                            c_map = cv2.circle(c_map, x, 5, (0, 0, 0), -1)
+                            c_map = cv2.circle(c_map, x, 2, (0, 0, 0), -1)
 
                     if(map[p1[1]][p1[0]] == 1):
-                        print("out")
                     # If our particle is outside of the mask area...
                         _Xi, _Yi = makeHolePath(flippedMap, 1, (p1[0], p1[1]), (p2[0], p2[1]), (max_len - 1))
                         # In a similar way to our landmark path, map from our particle to a collision point
@@ -610,7 +613,7 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
 
                         _XYi = np.column_stack((_Xi,_Yi))
                         for x in _XYi:
-                            c_map = cv2.circle(c_map, x, 5, (0, 0, 0), -1)
+                            c_map = cv2.circle(c_map, x, 2, (0, 0, 0), -1)
 
                         _X, _Y = makePath(c_map, 1, (p1[0], p1[1]), (p2[0], p2[1]), ((max_len - 1)), True)
                         
@@ -624,14 +627,14 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
 
                         dist = len(_Y)
 
-                    # '''
+                    '''
                     fig = plt.figure()
                     plt.scatter(_X, _Y)
                     plt.plot(p2[0], p2[1], 'y*')
                     plt.plot(p1[0], p1[1], 'r*')
                     plt.imshow(c_map, cmap='binary')
-                    # plt.show()
-                    plt.savefig(f"review_imgs/{i_l}_{i_j}.png")
+                    plt.show()
+                    # plt.savefig(f"review_imgs/{i_l}_{i_j}.png")
                     # '''
 
                     if(_Y == []): # Make sure our paths exist
