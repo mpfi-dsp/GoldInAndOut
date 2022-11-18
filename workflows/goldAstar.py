@@ -36,7 +36,7 @@ import cv2
 # pixels_conversion(data=data, unit=Unit.PIXEL, scalar=1.0))
 
 # def run_goldAstar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]]):
-def run_goldAstar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]], pb: pyqtSignal):
+def run_goldAstar(map_path, mask_path, coord_list: List[Tuple[float, float]], random_coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]], pb: pyqtSignal):
     def dist2(p1, p2):
         return (p1[0]-p2[0])**2 + (p1[1]-p2[1])**2
 
@@ -97,108 +97,134 @@ def run_goldAstar(map_path, mask_path, coord_list: List[Tuple[float, float]], al
         return nnd_list
 
     nnd_df = pd.DataFrame()
+    r_nnd_df = pd.DataFrame()
     nnd_df[['og_coord', 'goldstar_coord', 'dist']] = pd.DataFrame(goldstar_distance_closest(coord_list, alt_list))
+    r_nnd_df[['og_coord', 'goldstar_coord', 'dist']] = pd.DataFrame(goldstar_distance_closest(random_coord_list, alt_list))
 
-    mask = cv2.imread(mask_path)                                        # Load imported mask
-    img = cv2.imread(map_path)                                          # Load important image
-    cMask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)                      # Convery mask to Black & White
-    ret, binary = cv2.threshold(cMask, 220, 255, cv2.THRESH_BINARY)     # Threshold on mask to make it binary
-    base = np.zeros_like(mask)                                          # Create blank image with mask dimensions
-    imgMaskMerge = cv2.addWeighted(img, 0.5, mask, 0.5, 0.0)            # create image merging img & mask
+    def find_astar_real(nnd_df):
+        mask = cv2.imread(mask_path)                                        # Load imported mask
+        img = cv2.imread(map_path)                                          # Load important image
+        cMask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)                      # Convery mask to Black & White
+        ret, binary = cv2.threshold(cMask, 220, 255, cv2.THRESH_BINARY)     # Threshold on mask to make it binary
+        base = np.zeros_like(mask)                                          # Create blank image with mask dimensions
+        imgMaskMerge = cv2.addWeighted(img, 0.5, mask, 0.5, 0.0)            # create image merging img & mask
 
-    binary = map_fill(binary)
+        binary = map_fill(binary)
 
-    for idx, entry in nnd_df.iterrows():
-        particle_1 = tuple(int(x) for x in entry['og_coord'])
-        particle_2 = tuple(int(x) for x in entry['goldstar_coord'])
+        for idx, entry in nnd_df.iterrows():
+            particle_1 = tuple(int(x) for x in entry['og_coord'])
+            particle_2 = tuple(int(x) for x in entry['goldstar_coord'])
 
-        base = cv2.circle(base, particle_1, 10, (0, 0, 255), -1)        # Draw particle on base
-        base = cv2.line(base, particle_1, particle_2, (0, 0, 255), 5)   # Draw particle -> landmark line on base
-        base = cv2.circle(base, particle_2, 10, (0, 0, 255), -1)        # Draw landmark on base
+            base = cv2.circle(base, particle_1, 10, (0, 0, 255), -1)        # Draw particle on base
+            base = cv2.line(base, particle_1, particle_2, (0, 0, 255), 5)   # Draw particle -> landmark line on base
+            base = cv2.circle(base, particle_2, 10, (0, 0, 255), -1)        # Draw landmark on base
 
-    maskedLineImg = cv2.bitwise_or(base, base, mask = binary)           # Mask out base with mask (who could've guessed)
-    maskedLineImg = cv2.cvtColor(maskedLineImg, cv2.COLOR_BGR2GRAY)     # Convert new masked image to Black & White
+        maskedLineImg = cv2.bitwise_or(base, base, mask = binary)           # Mask out base with mask (who could've guessed)
+        maskedLineImg = cv2.cvtColor(maskedLineImg, cv2.COLOR_BGR2GRAY)     # Convert new masked image to Black & White
 
-    # Get contours of  masked image
-    contours, hierarchy = cv2.findContours(maskedLineImg, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        # Get contours of  masked image
+        contours, hierarchy = cv2.findContours(maskedLineImg, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-    cList = []
-    for c in contours:
+        cList = []
+        for c in contours:
 
-        # Compute the center of the contour
-        M = cv2.moments(c)
-        if M["m00"] != 0:
-            cX = int(M["m10"] / M["m00"])
-            cY = int(M["m01"] / M["m00"])
-        else:
-            cX, cY = 0, 0
-        cList.append((cX, cY))  # Add center to list of all centers
+            # Compute the center of the contour
+            M = cv2.moments(c)
+            if M["m00"] != 0:
+                cX = int(M["m10"] / M["m00"])
+                cY = int(M["m01"] / M["m00"])
+            else:
+                cX, cY = 0, 0
+            cList.append((cX, cY))  # Add center to list of all centers
 
-    mergedCList = fuse(cList, 200)  # If centers are close to each other...
-                                    # delete them and add an average of their points instead
+        mergedCList = fuse(cList, 200)  # If centers are close to each other...
+                                        # delete them and add an average of their points instead
 
-    newParticleList = nnd_df.copy()
+        newParticleList = nnd_df.copy()
 
-    astarList = []
-    nonSelected_Point = []
-    nonSelected_Landmark = []
-    nonSelected_Distance = []
+        astarList = []
+        nonSelected_Point = []
+        nonSelected_Landmark = []
+        nonSelected_Distance = []
 
-    for p in mergedCList:   
-        dists = [math.sqrt((p[0]-s1)**2 + (p[1]-s0)**2) for s0, s1 in alt_list]
+        for p in mergedCList:   
+            dists = [math.sqrt((p[0]-s1)**2 + (p[1]-s0)**2) for s0, s1 in alt_list]
 
-        if(all(i >= 100 for i in dists)):
-            for idx, entry in newParticleList.iterrows():
-                particle_1 = tuple(int(x) for x in entry['og_coord'])
-                p1_array = np.asarray(particle_1)
-                particle_2 = tuple(int(x) for x in entry['goldstar_coord'])
-                dist_ = entry['dist']
-                p2_array = np.asarray(particle_2)
+            if(all(i >= 100 for i in dists)):
+                for idx, entry in newParticleList.iterrows():
+                    particle_1 = tuple(int(x) for x in entry['og_coord'])
+                    p1_array = np.asarray(particle_1)
+                    particle_2 = tuple(int(x) for x in entry['goldstar_coord'])
+                    dist_ = entry['dist']
+                    p2_array = np.asarray(particle_2)
 
-                imgMaskMerge = cv2.circle(imgMaskMerge, p1_array, 10, (255, 0, 0), -1)
-                imgMaskMerge = cv2.circle(imgMaskMerge, p2_array, 10, (255, 0, 0), -1)
+                    imgMaskMerge = cv2.circle(imgMaskMerge, p1_array, 10, (255, 0, 0), -1)
+                    imgMaskMerge = cv2.circle(imgMaskMerge, p2_array, 10, (255, 0, 0), -1)
 
-                pt = nearestPointOnLine(p, p1_array, p2_array, True)
-                dist = np.linalg.norm(p-pt)
+                    pt = nearestPointOnLine(p, p1_array, p2_array, True)
+                    dist = np.linalg.norm(p-pt)
 
-                if(dist >= 100):
-                    imgMaskMerge = cv2.line(imgMaskMerge, p1_array, p2_array, (255, 0, 0), 5)
-                else:
-                    imgMaskMerge = cv2.line(imgMaskMerge, p1_array, p2_array, (0, 0, 255), 5)               
+                    if(dist >= 100):
+                        imgMaskMerge = cv2.line(imgMaskMerge, p1_array, p2_array, (255, 0, 0), 5)
+                    else:
+                        imgMaskMerge = cv2.line(imgMaskMerge, p1_array, p2_array, (0, 0, 255), 5)               
 
-                    astarList.append(particle_1)
-                    newParticleList.drop(idx, inplace=True)
+                        astarList.append(particle_1)
+                        newParticleList.drop(idx, inplace=True)
 
-    for idx, entry in newParticleList.iterrows():
-        particle_1 = tuple(int(x) for x in entry['og_coord'])
-        particle_2 = tuple(int(x) for x in entry['goldstar_coord'])
-        dist = entry['dist']
+        for idx, entry in newParticleList.iterrows():
+            particle_1 = tuple(int(x) for x in entry['og_coord'])
+            particle_2 = tuple(int(x) for x in entry['goldstar_coord'])
+            dist = entry['dist']
 
-        nonSelected_Point.append(particle_1)
-        nonSelected_Landmark.append(particle_2)
-        nonSelected_Distance.append(dist)
+            nonSelected_Point.append(particle_1)
+            nonSelected_Landmark.append(particle_2)
+            nonSelected_Distance.append(dist)
+        
+        return(astarList, nonSelected_Point, nonSelected_Landmark, nonSelected_Distance)
+
+    # REAL VALUES
+    logging.info("Running Real Values:")
+    astarList, ns_P, ns_L, ns_D = find_astar_real(nnd_df)
+    reg_alt_copy = alt_list.copy()
 
     print("A* Length: {}".format(len(astarList)))
 
-    # astarDF, astarDF_, astarCoords, astarCoords_ = run_astar(map_path, mask_path, astarList[84:], alt_list)
-    astarDF, astarDF_, astarCoords, astarCoords_ = run_astar(map_path, mask_path, astarList, alt_list, pb)
+    astarDF, astarCoords = run_astar(map_path, mask_path, astarList, reg_alt_copy, pb, False)
     
-    nonSelected_DF = pd.DataFrame(list(zip(nonSelected_Point, nonSelected_Landmark, nonSelected_Distance,
-                np.zeros(len(nonSelected_Point)), np.zeros(len(nonSelected_Point)), nonSelected_Distance)),
+    nonSelected_DF = pd.DataFrame(list(zip(ns_P, ns_L, ns_D,
+                np.zeros(len(ns_P)), np.zeros(len(ns_P)), ns_D)),
                 columns =['og_coord', 'astar_coord', 'goldstar_dist', 'astar_dist', 'smoothed_dist', 'dist'])
 
     combined_astarDF = pd.concat([astarDF, nonSelected_DF])
-
     astarCoords = astarCoords.set_index('og_coord')
     astarCoords = astarCoords.reindex(index=astarDF['og_coord'])
     astarCoords = astarCoords.reset_index()
 
-    return combined_astarDF, combined_astarDF, astarCoords, astarCoords
-    # return astarDF, astarDF, astarCoords, astarCoords
+    # RANDOM VALUES
+    logging.info("Running Random Values:")
+    r_astarList, r_ns_P, r_ns_L, r_ns_D = find_astar_real(r_nnd_df)
+    rand_alt_copy = alt_list.copy()
+
+    print("A* Length: {}".format(len(r_astarList)))
+    
+    r_astarDF, r_astarCoords = run_astar(map_path, mask_path, r_astarList, rand_alt_copy, pb, True)
+    
+    r_nonSelected_DF = pd.DataFrame(list(zip(r_ns_P, r_ns_L, r_ns_D,
+                np.zeros(len(r_ns_P)), np.zeros(len(r_ns_P)), r_ns_D)),
+                columns =['og_coord', 'astar_coord', 'goldstar_dist', 'astar_dist', 'smoothed_dist', 'dist'])
+
+    r_combined_astarDF = pd.concat([r_astarDF, r_nonSelected_DF])
+    r_astarCoords = r_astarCoords.set_index('og_coord')
+    r_astarCoords = r_astarCoords.reindex(index=r_astarDF['og_coord'])
+    r_astarCoords = r_astarCoords.reset_index()
+
+    return combined_astarDF, r_combined_astarDF, astarCoords, r_astarCoords
 
 # run_goldAstar(img_path, mask_path, COORDS, ALT_COORDS)
 
-def draw_goldAstar(nnd_df: pd.DataFrame, path_df: pd.DataFrame, bin_counts: List[int], img: List, mask: List, palette: List[Tuple[int, int, int]], alt_palette: List[Tuple[int, int, int]], circle_c: Tuple[int, int, int] = (0, 0, 255)):
+def draw_goldAstar(nnd_df: pd.DataFrame, path_df: pd.DataFrame, bin_counts: List[int], img: List, mask: List, palette: List[Tuple[int, int, int]], circle_c: Tuple[int, int, int] = (0, 0, 255)):
+# def draw_goldAstar(nnd_df: pd.DataFrame, path_df: pd.DataFrame, bin_counts: List[int], img: List, mask: List, palette: List[Tuple[int, int, int]], alt_palette: List[Tuple[int, int, int]], circle_c: Tuple[int, int, int] = (0, 0, 255)):
     
     mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
     ret, binary = cv2.threshold(mask, 100, 255, cv2.THRESH_OTSU)
@@ -230,7 +256,10 @@ def draw_goldAstar(nnd_df: pd.DataFrame, path_df: pd.DataFrame, bin_counts: List
         else:
             paths = path_df['Path']
             current_path = np.array([paths[pth_idx]])
-            img = cv2.polylines(img, np.int32([current_path]), False, sea_to_rgb(alt_palette[bin_idx]), 5)
+            try:
+                img = cv2.polylines(img, np.int32([current_path]), False, sea_to_rgb(palette[bin_idx]), 5)
+            except:
+                logging.info("Failed to draw polyline, value may be missing")
             pth_idx += 1
         
         img = cv2.circle(img, particle_1, 10, circle_c, -1)
