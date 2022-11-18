@@ -578,7 +578,7 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
 
         for p in _coord_list:
             i_l += 1                                        # Increment particle counter
-            print(f"Particle: {i_l}")
+            # print(f"Particle: {i_l}")
             i_j = 0                                         # Counter for each landmark (per particle)
             small_dist = 10000000000000000000               # Initial value for smallest dist (will be overidden)
             max_len = 1000                                  # Initial value for pathfinding cutoff
@@ -626,7 +626,7 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
 
                         dist = len(_Y)
 
-                    # '''
+                    '''
                     if(imgs):
                         fig = plt.figure()
                         plt.scatter(_X, _Y)
@@ -646,7 +646,7 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
                     timeSince = round(curTime - lastTime, 2)        #Get time since last loop
                     lastTime = curTime                              #Set loop timer to current time
 
-                    print(f"TIME: {curTime} Particle: {i_l}, Landmark: {i_j} - {smoothDist}", {map[p2[1]][p2[0]]})
+                    # print(f"TIME: {curTime} Particle: {i_l}, Landmark: {i_j} - {smoothDist}", {map[p2[1]][p2[0]]})
 
                     xs = [x[0] for x in mids]
                     ys = [x[1] for x in mids]
