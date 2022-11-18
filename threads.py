@@ -74,7 +74,7 @@ class AnalysisWorker(QObject):
             elif wf['type'] == Workflow.ASTAR:
                 # real_df1, rand_df1, real_df2, rand_df2 = run_astar(
                 real_df1, rand_df1, real_df2, rand_df2 = run_goldAstar(
-                    map_path=img_path, mask_path=mask_path, coord_list=coords, alt_list=alt_coords, pb=self.progress)
+                    map_path=img_path, mask_path=mask_path, coord_list=coords, random_coord_list=rand_coords, alt_list=alt_coords, pb=self.progress)
             self.output_data = DataObj(real_df1, real_df2, rand_df1, rand_df2)
             self.finished.emit(self.output_data)
             logging.info('finished %s analysis', wf["name"])

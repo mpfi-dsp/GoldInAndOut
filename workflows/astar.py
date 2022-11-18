@@ -109,7 +109,7 @@ def map_fill(img, flip = True):
     return(out)
 
 # def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]]):
-def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]], pb: pyqtSignal):
+def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_list: List[Tuple[float, float]], pb: pyqtSignal, imgs = False):
     """ RUN ASTAR ON A MAP """
 
     class Node:
@@ -557,9 +557,7 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
 
     map = map_fill(map)
     flippedMap = map_fill(flippedMap, False)
-    
-    # If you remove this comment the code will blow up
-    
+        
     def astar(_coord_list: List[Tuple[float, float]], _alt_list: List[Tuple[float, float]]):
         logging.info("initializing variables & making maps...")
 
@@ -580,12 +578,7 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
 
         for p in _coord_list:
             i_l += 1                                        # Increment particle counter
-<<<<<<< Updated upstream
-            print(f"Particle: {i_l}")
-=======
-            if(i_l % 5 == 0):
-                print(f"Particle #{i_l}")
->>>>>>> Stashed changes
+            # print(f"Particle: {i_l}")
             i_j = 0                                         # Counter for each landmark (per particle)
             small_dist = 10000000000000000000               # Initial value for smallest dist (will be overidden)
             max_len = 1000                                  # Initial value for pathfinding cutoff
@@ -597,6 +590,7 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
 
             for j in ordered_alt_list:
                 i_j += 1                # Increment landmark counter
+                # print(f"Landmark: {j}")
 
                 p2 = (j[0], j[1])       # Get current landmark coordinates
 
@@ -633,13 +627,14 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
                         dist = len(_Y)
 
                     '''
-                    fig = plt.figure()
-                    plt.scatter(_X, _Y)
-                    plt.plot(p2[0], p2[1], 'y*')
-                    plt.plot(p1[0], p1[1], 'r*')
-                    plt.imshow(c_map, cmap='binary')
-                    plt.show()
-                    # plt.savefig(f"review_imgs/{i_l}_{i_j}.png")
+                    if(imgs):
+                        fig = plt.figure()
+                        plt.scatter(_X, _Y)
+                        plt.plot(p2[0], p2[1], 'y*')
+                        plt.plot(p1[0], p1[1], 'r*')
+                        plt.imshow(c_map, cmap='binary')
+                        # plt.show()
+                        plt.savefig(f"randImgs/{i_l}_{i_j}.png")
                     # '''
 
                     if(_Y == []): # Make sure our paths exist
@@ -651,11 +646,7 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
                     timeSince = round(curTime - lastTime, 2)        #Get time since last loop
                     lastTime = curTime                              #Set loop timer to current time
 
-<<<<<<< Updated upstream
-                    print(f"TIME: {curTime} Particle: {i_l}, Landmark: {i_j} - {smoothDist}", {map[p2[1]][p2[0]]})
-=======
                     # print(f"TIME: {curTime} Particle: {i_l}, Landmark: {i_j} - {smoothDist}", {map[p2[1]][p2[0]]})
->>>>>>> Stashed changes
 
                     xs = [x[0] for x in mids]
                     ys = [x[1] for x in mids]
@@ -696,32 +687,7 @@ def run_astar(map_path, mask_path, coord_list: List[Tuple[float, float]], alt_li
     clean_real_df = pd.DataFrame()
     clean_real_df[['og_coord', 'astar_coord', 'goldstar_dist', 'astar_dist', 'smoothed_dist', 'dist']] = pd.DataFrame(
         [x for x in real_df['Nearest Neighbor A* Distance'].tolist()])
-    # clean_real_df = clean_real_df.sort_values(['dist'])
 
-    # df = pd.DataFrame(astar_coords, columns=["a*Y", "a*X"])
     df = pd.DataFrame(astar_coords, columns=['og_coord', 'Path'])
     logging.info("Finishing...")
-    return clean_real_df, clean_real_df, df, df
-
-def draw_astar(nnd_df: pd.DataFrame, bin_counts: List[int], img: List, palette: List[Tuple[int, int, int]], circle_c: Tuple[int, int, int] = (0, 0, 255)):
-    """ DRAW LINES TO ANNOTATE N NEAREST DIST ON IMAGE """
-    def sea_to_rgb(color):
-        color = [val * 255 for val in color]
-        return color
-
-    count, bin_idx = 0, 0
-    for idx, entry in nnd_df.iterrows():
-        count += 1
-        particle_1 = tuple(int(x) for x in entry['og_coord'])
-        particle_2 = tuple(int(x) for x in entry['astar_coord'])
-        if count >= bin_counts[bin_idx] and bin_idx < len(bin_counts) - 1:
-            bin_idx += 1
-            count = 0
-        img = cv2.circle(img, particle_1, 10, circle_c, -1)
-        img = cv2.line(img, particle_1, particle_2, sea_to_rgb(palette[bin_idx]), 5)
-        img = cv2.circle(img, particle_2, 10, (0, 0, 255), -1)
-
-    for idx, entry in nnd_df.iterrows():
-        particle_1 = tuple(int(x) for x in entry['og_coord'])
-        cv2.putText(img, str(idx), org=particle_1, fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(255, 255, 255), fontScale=0.5)
-    return img
+    return clean_real_df, df
