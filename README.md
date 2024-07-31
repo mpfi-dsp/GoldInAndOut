@@ -53,9 +53,9 @@ There are five analysis methods included in the base version of GoldInAndOut:
 
 *(Note that a landmark (in a .csv format) is required for Gold Rippler and Gold Star to ensure accurate analysis.)* Also note that the image file no longer requires the word "image" to be in the title (the other files should include “gold”, “landmark”, “parameters”, and “scalar” if being used). 
 
-If inputting multiple folders, the parameters.txt file can be located in the larger folder containing the folders of interest, and the same parameters will be applied to all folders. The parameters for each workflow are no longer input in the final output page. Similarly, a “Set Scalar” button has been added and accepts files in the format of “1px=0.000888um 1px=0.888nm” or “1px=0.000888um". This file can be located in the same path as parameters.txt, or can be manually entered at the bottom of the interface. Alternatively, if inputting a singular file, the parameters and scalar files can be located within that folder. 
-
 To learn more about these workflows, check the [wiki](https://github.com/GoldinGuy/GoldInAndOut/wiki/Workflows)
+
+NEW TO VERSION 2.4.0: If inputting multiple folders, the parameters.txt file can be located in the larger folder containing the folders of interest, and the same parameters will be applied to all folders. The parameters for each workflow are no longer input in the final output page. Similarly, a “Set Scalar” button has been added and accepts files in the format of “1px=0.000888um 1px=0.888nm” or “1px=0.000888um". This file can be located in the same path as parameters.txt, or can be manually entered at the bottom of the interface. Alternatively, if inputting a singular file, the parameters and scalar files can be located within that folder. 
 
 <img src="https://user-images.githubusercontent.com/47064842/137605418-3488526a-4b83-485a-a527-0162538c47e1.png" width="500px">
 
