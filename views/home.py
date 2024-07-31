@@ -1,12 +1,13 @@
 # pyQT5
 import os
+import numpy as np
 import traceback
 import logging
 import cv2
-from PyQt5.QtGui import QCursor, QMovie, QPixmap, QImage
+from PyQt5.QtGui import QCursor, QMovie, QPixmap, QImage, QIntValidator, QFont, QIcon
 from PyQt5.QtWidgets import (QLabel, QFileDialog, QSpacerItem, QCheckBox, QHBoxLayout, QPushButton, QWidget,
-                             QSizePolicy, QFormLayout, QLineEdit, QColorDialog, QComboBox, QProgressBar, QVBoxLayout)
-from PyQt5.QtCore import Qt, QByteArray, QPropertyAnimation, QAbstractAnimation, QVariantAnimation
+                             QSizePolicy, QFormLayout, QLineEdit, QColorDialog, QComboBox, QProgressBar, QVBoxLayout, QMessageBox, QListWidget, QListWidgetItem)
+from PyQt5.QtCore import Qt, QByteArray, QPropertyAnimation, QAbstractAnimation, QVariantAnimation, QTimer, QSize
 # general
 from pathlib import Path
 from functools import partial
@@ -14,6 +15,7 @@ from functools import partial
 from globals import UNIT_OPS, WORKFLOWS, MAX_DIRS_PRUNE, UNIT_PX_SCALARS, DEFAULT_OUTPUT_DIR, PROG_COLOR_1, PROG_COLOR_2
 from typings import FileType
 from utils import get_complimentary_color
+from workflows import random_coords
 
 HEADER = "Automated Gold Particle Analysis"
 DESC = "Upload files, select workflows and desired parameters, and click \"Start\"!"
@@ -114,7 +116,39 @@ class HomePage(QWidget):
         self.output_dir_le.setText(DEFAULT_OUTPUT_DIR)
         layout.addRow(out_btn, self.output_dir_le)
         layout.addItem(spacer)
-
+        # parameter input 
+        param_btn = QPushButton('Set Parameters', self)
+        param_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        param_btn.clicked.connect(partial(self.open_file_picker, FileType.PARAM))
+        self.param_popup_btn = QPushButton('Show Example', self)
+        self.param_popup_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        self.param_input = QLabel("Global Parameters Input Format: \nDistance=27px \nClust=2 \nRandom=1 \nSteps=10 \nSize=60px \nRadius=50px ")
+        self.param_input.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.param_input.setStyleSheet("font-size: 18px; font-weight: 450;") 
+        self.reload_params = QPushButton('*', self)
+        self.reload_params.setToolTip('Reset Parameters')
+        self.reload_params.clicked.connect(self.reload_params_func)
+        #self.params_icon = QIcon('./images/reload_icon.png')
+        #self.reload_params.setIcon(self.params_icon) #(QIcon('./images/reload_icon.png'))
+        self.reload_params.setCursor(QCursor(Qt.PointingHandCursor))
+        self.param_le = QLineEdit()
+        self.param_le.setPlaceholderText("None Selected (TXT)")
+        param_box = QHBoxLayout()
+        param_box.addWidget(param_btn)
+        param_box.addWidget(self.param_popup_btn)
+        param_box.addWidget(self.reload_params)
+        param_box.addWidget(self.param_le)
+        layout.addRow(param_box)
+        # scalar input 
+        scalar_btn = QPushButton('Set Scalar', self)
+        scalar_btn.setCursor(QCursor(Qt.PointingHandCursor))
+        scalar_btn.clicked.connect(partial(self.open_file_picker, FileType.SCALAR))
+        self.scalar_le = QLineEdit()
+        self.scalar_le.setPlaceholderText("None Selected (TXT)")
+        scalar_box = QHBoxLayout()
+        scalar_box.addWidget(scalar_btn)
+        scalar_box.addWidget(self.scalar_le)
+        layout.addRow(scalar_box)
         # workflows header
         workflows_header = QLabel("Select Workflows")
         layout.addRow(workflows_header)
@@ -131,6 +165,11 @@ class HomePage(QWidget):
         layout.addItem(spacer)
 
         props_header = QLabel("Global Parameters")
+        # parameters 
+        self.params_row_1 = QLabel('Distance threshold: 27px           Minimum cluster size: 2           # random trials: 1           ')
+        self.params_row_1.setStyleSheet("font-size: 17px; font-weight: 400;")
+        self.params_row_2 = QLabel('Maximum # steps: 10               Step size: 60px                         Initial radius: 50px')
+        self.params_row_2.setStyleSheet("font-size: 17px; font-weight: 400;")
         # folder btn
         self.show_logs_btn = QPushButton('Display Logger', self)
         self.show_logs_btn.setCursor(QCursor(Qt.PointingHandCursor))
@@ -141,6 +180,8 @@ class HomePage(QWidget):
         p_bl.addWidget(props_header)
         p_bl.addWidget(self.show_logs_btn)
         layout.addRow(p_bl)
+        layout.addRow(self.params_row_1)
+        layout.addRow(self.params_row_2)
         # delete old dirs checkbox
         self.dod_cb = QCheckBox(f'prune old output (delete folders older than {MAX_DIRS_PRUNE} runs)')
         layout.addRow(self.dod_cb)
@@ -150,6 +191,9 @@ class HomePage(QWidget):
         # cluster area checkbox
         self.clust_area = QCheckBox('find cluster area')
         layout.addRow(self.clust_area)
+        # automate checking of "find cluster area" for Cluster/Separation
+        self.workflow_cbs[1].stateChanged.connect(self.find_clust_func)
+        self.workflow_cbs[2].stateChanged.connect(self.find_clust_func)
         # input
         ip_scalr_lb = QLabel("in")
         ip_scalr_lb.setStyleSheet("font-size: 17px; font-weight: 400;")
@@ -180,6 +224,8 @@ class HomePage(QWidget):
         self.csvs_ip_o.setHidden(True)
         self.csvs_lb_i.setHidden(True)
         self.csvs_ip_i.setHidden(True)
+        # parameters  
+        self.parameters = [27, 2, 10, 60, 50] # default params
         # global props
         glob_props = QHBoxLayout()
         for glob in [ip_scalr_lb, self.ip_scalar_type, op_scalr_lb, self.op_scalar_type, self.csvs_lb_i, self.csvs_ip_i, self.csvs_lb_o, self.csvs_ip_o]:
@@ -195,7 +241,7 @@ class HomePage(QWidget):
         # start btn
         self.start_btn = QPushButton('Start', self)
         self.start_btn.setStyleSheet(
-            "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; background: #E89C12; color: white; border-radius: 7px; ")
+            "font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 5px; background: #E89C12; color: white; border-radius: 7px; ")
         self.start_btn.clicked.connect(start)
         self.start_btn.setCursor(QCursor(Qt.PointingHandCursor))
         layout.addRow(self.start_btn)
@@ -212,9 +258,15 @@ class HomePage(QWidget):
             self.prog_animation.start if self.progress.value() < 100 else self.prog_animation.stop)
         # self.prog_animation.finished.connect(self.prog_animation.deleteLater)
         self.prog_animation.start()
-
         # assign layout
         self.setLayout(layout)
+
+    # automate checking of "find cluster area" for Cluster/Separation
+    def find_clust_func(self): 
+        if self.workflow_cbs[1].isChecked() or self.workflow_cbs[2].isChecked():
+            self.clust_area.setChecked(True)
+        elif not self.workflow_cbs[1].isChecked() or not self.workflow_cbs[2].isChecked():
+            self.clust_area.setChecked(False)
 
     def _animate_prog(self, value):
         # print('prog', self.progress.value())
@@ -273,6 +325,14 @@ class HomePage(QWidget):
         self.mask_le.setText("")
         self.csv_le.setText("")
         self.csv2_le.setText("")
+        self.param_le.setText("")
+        self.scalar_le.setText("")
+        self.parameters = [27, 2, 10, 60, 50]
+        random_coords.N = 1
+        self.params_row_1.repaint()
+        self.params_row_1.setText(f'Distance threshold: {self.parameters[0]}px           Minimum cluster size: {self.parameters[1]}           # random trials: {random_coords.N}           ')
+        self.params_row_2.repaint()
+        self.params_row_2.setText(f'Maximum # steps: {self.parameters[2]}               Step size: {self.parameters[3]}px                         Initial radius: {self.parameters[4]}px')
         self.ip_scalar_type.setCurrentIndex(0)
         self.op_scalar_type.setCurrentIndex(0)
         self.csvs_ip_i.setText("")
@@ -289,16 +349,20 @@ class HomePage(QWidget):
             if len(os.listdir(input_folder)) > 0:
                 for filename in os.listdir(input_folder):
                     full_file = os.path.join(input_folder, filename)
-                    if 'image' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'mask' not in filename.lower() and len(self.img_le.text()) == 0:
+                    if filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'mask' not in filename.lower() and len(self.img_le.text()) == 0 or 'image' in filename.lower() and len(self.img_le.text()) == 0:
                         self.img_le.setText(full_file)
-                    elif 'mask' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'image' not in filename.lower() and len(self.mask_le.text()) == 0:
+                    elif 'mask' in filename.lower() and filename.endswith(('.tif', '.tiff','.png', '.jpeg', '.jpg')) and 'image' not in filename.lower() and len(self.mask_le.text()) == 0:
                         self.mask_le.setText(full_file)
                     elif 'gold' in filename.lower() and filename.endswith('.csv') and 'landmark' not in filename.lower() and len(self.csv_le.text()) == 0:
                         self.csv_le.setText(full_file)
                     elif 'landmark' in filename.lower() and filename.endswith('.csv') and 'gold' not in filename.lower() and len(self.csv2_le.text()) == 0:
                         self.csv2_le.setText(full_file)
-                    elif 'scalar' in filename.lower() and filename.endswith('.txt'):
+                    elif 'scalar' in filename.lower() and 'parameters' not in filename.lower() and filename.endswith('.txt') and len(self.scalar_le.text()) == 0:
                         self.set_scalar(full_file)
+                        self.scalar_le.setText(full_file)
+                    elif 'parameters' in filename.lower() and 'scalar' not in filename.lower() and filename.endswith('.txt') and len(self.param_le.text()) == 0:
+                        self.set_params(full_file)
+                        self.param_le.setText(full_file)
         except Exception as e:
             print(e, traceback.format_exc())
 
@@ -314,6 +378,10 @@ class HomePage(QWidget):
                 path = os.path.dirname(self.csv_le.text())
             elif len(self.csv2_le.text()) > 0:
                 path = os.path.dirname(self.csv2_le.text())
+            elif len(self.param_le.text()) > 0:
+                path = os.path.dirname(self.param_le.text())
+            elif len(self.scalar_le.text()) > 0:
+                path = os.path.dirname(self.scalar_le.text())    
             file = QFileDialog.getOpenFileName(self, 'Open file', path)
             filename = file[0]
             if (len(filename)) > 0:
@@ -325,6 +393,12 @@ class HomePage(QWidget):
                     self.csv_le.setText(filename)
                 elif btn_type == FileType.CSV2:
                     self.csv2_le.setText(filename)
+                elif btn_type == FileType.PARAM: 
+                    self.set_params(filename)
+                    self.param_le.setText(filename)
+                elif btn_type == FileType.SCALAR: 
+                    self.set_scalar(filename)
+                    self.scalar_le.setText(filename)
         except Exception as e:
             print(e, traceback.format_exc())
 
@@ -337,6 +411,7 @@ class HomePage(QWidget):
             detected_dirs = os.listdir(input_folder_dir)
             print('detected subdirectories:', detected_dirs)
             # remove hidden dirs
+            removed_dirs = [f for f in detected_dirs if not os.path.isdir(os.path.join(input_folder_dir, f)) or f.startswith('.')] # may include parameters or scalar file
             detected_dirs = [f for f in detected_dirs if os.path.isdir(os.path.join(input_folder_dir, f)) and not f.startswith('.')]
             self.folder_count = len(detected_dirs)
             logging.info(f'folder count: {self.folder_count}')
@@ -346,26 +421,59 @@ class HomePage(QWidget):
                         full_sub_dir = os.path.join(input_folder_dir, subfolder_dir)
                         if (os.path.isdir(full_sub_dir)):
                             subfolder_contents = os.listdir(full_sub_dir)
-                            if len(subfolder_contents) > 0:
+                            if len(subfolder_contents) == 4: #> 0:
+                                new_fld = {
+                                    'image': [],
+                                    'mask': [],
+                                    'csv': [],
+                                    'scalar': [],
+                                    'parameters': []
+                                }
+                                for filename in subfolder_contents:
+                                    full_file = os.path.join(full_sub_dir, filename)
+                                    if filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'mask' not in filename.lower() and len(self.img_le.text()) == 0 or len(self.img_le.text()) == 0 and 'image' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')):
+                                        new_fld['image'].append(full_file)
+                                    elif len(self.mask_le.text()) == 0 and filename.endswith(('.tif', '.tiff', '.png', '.jpeg', '.jpg')) and 'image' not in filename.lower() and 'mask' in filename.lower():
+                                        new_fld['mask'].append(full_file)
+                                    elif len(self.csv_le.text()) == 0 and filename.endswith('.csv') and 'landmark' not in filename.lower() and 'gold' in filename.lower():
+                                        new_fld['csv'].append(full_file)
+                                    elif len(self.csv2_le.text()) == 0 and filename.endswith('.csv') and 'gold' not in filename.lower() and 'landmark' in filename.lower():  
+                                        new_fld['csv2'].append(full_file)
+                                    elif filename.endswith('.txt') and 'scalar' in filename.lower()  and 'parameters' not in filename.lower() and len(self.scalar_le.text()) == 0: 
+                                        new_fld['scalar'].append(full_file)
+                                    elif 'parameters' in filename.lower() and 'scalar' not in filename.lower() and filename.endswith('.txt') and len(self.param_le.text()) == 0:
+                                        new_fld['parameters'].append(full_file)
+                                self.multi_folders.append(new_fld)
+                            elif len(subfolder_contents) > 4:
                                 new_fld = {
                                     'image': [],
                                     'mask': [],
                                     'csv': [],
                                     'csv2': [],
-                                    'scalar': []
+                                    'scalar': [],
+                                    'parameters': []
                                 }
                                 for filename in subfolder_contents:
                                     full_file = os.path.join(full_sub_dir, filename)
-                                    if 'image' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'mask' not in filename.lower() and len(self.img_le.text()) == 0:
-                                       new_fld['image'].append(full_file)
-                                    elif 'mask' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'image' not in filename.lower() and len(self.mask_le.text()) == 0:
+                                    if filename.endswith(('.tif', '.png', '.jpeg', '.jpg')) and 'mask' not in filename.lower() and len(self.img_le.text()) == 0 or len(self.img_le.text()) == 0 and 'image' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')):
+                                        if 'image' not in filename.lower():
+                                            if filename.endswith(('.tif', '.png', '.jpg')): 
+                                                filename = filename.replace(filename[:-4], "image")
+                                            elif filename.endswith(('.jpeg')):
+                                                filename = filename.replace(filename[:-5], "image")
+                                            new_fld['image'].append(full_file)
+                                        else: 
+                                            new_fld['image'].append(full_file)
+                                    elif len(self.mask_le.text()) == 0 and filename.endswith(('.tif', '.tiff', '.png', '.jpeg', '.jpg')) and 'image' not in filename.lower() or len(self.mask_le.text()) == 0 and 'mask' in filename.lower() and filename.endswith(('.tif', '.png', '.jpeg', '.jpg')):
                                         new_fld['mask'].append(full_file)
-                                    elif 'gold' in filename.lower() and filename.endswith('.csv') and 'landmark' not in filename.lower() and len(self.csv_le.text()) == 0:
+                                    elif len(self.csv_le.text()) == 0 and 'landmark' not in filename.lower() and 'gold' in filename.lower() and len(self.csv_le.text()) == 0 and filename.endswith('.csv'):
                                         new_fld['csv'].append(full_file)
-                                    elif 'landmark' in filename.lower() and filename.endswith('.csv') and 'gold' not in filename.lower() and len(self.csv2_le.text()) == 0:
+                                    elif len(self.csv2_le.text()) == 0 and 'gold' not in filename.lower() and 'landmark' in filename.lower() and len(self.csv2_le.text()) == 0 and filename.endswith('.csv'):  
                                         new_fld['csv2'].append(full_file)
-                                    elif 'scalar' in filename.lower() and filename.endswith('.txt'):
+                                    elif filename.endswith('.txt') and 'parameters' not in filename.lower() and 'scalar' in filename.lower() and len(self.scalar_le.text()) == 0: 
                                         new_fld['scalar'].append(full_file)
+                                    elif filename.endswith('.txt') and 'scalar' not in filename.lower() or 'parameters' in filename.lower() and filename.endswith('.txt') and len(self.param_le.text()) == 0: 
+                                        new_fld['parameters'].append(full_file)
                                 self.multi_folders.append(new_fld)
                 logging.info(f'folders: {self.multi_folders}')
                 self.multi_folder_btn.setText(f'{self.folder_count} folders selected')
@@ -375,10 +483,34 @@ class HomePage(QWidget):
                     self.mask_le.setText(self.multi_folders[0]['mask'][0])
                 if (len(self.multi_folders[0]['csv']) > 0):
                     self.csv_le.setText(self.multi_folders[0]['csv'][0])
-                if (len(self.multi_folders[0]['csv2']) > 0):
+                #if ['csv2'] in self.multi_folders[0]:
+                #    if (len(self.multi_folders[0]['csv2']) > 0):
+                #        self.csv2_le.setText(self.multi_folders[0]['csv2'][0])
+                #    self.csv_le.setText(self.multi_folders[0]['csv'][0])
+                #     self.csv2_le.setText('None Selected (CSV)')
+                if (len(self.multi_folders[0]) == 5):
+                    print(self.multi_folders[0])
+                    logging.info("Landmark file not detected. Gold Rippler and Gold Star work optimally with a landmark.")
+                elif (len(self.multi_folders[0]['csv2']) > 0):
                     self.csv2_le.setText(self.multi_folders[0]['csv2'][0])
                 if (len(self.multi_folders[0]['scalar']) > 0):
+                    self.scalar_le.setText(self.multi_folders[0]['scalar'][0])
                     self.set_scalar(self.multi_folders[0]['scalar'][0])
+                elif (len(self.multi_folders[0]['scalar']) == 0):
+                    for subfolder_dir in removed_dirs:
+                        if subfolder_dir.endswith('.txt') and 'parameters' not in subfolder_dir.lower() and 'scalar' in subfolder_dir.lower(): 
+                            subfolder_dir = os.path.join(input_folder_dir, subfolder_dir)
+                            self.scalar_le.setText(subfolder_dir)
+                            self.set_scalar(subfolder_dir)
+                if (len(self.multi_folders[0]['parameters']) > 0):
+                    self.param_le.setText(self.multi_folders[0]['parameters'][0])
+                    self.set_params(self.multi_folders[0]['parameters'][0])
+                elif (len(self.multi_folders[0]['parameters']) == 0):
+                    for subfolder_dir in removed_dirs:
+                        if 'parameters' in subfolder_dir.lower() and subfolder_dir.endswith('.txt') and len(self.param_le.text()) == 0: 
+                            subfolder_dir = os.path.join(input_folder_dir, subfolder_dir)
+                            self.param_le.setText(subfolder_dir)
+                            self.set_params(subfolder_dir)
         except Exception as e:
             print(e, traceback.format_exc())
 
@@ -391,9 +523,12 @@ class HomePage(QWidget):
                 # read in scalar file and extract value and unit
                 lines = f.read()
                 scalars = lines.split(' ')
-                scalar_in = scalars[0][(int(scalars[0].lower().find("1px=",0))+4):].lower()
-                scalar_out = scalars[1][(int(scalars[1].lower().find("1px=",0))+4):].lower()
-                print(scalar_in, scalar_out)
+                if len(scalars) > 1:
+                    scalar_in = scalars[0][(int(scalars[0].lower().find("1px=",0))+4):].lower()
+                    scalar_out = scalars[1][(int(scalars[1].lower().find("1px=",0))+4):].lower()
+                elif len(scalars) == 1: # converting between px and another unit 
+                    scalar_in = scalars[0][:(int(scalars[0].lower().find("1px=",0))+3)].lower()
+                    scalar_out = scalars[0][(int(scalars[0].lower().find("1px=",0))+4):].lower()
                 # set input scalar accordingly
                 if 'px' in scalar_in:
                     scalar_in = scalar_in.replace('px', '')
@@ -412,12 +547,87 @@ class HomePage(QWidget):
                 elif 'nm' in scalar_out:
                     scalar_out = scalar_out.replace('nm', '')
                     self.op_scalar_type.setCurrentIndex(1)
-                elif 'um' in scalar_out:
-                    scalar_out = scalar_out.replace('um', '').replace('μm', '')
-                    self.op_scalar_type.setCurrentIndex(2)
+                elif 'um' in scalar_out or 'µm' in scalar_out:
+                   #scalar_out = scalar_out.replace('um', '').replace('μm', '')
+                   scalar_out = scalar_out[:-3]
+                   self.op_scalar_type.setCurrentIndex(2)
                 self.csvs_ip_o.setText(scalar_out)
         except Exception as e:
             print(e, traceback.format_exc())
+    
+    def set_params(self, parameters_file):
+        try:
+            with open(parameters_file, 'r') as f:
+                # Format: 
+                # Distance threshold=27px (requires a space after each line)
+                # Min clust size=2px
+                # Random trials=1
+                # Maximum steps=10
+                # Step size=60px 
+                # Initial radius=50px 
+                lines = f.read()
+                parameter_input = lines.split(' ') # denotes lines of the .txt \n
+                first_line = parameter_input[0]
+                distance_thresh = first_line[-4:]
+                if '=' in distance_thresh: # if it is less than 10 
+                    distance_thresh = first_line[-3:]
+                if 'px' in distance_thresh: 
+                    distance_thresh = distance_thresh.replace('px', '')
+                distance_thresh = int(distance_thresh)
+                self.parameters[0] = distance_thresh
+                if len(parameter_input) > 1 and parameter_input[1] != '':
+                    second_line = parameter_input[1]
+                    clust_size = second_line[7:]
+                    clust_size = int(clust_size) 
+                    self.parameters[1] = clust_size
+                if len(parameter_input) > 2 and parameter_input[2] != '': # a variable for random exists 
+                    random_trials = parameter_input[2]
+                    random_coords.N = int(random_trials[8:])
+                self.params_row_1.repaint()
+                self.params_row_1.setText(f'Distance threshold: {self.parameters[0]}px           Minimum cluster size: {self.parameters[1]}           # random trials: {random_coords.N}           ')
+                if len(parameter_input) > 3 and parameter_input[3] != '': # if there are more than 2 or 3 lines 
+                    third_line = parameter_input[3]
+                    no_steps = third_line[7:]
+                    no_steps = int(no_steps)
+                    self.parameters[2] = no_steps
+                if len(parameter_input) > 4 and parameter_input[3] != '':
+                    fourth_line = parameter_input[4]
+                    step_size = fourth_line[6:]
+                    if 'px' in step_size: 
+                        step_size = step_size.replace('px', '')
+                    step_size = int(step_size)
+                    self.parameters[3] = step_size
+                if len(parameter_input) > 5 and parameter_input[3] != '':
+                    fifth_line = parameter_input[5]
+                    radius = fifth_line[8:]
+                    if 'px' in radius: 
+                        radius = radius.replace('px', '')
+                    radius = int(radius)
+                    self.parameters[4] = radius
+                    self.params_row_2.repaint()
+                    self.params_row_2.setText(f'Maximum # steps: {self.parameters[2]}               Step size: {self.parameters[3]}px                         Initial radius: {self.parameters[4]}px')
+        except Exception as e:
+            print(e, traceback.format_exc()) 
+
+    def reload_params_func(self):
+        self.param_le.setText("")
+        distance_thresh = 27
+        self.parameters[0] = distance_thresh
+        clust_size = 2
+        self.parameters[1] = clust_size
+        random_trials = 1
+        random_coords.N = random_trials
+        self.params_row_1.repaint()
+        self.params_row_1.setText(f'Distance threshold: {self.parameters[0]}px           Minimum cluster size: {self.parameters[1]}           # random trials: {random_coords.N}           ')
+        no_steps = 10
+        self.parameters[2] = no_steps
+        step_size = 60
+        self.parameters[3] = step_size
+        radius = 50
+        self.parameters[4] = radius
+        self.params_row_2.repaint()
+        self.params_row_2.setText(f'Maximum # steps: {self.parameters[2]}               Step size: {self.parameters[3]}px                         Initial radius: {self.parameters[4]}px')    
+
 
     def set_mask_clr(self):
         """ MASK COLOR SET """

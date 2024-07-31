@@ -8,9 +8,12 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QImage, QColor
 from typing import List, Tuple
 from globals import REAL_COLOR
+from workflows import random_coords
 
+distance_threshold = 27
+min_clust_size = 2
 
-def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], img_path: str, distance_threshold: int = 27, affinity: str = 'euclidean', linkage: str = 'single', clust_area: bool = False):
+def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], img_path: str, min_clust_size: int = 2, distance_threshold: int = 27, affinity: str = 'euclidean', linkage: str = 'single', clust_area: bool = False):
     """
     HIERARCHICAL CLUSTERING
     _______________________________
@@ -24,7 +27,16 @@ def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coord
         @maximum: linkage uses the maximum distances between all observations of the two sets
     @real_coords: the real coordinates
     @rand_coords: list of randomly generated coordinates
+    @min_clust_size: minimum number of coords required to be considered a "cluster"
     """
+
+    def minify_df(df, k: int = 2, c: int = 1): # adapted from Separation
+        for el in df.iloc[:, c]:
+            if el < k:
+                drop_values = df[df.iloc[:, c] == el].index
+                df.drop(drop_values, inplace=True)
+        return df
+
     logging.info("clustering")
     pb.emit(10)
     # handle ugly pyqt5 props
@@ -39,9 +51,40 @@ def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coord
     pb.emit(30)
     rand_coordinates = np.array(rand_coords)
     rand_coordinates = np.flip(rand_coordinates, 1)
-    rand_cluster = hc.fit_predict(rand_coordinates)
+    if random_coords.N > 1:
+        len_real = len(real_coords)
+        rand_coordinates_chunk = [rand_coordinates[i:i+len_real] for i in range(0, len(rand_coords), len_real)]
+        rand_cluster_1 = [x for rand_coordinates_chunk in [hc.fit_predict(x) for x in rand_coordinates_chunk] for x in rand_coordinates_chunk]
+        # updating cluster IDs to be unique for each trial
+        blank = rand_cluster_1[0:len_real].copy()
+        first_trial = rand_cluster_1[0:len_real].copy()
+        double_len_real = len_real * 2
+        for i in range(random_coords.N - 1):
+            max_id = int(max(first_trial)) + 1
+            testing = [x+max_id for x in rand_cluster_1[len_real:double_len_real]]
+            first_trial += testing
+            blank += testing
+            len_real += len(real_coords)
+            double_len_real += len(real_coords)
+        rand_cluster = np.array(blank)
+    else:
+        rand_cluster = hc.fit_predict(rand_coordinates)
     rand_df = pd.DataFrame(rand_coordinates, columns=["X", "Y"])
     rand_df['cluster_id'] = rand_cluster
+    len_real_2 = len(real_coords)
+    rand_df_og_copy = rand_df.copy()
+    if not clust_area:
+        for i in range(random_coords.N):
+            if len(rand_df[0:]) > len_real_2:
+                bottom_rows = rand_df.loc[len_real_2:, :]
+                bottom_rows = bottom_rows.reset_index(drop=True)
+                A = len_real_2 * random_coords.N
+                N_minus_one = random_coords.N - 1
+                B = len_real_2 * N_minus_one
+                to_drop = A - B
+                rand_df = rand_df.head(-to_drop)
+                rand_df = pd.merge(rand_df, bottom_rows, how='outer', left_index=True, right_index=True)
+                rand_df = rand_df.loc[:, ~rand_df.apply(lambda x: x.duplicated(), axis=1).all()].copy()
     pb.emit(50)
     clust_details_dfs = []
     if clust_area:
@@ -75,9 +118,76 @@ def run_clust(pb: pyqtSignal, real_coords: List[Tuple[float, float]], rand_coord
                 clust_objs.append(clust_obj)
             new_df = pd.DataFrame(clust_objs, columns=["cluster_id", "cluster_size", "cluster_area"])
             clust_details_dfs.append(new_df)
-    else: 
+            # regular random
+            if random_coords.N > 1:
+                for i in range(random_coords.N):
+                    if len(rand_df[0:]) > len_real_2:
+                        bottom_rows = rand_df.loc[len_real_2:, :]
+                        bottom_rows = bottom_rows.reset_index(drop=True)
+                        A = len_real_2 * random_coords.N
+                        N_minus_one = random_coords.N - 1
+                        B = len_real_2 * N_minus_one
+                        to_drop = A - B
+                        rand_df = rand_df.head(-to_drop)
+                        rand_df = pd.merge(rand_df, bottom_rows, how='outer', left_index=True, right_index=True)
+                        rand_df = rand_df.loc[:, ~rand_df.apply(lambda x: x.duplicated(), axis=1).all()].copy()
+    else:
         emp_df = pd.DataFrame()
         clust_details_dfs = [emp_df, emp_df]
+    final_sum = pd.DataFrame()
+    clust_details_dfs[0] = minify_df(df=clust_details_dfs[0], k=min_clust_size, c=1) # detailed_real_clust_output
+    clust_details_dfs[1] = minify_df(df=clust_details_dfs[1], k=min_clust_size, c=1) # detailed_rand_clust_output
+    clust_details_dfs[1] = clust_details_dfs[1].reset_index()
+    clust_details_dfs[1] = clust_details_dfs[1].iloc[:, 1:]
+    start_iteration = 0 # start of interation
+    M = 0
+    iteration_no = 1 # iteration number
+    rand_df_og_copy = rand_df_og_copy.sort_values(by="cluster_id")
+    rand_df_og_copy = rand_df_og_copy.reset_index()
+    if clust_details_dfs[1].empty:
+        clust_details_dfs[1] = pd.DataFrame(np.array([[0, 0, 0, 0]]), columns=['cluster_id', 'cluster_size', 'cluster_area', 'summed_trial_area'])
+    elif len(clust_details_dfs[1]) > 1:
+        for i in range(random_coords.N):
+            # within one trial of coordinates
+            rand_df_copy = rand_df_og_copy.iloc[:, 1:]
+            rand_df_copy = rand_df_copy.iloc[start_iteration:(len(df) * iteration_no), :]
+            rand_df_copy = rand_df_copy.reset_index()
+            rand_df_copy = rand_df_copy.iloc[:, 1:]
+            if M > 0:
+                rand_df_copy = rand_df_copy[rand_df_copy.iloc[:, 0] >= M]
+            v = rand_df_copy.iloc[:, 2].value_counts()
+            # find cluster IDs that show up more than the min clust size criteria (input)
+            sorted_IDs_2 = rand_df_copy[rand_df_copy.iloc[:, 2].isin(v.index[v.gt(min_clust_size - 1)])]
+            # find the maximum cluster ID within the trial
+            max_ID = int(max(sorted_IDs_2.iloc[:, 2]))
+            # find the index of the coordinate in the centroid list
+            # https://sparkbyexamples.com/pandas/get-row-number-in-pandas/
+            thresh = clust_details_dfs[1][clust_details_dfs[1].iloc[:, 0] == max_ID].index.to_numpy() 
+            thresh  = int(thresh[0]) + 1
+            details_df_copy = clust_details_dfs[1].copy()
+            insert_rows = int(thresh - start_iteration - 1)
+            details_df_copy = details_df_copy.iloc[start_iteration:thresh, 2]
+            summed = details_df_copy.sum(axis=0)
+            summed = pd.DataFrame([summed], columns=["summed_trial_area"])
+            summed = pd.concat([summed,
+                pd.DataFrame(0, columns=summed.iloc[1:, 0], index=range(insert_rows))], ignore_index=True)
+            final_sum = pd.concat([final_sum, summed], ignore_index=True)
+            if len(final_sum) < len(clust_details_dfs[1]):
+                start_iteration = int(thresh)
+                iteration_no += 1
+                M += int(len(df) // random_coords.N)
+        clust_details_dfs[1]["summed_trial_area"] = final_sum
+        clust_details_dfs[1] = clust_details_dfs[1].fillna(0)
+    final_sum_real = pd.DataFrame()
+    insert_rows_real = len(clust_details_dfs[0]) - 1
+    real_details_dfs_copy = clust_details_dfs[0].iloc[:, 2].copy()
+    summed_real = real_details_dfs_copy.sum(axis=0)
+    summed_real = pd.DataFrame([summed_real], columns=["summed_area"])
+    summed_real = pd.concat([summed_real,
+        pd.DataFrame(0, columns=summed_real.iloc[1:, 0], index=range(insert_rows_real))], ignore_index=True)
+    final_sum_real = pd.concat([final_sum_real, summed_real], ignore_index=True)
+    clust_details_dfs[0]["summed_area"] = final_sum_real
+    clust_details_dfs[0] = clust_details_dfs[0].fillna(0)
     pb.emit(90)
     return df, rand_df, clust_details_dfs[0], clust_details_dfs[1]
 

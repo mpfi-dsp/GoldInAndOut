@@ -50,7 +50,7 @@ def figure_to_img(fig: plt.Figure) -> Image:
     return img
 
 
-def pixels_conversion(data: pd.DataFrame, unit: Unit = Unit.PIXEL, scalar: float = 1, r: int = 3) -> pd.DataFrame:
+def pixels_conversion(data: pd.DataFrame, unit: Unit = Unit.PIXEL, scalar: float = 1, r: int = 7) -> pd.DataFrame:
     """ UPLOAD CSV AND CONVERT DF FROM ONE METRIC UNIT TO ANOTHER """
     ignored_cols = ['cluster_id', 'cluster_size', '%_gp_captured',
                     '%_img_covered', 'LCPI', 'total_gp', 'goldstar_dist', 'astar_dist', 'smoothed_dist', 'Path', 'num']  # 'radius',
@@ -76,7 +76,7 @@ def pixels_conversion(data: pd.DataFrame, unit: Unit = Unit.PIXEL, scalar: float
                 # handle scalar to unit^2 for cluster area
                 if df.columns[i] == 'cluster_area':
                     df[col] = round((df[col] * (scalar * scalar)), 4)
-                else: 
+                else:
                     df[col] = round((df[col] * scalar), r)
             else:
                 df[col] = round(df[col].div(scalar), r)
@@ -144,7 +144,7 @@ def to_df(coords: List[Tuple[float, float]]) -> pd.DataFrame:
 
 def avg_vals(val, df: pd.DataFrame) -> pd.DataFrame:
     try:
-        if val == Workflow.NND:
+        if val == Workflow.NND and len(df.columns) < 5:
             real_avg = df['dist'].mean()
             df['avg_dist'] = 0
             df.at[0, 'avg_dist'] = real_avg
@@ -153,11 +153,13 @@ def avg_vals(val, df: pd.DataFrame) -> pd.DataFrame:
             clustCounts = df['cluster_id'].value_counts()
             clustCountsNo1 = clustCounts[clustCounts > 1]
             real_avg = clustCounts.mean()
-            No1_avg = clustCountsNo1.mean()
+            if clustCountsNo1.mean() > 0:
+                No1_avg = clustCountsNo1.mean()
+            else:
+                No1_avg = 0
 
             df['avg'] = 0
             df.at[0, 'avg'] = real_avg
-            # TODO: triggering error in multi file 
             df['avg_no_1s'] = 0
             df.at[0, 'avg_no_1s'] = No1_avg
 

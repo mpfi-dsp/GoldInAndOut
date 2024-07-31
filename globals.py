@@ -4,7 +4,7 @@ from typing import List
 
 
 """ VERSION NUMBER """
-VERSION_NUMBER: str = '2.3.2'
+VERSION_NUMBER: str = '2.4.0'
 
 """
 WORKFLOW METADATA 
@@ -49,7 +49,7 @@ WORKFLOWS: List[WorkflowObj] = [
         "type": Workflow.CLUST,
         "header": "Hierarchical Clustering of Particles",
         "desc": "Cluster gold particles into groups. Optionally generate random coordinates.",
-        "checked": True,
+        "checked": False,
         "graph": {
             "type": "bar",
             "title": "Hierarchical Clustering of Particles",
@@ -57,20 +57,24 @@ WORKFLOWS: List[WorkflowObj] = [
             "y_label": "Number of Clusters",
             "x_type": "cluster_id",
             "y_type": "cluster_id"
-        },
-        "props": [
-            {
-                "title": "distance threshold (px)",
-                "placeholder": "27"
-            }
-        ]
+        } # ,
+        # "props": [
+        #     {
+        #         "title": "distance threshold (px)",
+        #         "placeholder": "27"
+        #     },
+        #     {
+        #         "title": "minimum clust size",
+        #         "placeholder": "2"
+        #     },
+        # ]
     },
     {
         "name": "SEPARATION",
         "type": Workflow.SEPARATION,
         "header": "Separation Between Clusters",
         "desc": "Find the separation (NND) between clusters. Optionally generate random coordinates.",
-        "checked": True,
+        "checked": False,
         "graph": {
             "type": "hist",
             "title": "Separation Between Clusters",
@@ -78,17 +82,17 @@ WORKFLOWS: List[WorkflowObj] = [
             "y_label": "Number of Entries",
             "x_type": "dist",
 
-        },
-        "props": [
-            {
-                "title": "distance threshold (px)",
-                "placeholder": "27"
-            },
-            {
-                "title": "minimum clust size",
-                "placeholder": "2"
-            },
-        ]
+        } #,
+        # "props": [
+        #     {
+        #         "title": "distance threshold (px)",
+        #         "placeholder": "27"
+        #     },
+        #     {
+        #         "title": "minimum clust size",
+        #         "placeholder": "2"
+        #     },
+        # ]
     },
     {
         "name": "RIPPLER",
@@ -139,21 +143,21 @@ WORKFLOWS: List[WorkflowObj] = [
             }
         ]
     },
-    {
-        "name": "ASTAR",
-        "type": Workflow.ASTAR,
-        "header": "A* NND Around Landmarks",
-        "desc": "Find the nearest neighbor distance of two different populations around landmarks. Requires lighthouse population",
-        "checked": False,
-        "graph": {
-            "type": "hist",
-            "title": "A* NND",
-            "x_label": "Distance",
-            "y_label": "Number of Particles",
-            "x_type": "dist"
-        },
-        "props": []
-    },
+    # {
+    #     "name": "ASTAR",
+    #     "type": Workflow.ASTAR,
+    #     "header": "A* NND Around Landmarks",
+    #     "desc": "Find the nearest neighbor distance of two different populations around landmarks. Requires lighthouse population",
+    #     "checked": False,
+    #     "graph": {
+    #         "type": "hist",
+    #         "title": "A* NND",
+    #         "x_label": "Distance",
+    #         "y_label": "Number of Particles",
+    #         "x_type": "dist"
+    #     },
+    #     "props": []
+    # },
 ]
 
 """ COLOR PALETTE OPTIONS """

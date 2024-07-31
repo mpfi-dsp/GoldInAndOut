@@ -5,6 +5,7 @@ import math
 import numpy as np
 from PyQt5.QtCore import pyqtSignal
 import cv2
+from workflows import random_coords
 
 def run_goldstar(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]], pb: pyqtSignal):
     """
@@ -72,14 +73,68 @@ def run_goldstar(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple
         clean_real_df[['og_coord', 'goldstar_coord', 'dist']] = pd.DataFrame(
             [x for x in real_df['Nearest Neighbor Starfish Distance'].tolist()])
         # find random dist
-        random_goldstar_list = goldstar_distance_closest(random_coordinate_list, alt_coordinate_list)
+        if random_coords.N > 1:
+            len_real = len(real_coords) #chunk row size
+            random_chunks = [random_coordinate_list[i:i+len_real] for i in range(0, len(rand_coords), len_real)]
+            #alt_chunks = [alt_coordinate_list[i:i+n] for i in range(0, len(alt_coords), n)]
+            random_goldstar_list = []
+            gs_index = 0
+            for i in range(random_coords.N):
+                random_list = goldstar_distance_closest(random_chunks[gs_index], alt_coordinate_list)
+                random_goldstar_list += random_list
+                gs_index += 1
+        else:
+            random_goldstar_list = goldstar_distance_closest(random_coordinate_list, alt_coordinate_list)
         rand_df = pd.DataFrame(data={'Nearest Neighbor Starfish Distance': random_goldstar_list})
         # fill clean random df
         clean_rand_df = pd.DataFrame()
         clean_rand_df[['og_coord', 'goldstar_coord', 'dist']] = pd.DataFrame(
             [x for x in rand_df['Nearest Neighbor Starfish Distance'].tolist()])
+        if random_coords.N > 1:
+            blank_range = len(clean_rand_df[0:]) - 1
+            avg_df = pd.DataFrame(clean_rand_df.loc[:, (clean_rand_df.columns.str.startswith('d'))].mean()).transpose()
+            zeros_df = pd.DataFrame(0, index=range(blank_range), columns=avg_df.columns)
+            clean_avg_df = pd.concat([avg_df, zeros_df], ignore_index=True, axis=0)
+            renamed = [(i, 'total_avg_' + i) for i in clean_rand_df.columns.values]
+            clean_avg_df.rename(columns=dict(renamed), inplace=True)
+        # finding dist avgs for rand
+        N_minus_one = random_coords.N - 1
+        distance = clean_rand_df.iloc[:, 2]
+        distance = distance.groupby(distance.index//len(real_coords)).mean()
+        avg = pd.DataFrame(distance)
+        insert_rows = len(real_coords)
+        avg.index = range(0, insert_rows * len(avg), insert_rows)
+        avg = avg.reindex(index = range(insert_rows * len(avg)))
+        avg = avg.add_prefix('avg_')
+        clean_rand_df = pd.merge(clean_rand_df, avg, how='outer', left_index=True, right_index=True)
+        clean_rand_df = clean_rand_df.fillna(0)
+        # finding dist avgs for real
+        distance = clean_real_df.iloc[:, 2]
+        distance = distance.groupby(distance.index//len(real_coords)).mean()
+        avg = pd.DataFrame(distance)
+        insert_rows = len(real_coords)
+        avg.index = range(0, insert_rows * len(avg), insert_rows)
+        avg = avg.reindex(index = range(insert_rows * len(avg)))
+        avg = avg.add_prefix('avg_')
+        clean_real_df = pd.merge(clean_real_df, avg, how='outer', left_index=True, right_index=True)
+        clean_real_df = clean_real_df.fillna(0)
+        # random trials
+        len_real_coords = len(real_coords)
+        if random_coords.N > 1:
+            for i in range(random_coords.N - 1):
+                if len(clean_rand_df[0:]) > len_real_coords:
+                    bottom_rows = clean_rand_df.loc[len_real_coords:, :]
+                    bottom_rows = bottom_rows.reset_index(drop=True)
+                    A = len_real_coords * random_coords.N # length of the dataframe multiplied by the number of random trials 
+                    B = len_real_coords * N_minus_one # length of the df multiplied by the number of trials minus one 
+                    removed_rows = A - B # number of rows to delete 
+                    clean_rand_df = clean_rand_df.head(-removed_rows)
+                    clean_rand_df = pd.merge(clean_rand_df, bottom_rows, how='outer', left_index=True, right_index=True)
+                    clean_rand_df = clean_rand_df.loc[:, ~clean_rand_df.apply(lambda x: x.duplicated(), axis=1).all()].copy()
+                    clean_rand_df.dropna(inplace=True)            
+            clean_rand_df = pd.merge(clean_rand_df, clean_avg_df, how='outer', left_index=True, right_index=True)
         return clean_real_df, clean_rand_df
-    # if generate_random prop enabled, create random coordinates and return results, else return real coordinates
+
     return goldstar_nnd(coordinate_list=real_coords, random_coordinate_list=rand_coords, alt_coordinate_list=alt_coords)
 
 

@@ -5,6 +5,7 @@ import cv2
 from PyQt5.QtCore import pyqtSignal
 from typing import List, Tuple
 from utils import create_color_pal
+from workflows import random_coords
 
 COLORS = [(128, 0, 0),
               (139, 0, 0),
@@ -123,7 +124,7 @@ def run_rippler(real_coords: List[Tuple[float, float]], rand_coords: List[Tuple[
             rad += step_size
             pb.emit(rad)
         # generate new df and return
-        new_df = pd.DataFrame(data={'radius': radius, '%_gp_captured': gp_captured, '%_img_covered': img_covered, 'LCPI': LCPI, 'total_gp': total_gp})
+        new_df = pd.DataFrame(data={'radius': radius, 'total_gp': total_gp, '%_gp_captured': gp_captured, '%_img_covered': img_covered, 'LCPI': LCPI})
         rippler_out.append(new_df)
     return rippler_out
 

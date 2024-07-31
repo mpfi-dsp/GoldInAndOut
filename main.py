@@ -40,7 +40,6 @@ except ImportError:
 # except Exception as e:
 #     pass
 
-
 class GoldInAndOut(QWidget):
     """ PARENT WINDOW INITIALIZATION """
     def __init__(self):
@@ -50,6 +49,7 @@ class GoldInAndOut(QWidget):
         # self.setWindowIcon(QIcon('./logo.png'))
         self.setMinimumSize(QSize(800, 850))
         self.logger_shown = False
+        self.params_shown = False
         logging.info("Booting up...")
         # set max threads
         numexpr.set_num_threads(numexpr.detect_number_of_cores())
@@ -84,6 +84,7 @@ class GoldInAndOut(QWidget):
         # select first page by default
         self.nav_list.item(0).setSelected(True)
         self.home_page.show_logs_btn.clicked.connect(self.open_logger)
+        self.home_page.param_popup_btn.clicked.connect(self.open_params)
         # init logger
         self.dlg = Logger()
 
@@ -93,7 +94,6 @@ class GoldInAndOut(QWidget):
         
         for prop in self.home_props:
             prop.setEnabled(True)
-
         if (self.home_page.run_idx < self.home_page.folder_count-1):
             self.home_page.run_idx += 1
             if (len(self.home_page.multi_folders[self.home_page.run_idx]['image']) == 0 or len(self.home_page.multi_folders[self.home_page.run_idx]['mask']) == 0 or len(self.home_page.multi_folders[self.home_page.run_idx]['csv']) == 0):
@@ -101,20 +101,44 @@ class GoldInAndOut(QWidget):
                 logging.info("Skipping folder %s because it is missing critical files", str(self.home_page.run_idx+1))
             logging.info("Running folder %s of %s", str(self.home_page.run_idx+1), str(self.home_page.folder_count))
             self.home_page.start_btn.setText(f'Folder {str(self.home_page.run_idx+1)} of {str(self.home_page.folder_count)}')
-            self.home_page.img_le.setText(self.home_page.multi_folders[self.home_page.run_idx]['image'][0]) 
+            self.home_page.img_le.setText(self.home_page.multi_folders[self.home_page.run_idx]['image'][0])
             self.home_page.mask_le.setText(self.home_page.multi_folders[self.home_page.run_idx]['mask'][0]) 
             self.home_page.csv_le.setText(self.home_page.multi_folders[self.home_page.run_idx]['csv'][0]) 
-            self.home_page.csv2_le.setText(self.home_page.multi_folders[self.home_page.run_idx]['csv2'][0]) 
+            for filename in list(self.home_page.multi_folders[self.home_page.run_idx].values()):
+                if filename != []:
+                    if filename[0].endswith('.csv') and 'landmark' in filename[0].lower(): # and 'gold' not in filename[0].lower() and '.txt' not in filename[0].lower():
+                        print(self.home_page.multi_folders[self.home_page.run_idx]['csv2'][0])
+                        self.home_page.csv2_le.setText(self.home_page.multi_folders[self.home_page.run_idx]['csv2'][0])  
             if (len(self.home_page.multi_folders[self.home_page.run_idx]['scalar']) > 0):
                 self.home_page.set_scalar(self.home_page.multi_folders[self.home_page.run_idx]['scalar'][0])
+            if (len(self.home_page.multi_folders[self.home_page.run_idx]['parameters']) > 0):
+                self.home_page.set_params(self.home_page.multi_folders[self.home_page.run_idx]['parameters'][0])
             self.home_page.progress.setStyleSheet("text-align: center; border: solid grey; border-radius: 7px;color: white; background: #ff00ff; font-size: 20px;")
             self.init_workflows()
         else:
             logging.info('finished2')
+            if self.home_page.run_idx > 0: 
+                self.home_page.img_le.setText(self.home_page.multi_folders[self.home_page.run_idx]['image'][0])
+                self.home_page.mask_le.setText(self.home_page.multi_folders[self.home_page.run_idx]['mask'][0]) 
+                self.home_page.csv_le.setText(self.home_page.multi_folders[self.home_page.run_idx]['csv'][0]) 
+                for filename in list(self.home_page.multi_folders[self.home_page.run_idx].values()):
+                    if filename != []:
+                        if filename[0].endswith('.csv') and 'landmark' in filename[0].lower() and 'gold' not in filename[0].lower() and '.txt' not in filename[0].lower():
+                            self.home_page.csv2_le.setText(self.home_page.multi_folders[self.home_page.run_idx]['csv2'][0]) 
+                if (len(self.home_page.multi_folders[self.home_page.run_idx]['scalar']) > 0):
+                    self.home_page.set_scalar(self.home_page.multi_folders[self.home_page.run_idx]['scalar'][0])
+                if (len(self.home_page.multi_folders[self.home_page.run_idx]['parameters']) > 0):
+                    self.home_page.set_params(self.home_page.multi_folders[self.home_page.run_idx]['parameters'][0])
             self.home_page.run_idx = 0
             self.home_page.start_btn.setText("Run Again")
             self.home_page.start_btn.setStyleSheet("font-size: 16px; font-weight: 600; padding: 8px; margin-top: 10px; margin-right: 450px; color: white; border-radius: 7px; background: #E89C12")
-
+            if self.home_page.folder_count > 1: 
+                self.home_page.img_le.setText(self.home_page.multi_folders[0]['image'][0])
+                self.home_page.mask_le.setText(self.home_page.multi_folders[0]['mask'][0]) 
+                self.home_page.csv_le.setText(self.home_page.multi_folders[0]['csv'][0])
+                if list(self.home_page.multi_folders[self.home_page.run_idx].values())[3] != []: 
+                    if (len(self.home_page.multi_folders[self.home_page.run_idx]['csv2']) > 0):
+                        self.home_page.csv2_le.setText(self.home_page.multi_folders[0]['csv2'][0]) 
     def open_logger(self):
         if self.logger_shown == False:
             self.home_page.show_logs_btn.setText("Hide Logger")
@@ -124,6 +148,16 @@ class GoldInAndOut(QWidget):
             self.logger_shown = False
             self.home_page.show_logs_btn.setText("Display Logger")
             self.dlg.hide()
+
+    def open_params(self):
+        if self.params_shown == False:
+            self.home_page.param_popup_btn.setText("Hide Example")
+            self.params_shown = True
+            self.home_page.param_input.show()
+        else:
+            self.params_shown = False
+            self.home_page.param_popup_btn.setText("Show Example")
+            self.home_page.param_input.hide()
 
     def props_checked(self):
         for wf_cb in self.home_page.workflow_cbs:
@@ -167,7 +201,8 @@ class GoldInAndOut(QWidget):
             o_dir: str = self.home_page.output_dir_le.text() if len(self.home_page.output_dir_le.text()) > 0 else DEFAULT_OUTPUT_DIR
             output_ops: OutputOptions = OutputOptions(output_unit=ou, output_dir=o_dir, output_scalar=s_o, delete_old=dod)
             c_area = self.home_page.clust_area.isChecked()
-
+            # parameters
+            p_i: list = (self.home_page.parameters) if len(self.home_page.parameters) > 0 else [27, 2]
             # determine workflow pages
             wf_td = 0
             for wf_cb in self.home_page.workflow_cbs:
@@ -192,6 +227,7 @@ class GoldInAndOut(QWidget):
                                     csv=csv_path,
                                     csv2=csv2_path,
                                     output_ops=output_ops,
+                                    parameters=p_i, 
                                     pg=partial(self.update_main_progress, (int((z / wf_td * 100)))),
                                     clust_area=c_area,
                                     log=self.dlg
@@ -210,11 +246,12 @@ class GoldInAndOut(QWidget):
             csv2_path: str = self.home_page.csv2_le.text() 
             unit = unit_to_enum(self.home_page.ip_scalar_type.currentText()) if self.home_page.ip_scalar_type.currentText() else Unit.PIXEL
             scalar = float(self.home_page.csvs_ip_i.text() if len(self.home_page.csvs_ip_i.text()) > 0 else 1)
+            parameters = [self.home_page.parameters if len(self.home_page.parameters) > 0 else [27, 2]]
             # load in data in thread
             self.load_thread = QThread()
             self.load_worker = DataLoadWorker()
             self.load_worker.moveToThread(self.load_thread)
-            self.load_thread.started.connect(partial(self.load_worker.run, img_path, mask_path, csv_path, csv2_path, unit, scalar))
+            self.load_thread.started.connect(partial(self.load_worker.run, img_path, mask_path, csv_path, csv2_path, unit, scalar, parameters))
             self.load_worker.finished.connect(self.on_loaded_data)
             self.load_worker.finished.connect(self.load_thread.quit)
             self.load_worker.finished.connect(self.load_worker.deleteLater)
