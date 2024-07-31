@@ -27,12 +27,12 @@ All code for the primary window is contained in two files, `home.py` and `workfl
 
 NEW TO VERSION 2.4.0: GoldInAndOut’s home interface has been modified to allow for customized single and multi-folder analysis. The user can input a “parameters” file (in the .txt format) to change metrics related to analyses of the workflows chosen (i.e., the number of gold particles required to make a “cluster”). Changes to the default parameters will be visible under the “Global Parameters” header after a file is imported. Clicking the button to the right of this will reset all parameters to their default forms. A copyable example of this file’s format can be found via the “Show Example” button, and the format is: 
 
-Distance=27px *(distance threshold (px) for Cluster/Separation)*
-Clust=2 *(minimum cluster size for Cluster/Separation)*
-Random=1 *(# random trials)*
-Steps=10 *(max. # steps for Rippler)*
-Size=60px *(step size for Rippler)*
-Radius=50px *(initial radius for Rippler)*
+Distance=27px *(distance threshold (px) for Cluster/Separation)* /
+Clust=2 *(minimum cluster size for Cluster/Separation)* /
+Random=1 *(# random trials)* /
+Steps=10 *(max. # steps for Rippler)* /
+Size=60px *(step size for Rippler)* /
+Radius=50px *(initial radius for Rippler)* /
 
 Note that each parameter is on a separate line with a proceeding space.
 
