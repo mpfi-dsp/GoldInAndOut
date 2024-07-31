@@ -2,7 +2,7 @@
 
 🔬🥇🧠🍔 Automated Gold Particle Analysis For Freeze Fracture Replica Electron Microscopy Images
 
-<!-- Read more about Gold In-and-Out in the paper *"GIO: A Toolkit for Analyzing Subcellular Distribution of Immunogold-Labeled Membrane Proteins in Freeze-Fracture Replica Images"* published [here](https://www.youtube.com/watch?v=dQw4w9WgXcQ)! -->
+Read more about Gold In-and-Out in the paper *"GIO: A Toolkit for Analyzing Subcellular Distribution of Immunogold-Labeled Membrane Proteins in Freeze-Fracture Replica Images"* published [here](https://doi.org/10.3389/fnana.2022.855218)!
 
 *Note: The terms analysis `method` and `workflow` are used relatively interchangeably in this readme.*
 
@@ -23,11 +23,24 @@ On a broad level, Gold InAndOut was designed to combine numerous analysis workfl
 All of the graphical interface code is located in the `/views` directory. This includes the primary window interface as well as the powerful built-in image viewer and logger. 
 
 All code for the primary window is contained in two files, `home.py` and `workflow.py`. This allows us to dramatically reduce excess or repeated code by generating different variations of the same core workflow analysis view. The home view lets the user input their desired input and global parameters, and run analysis. This will then populate the navigation sidebar with all selected workflow pages, which the user can toggle between at will for further customization and analysis.
+```diff 
+! NEW TO VERSION 2.4.0: GoldInAndOut’s home interface has been modified to allow for customized single and multi-folder analysis. The user can input a “parameters” file (in the .txt format) to change metrics related to analyses of the workflows chosen (i.e., the number of gold particles required to make a “cluster”). Changes to the default parameters will be visible under the “Global Parameters” header after a file is imported. Clicking the button to the right of this will reset all parameters to their default forms. A copyable example of this file’s format can be found via the “Show Example” button, and the format is: 
 
+! Distance=27px *(distance threshold (px) for Cluster/Separation)*
+! Clust=2 *(minimum cluster size for Cluster/Separation)*
+! Random=1 *(# random trials)*
+! Steps=10 *(max. # steps for Rippler)*
+! Size=60px *(step size for Rippler)*
+! Radius=50px *(initial radius for Rippler)*
+
+! Note that each parameter is on a separate line with a proceeding space.
 
 ### Data Science Analysis
 
 All data science analysis workflow files and related functions are contained in the `/workflows` directory. Each file is named after its respective workflow, and contains two functions: one that "runs" the workflow and outputs the resulting data, and one that takes that data and generates output visualizations. These are all run simultaneously using multithreading, speeding up each run of GoldInAndOut. Many of these workflow methods take custom parameters, which are passed from the external thread. They also emit updates to a progress bar at intermittent points throughout their run. 
+
+
+! NEW TO VERSION 2.4.0: In addition to these workflows, the ‘random.py’ file generates a series of pseudo-random coordinates (representing gold particles) that, by default, equal the number of ground truth particles input. In the user’s input ‘parameters.txt’ file, the variable “Random” indicates the number of random trials in the analysis (i.e., inputting 100 ground truth coordinates and setting “Random=3” will generate 100 pseudo-random coordinates and apply the selected workflows, three separate times). Random data acts as control data when compared to the real data obtained. In the output tab for each workflow, the user can view visualizations that compare the real data to the first trial of the random data. Depending on the workflow, random trials are differentiated either by vertical columns (“concatenated” vertically) or with the final column showing the average/sum of another column and having “0’s” in between.  
 
 There are five analysis methods included in the base version of GoldInAndOut:
 - Nearest Neighbor Distance
@@ -35,6 +48,11 @@ There are five analysis methods included in the base version of GoldInAndOut:
 - Separation Between Clusters
 - Gold Rippler: Landmark-particle Analysis
 - Gold Star Nearest Neighbor Distance
+! - A* Nearest Neighbor *(Non-functional as of version 2.4.0)*
+
+! *(Note that a landmark (in a .csv format) is required for Gold Rippler and Gold Star to ensure accurate analysis.)* Also note that the image file no longer requires the word "image" to be in the title (the other files should include “gold”, “landmark”, “parameters”, and “scalar” if being used). 
+
+! If inputting multiple folders, the parameters.txt file can be located in the larger folder containing the folders of interest, and the same parameters will be applied to all folders. The parameters for each workflow are no longer input in the final output page. Similarly, a “Set Scalar” button has been added and accepts files in the format of “1px=0.000888um 1px=0.888nm” or “1px=0.000888um". This file can be located in the same path as parameters.txt, or can be manually entered at the bottom of the interface. Alternatively, if inputting a singular file, the parameters and scalar files can be located within that folder. 
 
 To learn more about these workflows, check the [wiki](https://github.com/GoldinGuy/GoldInAndOut/wiki/Workflows)
 

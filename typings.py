@@ -22,6 +22,8 @@ class FileType(Enum):
     MASK = 2
     CSV = 3
     CSV2 = 4
+    PARAM = 5
+    SCALAR = 6
 
 
 class WorkflowGraph(TypedDict):
@@ -56,6 +58,7 @@ class DataObj:
     final_real: pd.DataFrame
     final_rand: pd.DataFrame
 
+
     def __init__(self, real_df1: pd.DataFrame, real_df2: pd.DataFrame, rand_df1: pd.DataFrame, rand_df2: pd.DataFrame):
         self.real_df1 = real_df1
         self.real_df2 = real_df2
@@ -63,6 +66,7 @@ class DataObj:
         self.rand_df2 = rand_df2
         self.final_real = pd.DataFrame()
         self.final_rand = pd.DataFrame()
+
     
 
 class OutputOptions:

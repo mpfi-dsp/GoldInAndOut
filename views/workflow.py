@@ -21,6 +21,7 @@ from PyQt5.QtWidgets import (QLabel, QRadioButton, QCheckBox, QHBoxLayout, QPush
 # views
 from views.image_viewer import QImageViewer
 from views.logger import Logger
+from views import home
 # utils
 from globals import PALETTE_OPS, PROG_COLOR_1, PROG_COLOR_2, REAL_COLOR, RAND_COLOR
 from typings import Unit, Workflow, DataObj, OutputOptions, WorkflowObj
@@ -28,13 +29,14 @@ from typing import List, Tuple
 from utils import Progress, create_color_pal, enum_to_unit, to_coord_list, pixels_conversion, avg_vals
 from threads import AnalysisWorker, DownloadWorker
 from workflows.random_coords import gen_random_coordinates
-from workflows.clust import draw_clust
+from workflows.clust import draw_clust, min_clust_size
 from workflows.gold_rippler import draw_rippler
 from workflows.separation import draw_separation
 from workflows.goldstar import draw_goldstar
 from workflows.goldAstar import draw_goldAstar
 # from workflows.astar import draw_astar
 from workflows.nnd import draw_length
+from workflows import random_coords
 
 
 class WorkflowPage(QWidget):
@@ -63,7 +65,7 @@ class WorkflowPage(QWidget):
     """
 
     def __init__(self, wf: WorkflowObj, coords: List[Tuple[float, float]], alt_coords: List[Tuple[float, float]] = None,
-                 output_ops: OutputOptions = None, img: str = "", mask: str = "", csv: str = "", csv2: str = "",
+                 output_ops: OutputOptions = None, parameters: list = None, img: str = "", mask: str = "", csv: str = "", csv2: str = "",
                  pg: Progress = None, clust_area: bool = False, log: Logger = None):
         super().__init__()
         # init class vars: allow referencing within functions without passing explicitly
@@ -72,6 +74,7 @@ class WorkflowPage(QWidget):
         self.wf = wf
         self.pg = pg
         self.output_ops = output_ops
+        self.parameters = parameters
         self.draw_clust_area = clust_area
         self.dlg = log
         # init layout
@@ -87,15 +90,16 @@ class WorkflowPage(QWidget):
         # REUSABLE PARAMETERS
         self.workflows_header = QLabel("Parameters")
         layout.addRow(self.workflows_header)
-        # custom props
-        self.cstm_props = []
-        for i in range(len(wf['props'])):
-            prop_l = QLabel(wf['props'][i]['title'])
-            prop_l.setStyleSheet("font-size: 17px; font-weight: 400;")
-            prop_le = QLineEdit()
-            prop_le.setPlaceholderText(wf['props'][i]['placeholder'])
-            layout.addRow(prop_l, prop_le)
-            self.cstm_props.append(prop_le)
+        # custom props - removed as of v. 2.4.0
+        # self.cstm_props = []
+        # for i in range(len(wf['props'])):
+        #     prop_l = QLabel(wf['props'][i]['title'])
+        #     prop_l.setStyleSheet("font-size: 17px; font-weight: 400;")
+        #     prop_le = QLineEdit()
+        #     prop_le.setPlaceholderText(wf['props'][i]['placeholder'])
+        #     layout.addRow(prop_l, prop_le)
+        #     self.cstm_props.append(prop_le)
+        
         # REAL COORDS SECTION
         file_head = QLabel("Selected Files")
         file_head.setStyleSheet(
@@ -314,8 +318,8 @@ class WorkflowPage(QWidget):
         for prop in self.theme_props:
             prop.setVisible(not prop.isVisible())
 
-    def get_custom_values(self):
-        return [int(self.cstm_props[i].text()) if self.cstm_props[i].text() else int(self.wf['props'][i]['placeholder']) for i in range(len(self.cstm_props))]
+    def get_custom_values(self): # replaced self.cstm_props
+        return self.parameters if len(self.parameters) > 1 else [27, 2]
 
     def download(self, output_ops: OutputOptions, wf: WorkflowObj):
         logging.info('%s: started downloading, opening thread', wf['name'])
@@ -403,8 +407,7 @@ class WorkflowPage(QWidget):
 
     def create_visuals(self, wf: WorkflowObj, n_bins, output_ops: OutputOptions, n: List[int] = np.zeros(11)):
         """ CREATE DATA VISUALIZATIONS """
-        # plt.switch_backend('Agg') 
-        # TODO: potentially move some drawing functions to separate threads?
+        # plt.switch_backend('Agg')
         try:
             matplotlib.use('agg')
             if self.gen_real_cb.isChecked() or self.gen_rand_cb.isChecked() and len(self.coords) > 0:
@@ -416,22 +419,110 @@ class WorkflowPage(QWidget):
                 canvas = FigureCanvas(fig)
                 ax = fig.add_subplot(111)
                 # fix csv index not matching id
+                suf = 2 * (random_coords.N - 1)
+                if self.data.real_df1.empty: 
+                    self.data.real_df1 = pd.DataFrame(np.array([[0, 0, 0, 0, 0]]), columns=['og_centroid', 'closest_centroid', 'dist', 'cluster_id', 'avg_trial_dist'])
                 self.data.real_df1.sort_values(wf["graph"]["x_type"], inplace=True)
                 self.data.real_df1 = self.data.real_df1.reset_index(drop=True)
                 # add averaged values to real dataframe
                 self.data.real_df1 = avg_vals(wf['type'], self.data.real_df1)
+                if wf['type'] == Workflow.NND or wf['type'] == Workflow.GOLDSTAR or wf['type'] == Workflow.CLUST or wf['type'] == Workflow.RIPPLER:
+                    self.final_csv = self.data.rand_df1
+                    self.final_csv_2 = self.data.rand_df2.copy()
+                    self.data.final_rand = self.data.rand_df1.copy()
+                    self.rand_df1 = self.data.rand_df1.copy()
+                elif wf['type'] == Workflow.SEPARATION:
+                    self.final_csv = self.data.rand_df1.copy()
+                    self.final_csv_2 = self.data.rand_df2
+                    self.data.final_rand = self.data.rand_df1.copy()
+                    self.rand_df1 = self.data.rand_df1.copy()
+                # taking only first trial to graph if multiple trials
+                if random_coords.N > 1:
+                    if wf['type'] == Workflow.NND or wf['type'] == Workflow.GOLDSTAR or wf['type'] == Workflow.CLUST:
+                        if [col for col in self.final_csv.columns if col.endswith('_x')] or [col for
+                                col in self.final_csv.columns if col.endswith('_y')]:
+                            for i in range(1):
+                                self.final_csv.iloc.columns = [col[:-suf] for col in self.final_csv.iloc]
+                        self.final_csv = self.final_csv.iloc[:(len(self.coords)), 0:3]
+                        self.final_csv.dropna(inplace=True)
+                    elif wf['type'] == Workflow.SEPARATION:
+                        # only visualizing first cluster – if same as real visualized, NND drawn to non-existent clusters
+                        min_clust_size = self.parameters[1]
+                        self.final_csv_2_reference = self.final_csv_2.iloc[:(len(self.data.real_df2)), 0:3]
+                        if [col for col in self.final_csv_2_reference.columns if col[-1] in ['_x', '_y']]:
+                            self.final_csv_2_reference.columns = [col[:-suf] for col in self.final_csv_2_reference]
+                        reference_df = self.final_csv.copy()
+                        sorted_IDs = self.final_csv_2_reference.sort_values(self.final_csv_2_reference.columns[2])
+                        sorted_IDs = sorted_IDs.reset_index()
+                        # within one trial of coordinates
+                        sorted_IDs_copy = sorted_IDs.copy() 
+                        ID_counter = sorted_IDs_copy.iloc[:, 3].value_counts()
+                        # find cluster IDs that show up more than/equal to the min clust size criteria (custom parameter)
+                        sorted_IDs_2 = sorted_IDs_copy[sorted_IDs_copy.iloc[:, 3].isin(ID_counter.index[ID_counter.gt(min_clust_size - 1)])]
+                        if sorted_IDs_2.empty: # no clusters within that trial 
+                            sorted_IDs_2 = pd.DataFrame(np.array([[0, 0, 0, -1]]), columns=['index', 'X', 'Y', 'cluster_id'])
+                        sorted = sorted_IDs_2.tail(1)
+                        sorted_2 = sorted.iloc[0, 3]
+                        #extract just coordinate (no ID or index) of maximum cluster ID
+                        reference_df_2 = reference_df.loc[reference_df.iloc[:, 3] == sorted_2]
+                        reference_df_2 = reference_df_2.iloc[0, 0] # tuple
+                        #find the index of the coordinate in the centroid list
+                        thresh = self.final_csv[self.final_csv['og_centroid'] == reference_df_2].index.values
+                        if len(thresh) > 1: 
+                            thresh = thresh[0]
+                        thresh = int(thresh) + 1
+                        #find nnd within centroid area
+                        self.final_csv = self.final_csv.iloc[0:thresh] # goes to max trial point
+                    elif wf['type'] == Workflow.RIPPLER:
+                        self.final_csv = self.final_csv.iloc[0:len(self.data.real_df1), :5]
+                        if [col for col in self.final_csv.columns if col.endswith('_x')] or [col for
+                                col in self.final_csv.columns if col.endswith('_y')]:
+                            for i in range(1):
+                                self.final_csv.columns = [col[:-suf] for col in self.final_csv]
                 # logging.info('output_ops', output_ops)
                 self.data.final_real = pixels_conversion(
                     data=self.data.real_df1, unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
-                if wf["graph"]["x_type"] in self.data.rand_df1.columns and len(
-                        self.data.rand_df1[wf["graph"]["x_type"]]) > 0:
-                    self.data.rand_df1.sort_values(wf["graph"]["x_type"], inplace=True)
-                    self.data.rand_df1 = self.data.rand_df1.reset_index(drop=True)
+                if wf['type'] == Workflow.RIPPLER:
+                    self.data.final_rand = self.data.rand_df1
+                    self.data.final_rand.iloc[:, :-1] = pixels_conversion(
+                        data=self.data.final_rand.iloc[:, :-1], unit=Unit.PIXEL, scalar=float(output_ops.output_scalar)) # excluding LCPI avg. 
+                elif wf['type'] == Workflow.SEPARATION and self.gen_real_cb.isChecked() and random_coords.N > 1:
+                    if random_coords.N > 1: 
+                        self.data.final_rand = self.data.final_rand[self.data.final_rand.cluster_id != -1]
+                        summed = self.data.final_rand['dist'].tolist()
+                        summed = sum(summed)
+                        if summed > 0: # if there are tangible clusters
+                            self.data.final_rand.iloc[:, [0, 1, 2, 4]] = pixels_conversion(
+                                data=self.data.final_rand.iloc[:, [0, 1, 2, 4]].copy(), unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))            
+                elif wf['type'] == Workflow.CLUST:
+                    self.data.final_rand.iloc[:, ::3] = pixels_conversion(
+                        data=self.data.final_rand.iloc[:, ::3].copy(), unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
+                    self.data.final_rand.iloc[:, 1::3] = pixels_conversion(
+                        data=self.data.final_rand.iloc[:, 1::3].copy(), unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
+                if wf["graph"]["x_type"] in self.final_csv.columns and len(
+                        self.final_csv[wf["graph"]["x_type"]]) > 0:
+                    self.final_csv.sort_values(wf["graph"]["x_type"], inplace=True)
+                    self.final_csv = self.final_csv.reset_index(drop=True)
                     # add averaged values to real dataframe
-                    self.data.rand_df1 = avg_vals(wf['type'], self.data.rand_df1)
+                    if random_coords.N > 1:
+                        self.final_csv_pix = pixels_conversion(
+                                data=self.final_csv.copy(), unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
+                        if [col for col in self.final_csv_pix.columns if col.endswith('_x')] or [col for
+                            col in self.final_csv_pix.columns if col.endswith('_y')]: 
+                            for i in range(1):
+                                self.final_csv_pix.columns = [col[:-suf] for col in self.final_csv_pix]
+                        self.final_csv_graph = self.final_csv.copy()
                 if not self.data.rand_df1.empty:
-                    self.data.final_rand = pixels_conversion(
-                        data=self.data.rand_df1, unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
+                    if random_coords.N > 1:
+                        if wf['type'] == Workflow.NND or wf['type'] == Workflow.GOLDSTAR:
+                            self.data.rand_df1.dropna(inplace=True)
+                            self.data.final_rand = pixels_conversion(
+                                data=self.rand_df1, unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
+                            self.final_rand_nopix = self.data.final_rand.iloc[:(len(self.coords)), 0:3]
+                            self.final_rand_nopix.columns = [col[:-suf] for col in self.final_rand_nopix]
+                    else:
+                        self.data.final_rand = pixels_conversion(
+                            data=self.data.rand_df1, unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
                 # convert back to proper size
                 if wf["graph"]["type"] == "hist":
                     # create histogram
@@ -442,19 +533,35 @@ class WorkflowPage(QWidget):
                     elif self.gen_rand_cb.isChecked() and not self.gen_real_cb.isChecked():
                         ax.set_title(f'{wf["graph"]["title"]} (Random)')
                         cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
-                        graph_df = self.data.final_rand[wf["graph"]["x_type"]]
+                        graph_df = self.final_csv_pix[wf["graph"]["x_type"]]
                     if self.gen_real_cb.isChecked() and not self.gen_rand_cb.isChecked() or self.gen_rand_cb.isChecked() and not self.gen_real_cb.isChecked():
                         # draw graph
                         n, bins, patches = ax.hist(graph_df, bins=(int(n_bins) if n_bins.isdecimal() else n_bins),
                                                    color='green')
                         # normalize values
-                        col = (n - n.min()) / (n.max() - n.min())
-                        for c, p in zip(col, patches):
-                            p.set_facecolor(cm(c))
+                        if len(n) > 1:
+                            col = (n - n.min()) / (n.max() - n.min())
+                            for c, p in zip(col, patches):
+                                p.set_facecolor(cm(c))
                     elif self.gen_real_cb.isChecked() and self.gen_rand_cb.isChecked():
-                        if wf["graph"]["x_type"] in self.data.rand_df1.columns and len(
-                                self.data.rand_df1[wf["graph"]["x_type"]]) > 0:
-                            rand_graph = self.data.final_rand[wf["graph"]["x_type"]]
+                        if wf['type'] == Workflow.NND or wf['type'] == Workflow.GOLDSTAR or wf['type'] == Workflow.CLUST:
+                            self.final_csv_pix = pixels_conversion(
+                                data=self.final_csv.copy(), unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
+                            if [col for col in self.final_csv_pix.columns if col.endswith('_x')] or [col for
+                                col in self.final_csv_pix.columns if col.endswith('_y')] or [col for col in self.final_csv.columns if col.endswith('_x')] or [col for
+                                col in self.final_csv.columns if col.endswith('_y')]:
+                                for i in range(1):
+                                    self.final_csv_pix.columns = [col[:-suf] for col in self.final_csv_pix]
+                                    self.final_csv.columns = [col[:-suf] for col in self.final_csv.copy()]
+                            rand_graph = self.final_csv_pix[wf["graph"]["x_type"]]
+                        elif wf['type'] == Workflow.SEPARATION:
+                            if [col for col in self.final_csv.columns if col.endswith('_x')] or [col for
+                                col in self.final_csv.columns if col.endswith('_y')]:
+                                    for i in range(1):
+                                        self.final_csv.columns = [col[:-suf] for col in self.final_csv.copy()]
+                            self.final_csv_pix = pixels_conversion(
+                                data=self.final_csv.copy(), unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
+                            rand_graph = self.final_csv_pix[wf["graph"]["x_type"]]
                         real_graph = self.data.final_real[wf["graph"]["x_type"]]
                         ax.hist(rand_graph, bins=(int(n_bins) if n_bins.isdecimal() else n_bins), alpha=0.75,
                                 color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()),
@@ -462,7 +569,10 @@ class WorkflowPage(QWidget):
                         n, bins, patches = ax.hist(real_graph, bins=(int(n_bins) if n_bins.isdecimal() else n_bins),
                                                    alpha=0.75, color=create_color_pal(n_bins=1, palette_type=self.pal_type.currentText()),
                                                    label='Real')
-                        ax.set_title(f'{wf["graph"]["title"]} (Real & Random)')
+                        if random_coords.N > 1:
+                            ax.set_title(f'{wf["graph"]["title"]} (Real & 1st Random Trial)')
+                        else:
+                            ax.set_title(f'{wf["graph"]["title"]} (Real & Random)')
                         ax.legend(loc='upper right')
                 elif wf["graph"]["type"] == "line":
                     # create line graph
@@ -473,7 +583,7 @@ class WorkflowPage(QWidget):
                     elif self.gen_rand_cb.isChecked():
                         ax.set_title(f'{wf["graph"]["title"]} (Random)')
                         cm = sns.color_palette(self.r_pal_type.currentText(), as_cmap=True)
-                        graph_df = self.data.final_rand
+                        graph_df = self.final_rand_nopix
                     ax.plot(graph_df[wf["graph"]["x_type"]], graph_df[wf["graph"]["y_type"]], color='blue')
                 elif wf["graph"]["type"] == "bar":
                     # create bar graph
@@ -492,10 +602,17 @@ class WorkflowPage(QWidget):
                     elif self.gen_rand_cb.isChecked():
                         ax.set_title(f'{wf["graph"]["title"]} (Random)')
                         c = 1
-                        graph_y = self.data.final_rand[wf["graph"]["y_type"]],
-                        graph_x = np.array(self.data.final_rand[wf["graph"]["x_type"]])
+                        if [col for col in self.final_csv.columns if col.endswith('_x')] or [col for # removing unecessary suffixes 
+                            col in self.final_csv.columns if col.endswith('_y')]: 
+                            for i in range(1):
+                                self.final_csv.columns = [col[:-suf] for col in self.final_csv]
+                        if wf['type'] != Workflow.CLUST: # otherwise units will be converted twice 
+                            self.final_csv = pixels_conversion( 
+                                    data=self.final_csv, unit=Unit.PIXEL, scalar=float(output_ops.output_scalar))
+                        graph_y = self.final_csv[wf["graph"]["y_type"]],
+                        graph_x = np.array(self.final_csv[wf["graph"]["x_type"]])
                         if wf['type'] == Workflow.CLUST:
-                            graph_y = np.bincount(np.bincount(self.data.final_rand[wf["graph"]["x_type"]]))[1:]
+                            graph_y = np.bincount(np.bincount(self.final_csv[wf["graph"]["x_type"]]))[1:]
                             graph_x = list(range(1, (len(graph_y) + 1)))
                             c = len(graph_x)
                         c = create_color_pal(n_bins=c, palette_type=self.r_pal_type.currentText())
@@ -514,16 +631,20 @@ class WorkflowPage(QWidget):
                         if wf['type'] != Workflow.RIPPLER:
                             real_graph_y = np.bincount(np.bincount(self.data.final_real[wf["graph"]["x_type"]]))[1:]
                             real_graph_x = list(range(1, (len(set(real_graph_y))) + 1))
-                            rand_graph_y = np.bincount(np.bincount(self.data.final_rand[wf["graph"]["x_type"]]))[1:]
+                            if [col for col in self.final_csv.columns if col.endswith('_x')] or [col for
+                                col in self.final_csv.columns if col.endswith('_y')]:
+                                    for i in range(1):
+                                        self.final_csv.columns = [col[:-suf] for col in self.final_csv.copy()]
+                            rand_graph_y = np.bincount(np.bincount(self.final_csv[wf["graph"]["x_type"]]))[1:]
                             rand_graph_x = list(range(1, (len(set(rand_graph_y))) + 1))
                         if wf['type'] == Workflow.CLUST:
                             real_graph_x = list(range(1, (len(real_graph_y) + 1)))
                             rand_graph_x = list(range(1, (len(rand_graph_y) + 1)))
                         if wf['type'] == Workflow.RIPPLER:
-                            rand_x = np.array(self.data.final_rand[wf["graph"]["x_type"]])
+                            rand_x = np.array(self.final_csv.copy()[wf["graph"]["x_type"]])
                             shift_rand_x = (max(rand_x) / (len(rand_x) + 2)) / 4
                             ax.bar([el - shift_rand_x for el in rand_x],
-                                   np.array(self.data.final_rand[wf["graph"]["y_type"]]),
+                                   np.array(self.final_csv[wf["graph"]["y_type"]]),
                                    width=(max(rand_x) / (len(rand_x) + 2)), alpha=0.7,
                                    color=create_color_pal(n_bins=1, palette_type=self.r_pal_type.currentText()),
                                    label='Random')
@@ -546,7 +667,10 @@ class WorkflowPage(QWidget):
                                                           palette_type=self.r_pal_type.currentText()), alpha=0.7,
                                    label='Random')
                             n = rand_graph_x
-                        ax.set_title(f'{wf["graph"]["title"]} (Real & Random)')
+                        if random_coords.N > 1:
+                            ax.set_title(f'{wf["graph"]["title"]} (Real & 1st Random Trial)') # only visualizing 1st random trial even though many are generated
+                        else:
+                            ax.set_title(f'{wf["graph"]["title"]} (Real & Random)')
                         ax.legend(loc='upper right')
 
                 # label graph
@@ -582,20 +706,37 @@ class WorkflowPage(QWidget):
                     if self.gen_real_cb.isChecked():
                         drawn_img = draw_length(nnd_df=self.data.real_df1, bin_counts=n, img=drawn_img, palette=palette,
                                                 circle_c=(103, 114, 0))
+                    self.data.input_params = {'# random trials': '', random_coords.N: ''}
+                    self.data.input_params = pd.DataFrame(self.data.input_params, index=['0'])
                     # if rand coords selected, annotate them on img with lines indicating length
                     if self.gen_rand_cb.isChecked():
-                        drawn_img = draw_length(nnd_df=self.data.rand_df1, bin_counts=n, img=drawn_img,
-                                                palette=r_palette, circle_c=(18, 156, 232))
+                        if random_coords.N > 1:
+                            if [col for col in self.final_csv.columns if col.endswith('_x')] or [col for
+                                col in self.final_csv.columns if col.endswith('_y')]:
+                                for i in range(1):
+                                    self.final_csv.columns = [col[:-suf] for col in self.final_csv]
+                            drawn_img = draw_length(nnd_df=self.final_csv, bin_counts=n, img=drawn_img,
+                                                    palette=r_palette, circle_c=(18, 156, 232))
+                        else:
+                            drawn_img = draw_length(nnd_df=self.final_csv, bin_counts=n, img=drawn_img,
+                                                    palette=r_palette, circle_c=(18, 156, 232))
                 elif wf["type"] == Workflow.CLUST:
                     vals = self.get_custom_values()
                     if self.gen_real_cb.isChecked():
                         drawn_img = draw_clust(clust_df=self.data.real_df1, img=drawn_img, palette=palette,
                                                distance_threshold=vals[0], draw_clust_area=self.draw_clust_area,
                                                clust_area_color=REAL_COLOR)
-                    if self.gen_rand_cb.isChecked():
+                    if self.gen_rand_cb.isChecked() and random_coords.N > 1:
+                        drawn_img = draw_clust(clust_df=self.final_csv, img=drawn_img, palette=r_palette,
+                                               distance_threshold=vals[0], draw_clust_area=self.draw_clust_area,
+                                               clust_area_color=RAND_COLOR)
+                    elif self.gen_rand_cb.isChecked() and random_coords.N == None or self.gen_rand_cb.isChecked() and random_coords.N == 1:
                         drawn_img = draw_clust(clust_df=self.data.rand_df1, img=drawn_img, palette=r_palette,
                                                distance_threshold=vals[0], draw_clust_area=self.draw_clust_area,
                                                clust_area_color=RAND_COLOR)
+                    self.data.input_params = {'Distance Threshold': ['Min Clust Size', '# random trials'], 
+                                              f'{vals[0]}': [vals[1], random_coords.N]}
+                    self.data.input_params = pd.DataFrame(self.data.input_params, index=['1', '2'])
                 elif wf["type"] == Workflow.SEPARATION:
                     vals = self.get_custom_values()
                     if self.gen_real_cb.isChecked():
@@ -604,21 +745,36 @@ class WorkflowPage(QWidget):
                                                     circle_c=(103, 114, 0), distance_threshold=vals[0],
                                                     draw_clust_area=self.draw_clust_area, clust_area_color=REAL_COLOR)
                     if self.gen_rand_cb.isChecked():
-                        drawn_img = draw_separation(nnd_df=self.data.rand_df1, clust_df=self.data.rand_df2,
-                                                    img=drawn_img, palette=r_palette, bin_counts=n,
-                                                    circle_c=(18, 156, 232), distance_threshold=vals[0],
-                                                    draw_clust_area=self.draw_clust_area, clust_area_color=RAND_COLOR)
+                        if random_coords.N > 1:
+                            self.final_csv.dropna(inplace=True)
+                            sorted_IDs_copy = sorted_IDs_copy.reset_index(drop=True)
+                            sorted_IDs_copy = sorted_IDs_copy.iloc[:, 1:]
+                            drawn_img = draw_separation(nnd_df=self.final_csv, clust_df=sorted_IDs_copy,
+                                                        img=drawn_img, palette=r_palette, bin_counts=n,
+                                                        circle_c=(18, 156, 232), distance_threshold=vals[0],
+                                                        draw_clust_area=self.draw_clust_area, clust_area_color=RAND_COLOR)
+                        else:
+                            drawn_img = draw_separation(nnd_df=self.final_csv, clust_df=self.final_csv_2,
+                                                        img=drawn_img, palette=r_palette, bin_counts=n,
+                                                        circle_c=(18, 156, 232), distance_threshold=vals[0],
+                                                        draw_clust_area=self.draw_clust_area, clust_area_color=RAND_COLOR)
+                    self.data.input_params = {'Distance Threshold': ['Min Clust Size', '# random trials'], 
+                                              f'{vals[0]}': [vals[1], random_coords.N]}
+                    self.data.input_params = pd.DataFrame(self.data.input_params, index=['1', '2'])
                 elif wf["type"] == Workflow.RIPPLER:
                     vals = self.get_custom_values()
                     if self.gen_real_cb.isChecked():
                         drawn_img = draw_rippler(coords=self.coords, alt_coords=self.alt_coords,
                                                  mask_path=self.mask_drop.currentText(), img=drawn_img, palette=palette,
-                                                 circle_c=(18, 156, 232), max_steps=vals[0], step_size=vals[1], initial_radius=vals[2])
+                                                 circle_c=(18, 156, 232), max_steps=vals[2], step_size=vals[3], initial_radius=vals[4])
                     if self.gen_rand_cb.isChecked():
-                        drawn_img = draw_rippler(coords=self.rand_coords, alt_coords=self.alt_coords,
+                        drawn_img = draw_rippler(coords=self.rand_coords[0:len(self.coords)], alt_coords=self.alt_coords,
                                                  mask_path=self.mask_drop.currentText(), img=drawn_img,
-                                                 palette=r_palette, circle_c=(103, 114, 0), max_steps=vals[0],
-                                                 step_size=vals[1], initial_radius=vals[2])
+                                                 palette=r_palette, circle_c=(103, 114, 0), max_steps=vals[2],
+                                                 step_size=vals[3], initial_radius=vals[4])
+                    self.data.input_params = {'Maximum Steps': ['Step Size (px)', 'Initial Radius (px)', '# random trials'], 
+                                              f' {vals[2]}': [vals[3], vals[4], random_coords.N]}
+                    self.data.input_params = pd.DataFrame(self.data.input_params, index=['1', '2', '3'])
                 elif wf["type"] == Workflow.GOLDSTAR:
                     # if real coords selected, annotate them on img with lines indicating length
                     if self.gen_real_cb.isChecked():
@@ -626,8 +782,16 @@ class WorkflowPage(QWidget):
                                                   palette=palette, circle_c=(103, 114, 0))
                     # if rand coords selected, annotate them on img with lines indicating length
                     if self.gen_rand_cb.isChecked():
-                        drawn_img = draw_goldstar(nnd_df=self.data.rand_df1, bin_counts=n, img=drawn_img,
+                        if random_coords.N > 1:
+                            if [col for col in self.final_csv.columns if col.endswith('_x')] or [col for
+                                col in self.final_csv.columns if col.endswith('_y')]:
+                                for i in range(1):
+                                    self.final_csv.columns = [col[:-suf] for col in self.final_csv]
+                        drawn_img = draw_goldstar(nnd_df=self.final_csv, bin_counts=n, img=drawn_img,
                                                   palette=r_palette, circle_c=(18, 156, 232))
+                        
+                    self.data.input_params = {'# random trials': '', random_coords.N: ''}
+                    self.data.input_params = pd.DataFrame(self.data.input_params, index=['0'])
                 elif wf["type"] == Workflow.ASTAR:
                     # if real coords selected, annotate them on img with lines indicating length
                     if self.gen_real_cb.isChecked():
